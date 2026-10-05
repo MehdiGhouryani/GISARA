@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import fs from 'fs';
+import crypto from 'crypto';
 import path from 'path';
 import { db, saveDb } from './db';
 import { createRateLimiter, sanitizeInput } from './security';
@@ -16,14 +17,17 @@ import {
 } from './auth';
 
 import { Product, UserOrder, WorkshopRequest, Article, StyleModel } from '../src/types/domain';
-import { sendSMS } from './sms';
+import { sendSMS, sendOrderConfirmationSMS } from './sms';
 import { requestPaymentGateway, verifyPaymentGateway } from './payment';
 import { checkOrderTransition } from './orderStateMachine';
 import { releaseReservedStock, releaseCouponUsage } from './orderLifecycle';
 import { validateImport, snapshotBeforeImport, IMPORTABLE_COLLECTIONS } from './dbImport';
-import { validateBody, productCreateSchema, productUpdateSchema, styleCreateSchema, styleUpdateSchema, courseCreateSchema, courseUpdateSchema, couponCreateSchema, couponUpdateSchema, certificateCreateSchema, settingsUpdateSchema, workshopRequestSchema, aiConsultationSchema, articleCreateSchema, articleUpdateSchema, techniqueCreateSchema, techniqueUpdateSchema, sessionCreateSchema, sessionUpdateSchema } from './validation';
+import { validateBody, shippingInfoSchema, productCreateSchema, productUpdateSchema, styleCreateSchema, styleUpdateSchema, courseCreateSchema, courseUpdateSchema, couponCreateSchema, couponUpdateSchema, certificateCreateSchema, settingsUpdateSchema, workshopRequestSchema, aiConsultationSchema, articleCreateSchema, articleUpdateSchema, techniqueCreateSchema, techniqueUpdateSchema, sessionCreateSchema, sessionUpdateSchema } from './validation';
 import { getEntitledCourseIds, hasCourseAccess, toPublicCourse, findLesson } from './courseAccess';
 import { isJalaliExpired } from './jalali';
+import { computeTotals } from '../src/shared/pricing';
+import { normalizeCode, normalizeMobile } from '../src/shared/digits';
+import { newId, newOrderNumber } from './ids';
 import { generateExpertStylingAdvice } from './expertStylingEngine';
 
 export const apiRouter = Router();
@@ -70,7 +74,7 @@ const writeLimiter = createRateLimiter({
 // Helper to log administrative actions
 function logAdminAction(adminUser: string, action: string, details: string) {
   const newLog = {
-    id: `audit-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+    id: newId('audit'),
     timestamp: new Date().toISOString(),
     action,
     user: adminUser,
@@ -260,7 +264,7 @@ apiRouter.post('/styles', requireAdmin, writeLimiter, validateBody(styleCreateSc
   const body = req.body;
 
   const newStyle: StyleModel = {
-    id: `style-${Date.now()}`,
+    id: newId('style'),
     name: body.name,
     slug: body.slug,
     primaryImage: body.primaryImage || 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=1000&q=80',
@@ -345,7 +349,7 @@ apiRouter.post('/products', requireAdmin, writeLimiter, validateBody(productCrea
   const body = req.body;
 
   const newProd: Product = {
-    id: `prod-${Date.now()}`,
+    id: newId('prod'),
     name: body.name,
     slug: body.slug || body.name.toLowerCase().replace(/\s+/g, '-'),
     category: body.category || 'تثبیت‌کننده‌ها',
@@ -421,34 +425,45 @@ apiRouter.get('/orders', requireAuth, (req: any, res) => {
 });
 
 apiRouter.post('/orders', requireAuth, writeLimiter, (req: any, res) => {
-  const { cartItems, shippingInfo, couponCode } = req.body;
-  if (!cartItems || !Array.isArray(cartItems) || cartItems.length === 0) {
-    return res.status(400).json({ success: false, message: 'سبد خرید خالی است.' });
-  }
+  const { cartItems, shippingInfo, couponCode } = req.body || {};
+  const fail = (code: number, message: string) => res.status(code).json({ success: false, message });
 
-  // ---------------------------------------------------------------------------
-  // Validate + price every line from SERVER data (never trust client price/title),
-  // and only then reserve stock. Two passes make the reservation all-or-nothing:
-  // previously a failure on line N returned 400 after lines 1..N-1 had already
-  // been decremented, and negative/fractional quantities were accepted.
-  // ---------------------------------------------------------------------------
+  if (!Array.isArray(cartItems) || cartItems.length === 0) {
+    return fail(400, 'سبد خرید خالی است.');
+  }
   const MAX_LINES = 50;
   const MAX_QTY_PER_LINE = 20;
   if (cartItems.length > MAX_LINES) {
-    return res.status(400).json({ success: false, message: 'تعداد اقلام سبد خرید بیش از حد مجاز است.' });
+    return fail(400, 'تعداد اقلام سبد خرید بیش از حد مجاز است.');
   }
 
+  // Idempotency: a retried request (flaky network, double click, back button) with the same
+  // key returns the order that was already created instead of reserving stock a second time.
+  const rawKey = req.headers['idempotency-key'];
+  const idempotencyKey = typeof rawKey === 'string' ? rawKey.trim().slice(0, 100) : '';
+  if (idempotencyKey) {
+    const prior = (db.orders as any[]).find(o => o.userMobile === req.user.mobile && o.idempotencyKey === idempotencyKey);
+    if (prior) {
+      return res.status(200).json({ success: true, replayed: true, message: 'این سفارش قبلاً ثبت شده است.', order: prior });
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Pass 1 — validate and price every line from SERVER data. Nothing is mutated here, so every
+  // early return below is side-effect free (no stock reservation / coupon usage to roll back).
+  // ---------------------------------------------------------------------------
   const lineItems: any[] = [];
   const stockDemand = new Map<string, number>();
-  let subtotal = 0;
+  const courseIdsInCart = new Set<string>();
+  const alreadyOwned = new Set(getEntitledCourseIds(req.user.mobile));
 
   for (const item of cartItems) {
     if (!item || typeof item !== 'object') {
-      return res.status(400).json({ success: false, message: 'آیتم سبد خرید نامعتبر است.' });
+      return fail(400, 'آیتم سبد خرید نامعتبر است.');
     }
     const qty = Number(item.quantity);
     if (!Number.isInteger(qty) || qty < 1 || qty > MAX_QTY_PER_LINE) {
-      return res.status(400).json({ success: false, message: 'تعداد یکی از اقلام نامعتبر است.' });
+      return fail(400, 'تعداد یکی از اقلام نامعتبر است.');
     }
     const image = typeof item.image === 'string' ? item.image.slice(0, 500) : '';
     const lineId = typeof item.id === 'string' ? item.id.slice(0, 100) : `line-${lineItems.length + 1}`;
@@ -456,97 +471,117 @@ apiRouter.post('/orders', requireAuth, writeLimiter, (req: any, res) => {
     if (item.type === 'ONLINE_COURSE') {
       const course = db.courses.find(c => c.id === item.courseId && c.status === 'PUBLISHED');
       if (!course) {
-        return res.status(400).json({ success: false, message: 'دوره انتخاب‌شده یافت نشد یا در دسترس نیست.' });
+        return fail(400, 'دوره انتخاب‌شده یافت نشد یا در دسترس نیست.');
       }
       if (qty !== 1) {
-        return res.status(400).json({ success: false, message: 'هر دوره آنلاین فقط یک‌بار قابل خرید است.' });
+        return fail(400, 'هر دوره آنلاین فقط یک‌بار قابل خرید است.');
       }
-      subtotal += course.priceToman;
+      if (courseIdsInCart.has(course.id)) {
+        return fail(400, `دوره «${course.name}» بیش از یک‌بار در سبد وجود دارد.`);
+      }
+      if (alreadyOwned.has(course.id)) {
+        return fail(409, `دوره «${course.name}» قبلاً برای شما فعال شده است و نیازی به خرید دوباره نیست.`);
+      }
+      courseIdsInCart.add(course.id);
       lineItems.push({ id: lineId, type: 'ONLINE_COURSE', courseId: course.id, title: course.name, priceToman: course.priceToman, quantity: 1, image });
       continue;
     }
 
     const product = db.products.find(p => p.id === item.productId);
-    if (!product) {
-      return res.status(400).json({ success: false, message: 'محصول انتخاب‌شده یافت نشد.' });
+    if (!product || ((product as any).status && (product as any).status !== 'PUBLISHED')) {
+      return fail(400, 'محصول انتخاب‌شده یافت نشد یا در دسترس نیست.');
     }
     stockDemand.set(product.id, (stockDemand.get(product.id) || 0) + qty);
-    subtotal += product.priceToman * qty;
     lineItems.push({ id: lineId, type: 'PHYSICAL_PRODUCT', productId: product.id, title: product.name, sku: (product as any).sku, priceToman: product.priceToman, quantity: qty, image });
   }
 
-  // Check aggregated demand (the same product may appear on several lines).
+  // Aggregated demand (the same product may appear on several lines).
   for (const [productId, qty] of stockDemand) {
     const product = db.products.find(p => p.id === productId)!;
     if (product.stock < qty) {
-      return res.status(400).json({ success: false, message: `موجودی انبار محصول ${product.name} کافی نیست.` });
+      return fail(400, `موجودی انبار محصول ${product.name} کافی نیست.`);
     }
   }
-  // Validation complete: reserve stock. Kept synchronous (no await) so the
-  // check-then-decrement above is atomic within the single-threaded event loop.
+
+  // Shipping details: required (and strictly validated) only when something is shipped.
+  const hasPhysical = lineItems.some(l => l.type === 'PHYSICAL_PRODUCT');
+  let shippingAddress: any;
+  if (hasPhysical) {
+    const parsed = shippingInfoSchema.safeParse(shippingInfo || {});
+    if (!parsed.success) {
+      return fail(400, parsed.error.issues[0]?.message || 'اطلاعات آدرس تحویل کامل نیست.');
+    }
+    const s = parsed.data;
+    shippingAddress = {
+      recipientName: s.recipientName,
+      mobile: s.recipientMobile,
+      province: s.province,
+      city: s.city,
+      addressLine: s.addressLine,
+      postalCode: s.postalCode
+    };
+  }
+
+  // Coupon: fully validated BEFORE any reservation.
+  let coupon: any = null;
+  const subtotalForCoupon = lineItems.reduce((sum, l) => sum + l.priceToman * l.quantity, 0);
+  if (couponCode !== undefined && couponCode !== null && String(couponCode).trim() !== '') {
+    const code = normalizeCode(couponCode);
+    coupon = db.coupons.find(c => normalizeCode(c.code) === code);
+    if (!coupon || !coupon.isActive) {
+      return fail(400, 'کد تخفیف معتبر نیست.');
+    }
+    if (isJalaliExpired(coupon.expiresAtJalali)) {
+      return fail(400, 'کد تخفیف منقضی شده است.');
+    }
+    if (coupon.usageLimit && coupon.usageCount >= coupon.usageLimit) {
+      return fail(400, 'ظرفیت استفاده از این کد تخفیف به پایان رسیده است.');
+    }
+    if (coupon.minOrderToman && subtotalForCoupon < coupon.minOrderToman) {
+      return fail(400, `حداقل مبلغ سفارش برای این کد تخفیف ${coupon.minOrderToman.toLocaleString('fa-IR')} تومان است.`);
+    }
+  }
+
+  const totals = computeTotals(lineItems, coupon);
+
+  // ---------------------------------------------------------------------------
+  // Pass 2 — commit. Synchronous (no await) so check-then-decrement stays atomic in the event loop.
+  // ---------------------------------------------------------------------------
   for (const [productId, qty] of stockDemand) {
     const product = db.products.find(p => p.id === productId)!;
     product.stock -= qty;
   }
+  if (coupon) coupon.usageCount++;
 
-  let discount = 0;
-  if (couponCode) {
-    const coupon = db.coupons.find(c => c.code.toLowerCase() === couponCode.toLowerCase());
-    if (!coupon || !coupon.isActive) {
-      return res.status(400).json({ success: false, message: 'کد تخفیف معتبر نیست.' });
-    }
-    if (isJalaliExpired(coupon.expiresAtJalali)) {
-      return res.status(400).json({ success: false, message: 'کد تخفیف منقضی شده است.' });
-    }
-    if ((coupon as any).usageLimit && coupon.usageCount >= (coupon as any).usageLimit) {
-      return res.status(400).json({ success: false, message: 'ظرفیت استفاده از این کد تخفیف به پایان رسیده است.' });
-    }
-    if (coupon.minOrderToman && subtotal < coupon.minOrderToman) {
-      return res.status(400).json({ success: false, message: `حداقل مبلغ سفارش برای این کد تخفیف ${coupon.minOrderToman.toLocaleString('fa-IR')} تومان است.` });
-    }
-    discount = Math.round((subtotal * coupon.discountPercent) / 100);
-    if (coupon.maxDiscountToman && discount > coupon.maxDiscountToman) {
-      discount = coupon.maxDiscountToman;
-    }
-    coupon.usageCount++;
-  }
-
-  const shippingCost = subtotal > 1000000 ? 0 : 45000; // Free shipping over 1M Toman
-  const finalTotal = Math.max(0, subtotal - discount + shippingCost);
-
-  const orderNumber = `GSR-${Date.now().toString().slice(-6)}-${Math.floor(Math.random() * 900 + 100)}`;
   const PAYMENT_WINDOW_MS = 30 * 60 * 1000; // 30 minutes to complete payment before the order/reservation expires
+  const orderNumber = newOrderNumber((db.orders as any[]).map(o => o.orderNumber));
 
   const newOrder: any = {
-    id: `order-${Date.now()}`,
+    id: newId('order'),
     orderNumber,
     items: lineItems,
-    subtotalToman: subtotal,
-    shippingToman: shippingCost,
-    payableToman: finalTotal,
+    subtotalToman: totals.subtotalToman,
+    discountToman: totals.discountToman,
+    shippingToman: totals.shippingToman,
+    payableToman: totals.payableToman,
     status: 'PENDING_PAYMENT' as any,
     createdAt: new Date().toISOString(),
     paymentExpiresAt: new Date(Date.now() + PAYMENT_WINDOW_MS).toISOString(),
     userMobile: req.user.mobile,
-    couponApplied: couponCode || undefined,
-    shippingAddress: {
-      recipientName: sanitizeInput(shippingInfo?.recipientName || req.user.name),
-      mobile: sanitizeInput(shippingInfo?.recipientMobile || req.user.mobile),
-      province: shippingInfo?.province || 'تهران',
-      city: shippingInfo?.city || 'تهران',
-      addressLine: sanitizeInput(shippingInfo?.addressLine || 'تحویل دیجیتال'),
-      postalCode: sanitizeInput(shippingInfo?.postalCode || '1111111111')
-    },
+    customerName: req.user.name,
+    couponApplied: coupon ? coupon.code : undefined,
+    idempotencyKey: idempotencyKey || undefined,
+    shippingAddress,
     systemLogs: [`سفارش با شناسه پیگیری ${orderNumber} ثبت شد و در انتظار پرداخت است.`]
   };
 
   db.orders = [newOrder, ...db.orders];
   db.products = [...db.products]; // Trigger product state saving
   db.coupons = [...db.coupons];
-  
-  // Invalidate cache
+
   serverCache.invalidate('products');
-  
+  serverCache.invalidate('admin_');
+
   res.status(201).json({
     success: true,
     message: 'سفارش با موفقیت ثبت شد. برای تکمیل، به درگاه پرداخت هدایت می‌شوید.',
@@ -623,7 +658,7 @@ const handlePostRequest = (req: any, res: any) => {
   }
 
   const newRequest: WorkshopRequest = {
-    id: `req-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+    id: newId('req'),
     userId: req.user ? req.user.mobile : 'guest',
     kind: body.kind || 'REQUEST_NEW_SESSION',
     sessionId: body.sessionId || undefined,
@@ -693,7 +728,7 @@ apiRouter.get('/courses/:courseId/lessons/:lessonId', (req: any, res) => {
 apiRouter.post('/courses', requireAdmin, writeLimiter, validateBody(courseCreateSchema), (req: any, res) => {
   const body = req.body;
   const newCourse: any = {
-    id: `course-${Date.now()}`,
+    id: newId('course'),
     name: body.name,
     slug: body.slug || body.name.toLowerCase().replace(/\s+/g, '-'),
     kind: body.kind || 'ONLINE',
@@ -790,7 +825,7 @@ apiRouter.get('/techniques', (req, res) => {
 apiRouter.post('/sessions', requireAdmin, writeLimiter, validateBody(sessionCreateSchema), (req: any, res) => {
   const body = req.body;
   const newSession = {
-    id: `session-${Date.now()}`,
+    id: newId('session'),
     ...body,
     registeredCount: body.registeredCount ?? 0
   };
@@ -823,8 +858,8 @@ apiRouter.delete('/sessions/:id', requireAdmin, (req: any, res) => {
 apiRouter.post('/articles', requireAdmin, writeLimiter, validateBody(articleCreateSchema), (req: any, res) => {
   const body = req.body;
   const newArticle = {
-    id: `article-${Date.now()}`,
-    slug: body.slug || `article-${Date.now()}`,
+    id: newId('article'),
+    slug: body.slug || newId('article'),
     publishedAt: body.publishedAt || new Date().toISOString().split('T')[0],
     readTimeMinutes: body.readTimeMinutes || 5,
     author: body.author || { name: 'گیس‌آرا', role: 'دبارتمان آموزش', avatar: '/icon.svg' },
@@ -863,8 +898,8 @@ apiRouter.delete('/articles/:id', requireAdmin, (req: any, res) => {
 apiRouter.post('/techniques', requireAdmin, writeLimiter, validateBody(techniqueCreateSchema), (req: any, res) => {
   const body = req.body;
   const newTechnique = {
-    id: `technique-${Date.now()}`,
-    slug: body.slug || `tech-${Date.now()}`,
+    id: newId('technique'),
+    slug: body.slug || newId('tech'),
     steps: body.steps || [],
     commonMistakes: body.commonMistakes || [],
     toolIds: body.toolIds || [],
@@ -930,7 +965,7 @@ apiRouter.post('/coupons', requireAdmin, writeLimiter, validateBody(couponCreate
   }
 
   const newCoupon = {
-    id: `coupon-${Date.now()}`,
+    id: newId('coupon'),
     code: body.code.toUpperCase(),
     discountPercent: body.discountPercent,
     maxDiscountToman: body.maxDiscountToman,
@@ -990,12 +1025,12 @@ apiRouter.get('/certificates/validate/:code', (req, res) => {
 apiRouter.post('/certificates', requireAdmin, writeLimiter, validateBody(certificateCreateSchema), (req: any, res) => {
   const body = req.body;
 
-  const certCode = `GSR-CERT-${Math.floor(Math.random() * 90000 + 10000)}`;
+  const certCode = `GSR-CERT-${crypto.randomInt(10_000_000, 100_000_000)}`;
 
   const newCert = {
-    id: `cert-${Date.now()}`,
+    id: newId('cert'),
     certificateCode: certCode,
-    courseId: body.courseId || `course-${Date.now()}`,
+    courseId: body.courseId || newId('course'),
     courseTitle: body.courseTitle,
     studentName: body.studentName,
     studentMobile: body.studentMobile,
@@ -1047,7 +1082,7 @@ apiRouter.post('/admin/enrollments', requireAdmin, writeLimiter, (req: any, res)
   }
 
   const newEnrollment = {
-    id: `enrollment-${Date.now()}`,
+    id: newId('enrollment'),
     userMobile,
     courseId,
     courseName,
@@ -1076,8 +1111,12 @@ apiRouter.post('/ai/consultation', aiLimiter, validateBody(aiConsultationSchema)
   }
 
   try {
-    // 2.5s Timeout Guard for Gemini AI to ensure instantaneous user experience
-    const geminiPromise = (async () => {
+    // Hard 2.5s budget for Gemini. The request is actually ABORTED on timeout (a bare Promise.race
+    // leaves it running and still consuming quota).
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 2500);
+    let aiText = '';
+    try {
       const { GoogleGenAI } = await import('@google/genai');
       const ai = new GoogleGenAI({ apiKey: aiKey });
 
@@ -1097,16 +1136,12 @@ apiRouter.post('/ai/consultation', aiLimiter, validateBody(aiConsultationSchema)
       const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
         contents: prompt,
+        config: { abortSignal: controller.signal },
       });
-
-      return response.text ? response.text.trim() : '';
-    })();
-
-    const timeoutPromise = new Promise<string>((_, reject) => {
-      setTimeout(() => reject(new Error('AI_TIMEOUT')), 2500);
-    });
-
-    const aiText = await Promise.race([geminiPromise, timeoutPromise]);
+      aiText = response.text ? response.text.trim() : '';
+    } finally {
+      clearTimeout(timer);
+    }
 
     if (aiText && aiText.length > 20) {
       return res.json({
@@ -1311,14 +1346,22 @@ apiRouter.post('/admin/settings', requireAdmin, writeLimiter, validateBody(setti
   });
 });
 
+// Where the gateway sends the customer back. PUBLIC_BASE_URL pins it in production so a spoofed
+// Host header can never redirect a paying customer (or the gateway callback) elsewhere.
+function resolveBaseUrl(req: any): string {
+  const pinned = (process.env.PUBLIC_BASE_URL || '').trim().replace(/\/+$/, '');
+  if (pinned) return pinned;
+  return `${req.protocol || 'https'}://${req.get('host') || 'localhost:3000'}`;
+}
+
 // Create Online Payment Gateway Link
 apiRouter.post('/payments/request', requireAuth, writeLimiter, async (req: any, res) => {
-  const { orderId } = req.body;
-  if (!orderId) {
+  const { orderId } = req.body || {};
+  if (!orderId || typeof orderId !== 'string') {
     return res.status(400).json({ success: false, message: 'کد سفارش الزامی است.' });
   }
 
-  const order = db.orders.find(o => o.id === orderId);
+  const order: any = db.orders.find(o => o.id === orderId);
   if (!order) {
     return res.status(404).json({ success: false, message: 'سفارش مورد نظر یافت نشد.' });
   }
@@ -1330,59 +1373,83 @@ apiRouter.post('/payments/request', requireAuth, writeLimiter, async (req: any, 
 
   // A declined payment may be retried while the original payment window is still
   // open (the stock reservation is not extended).
-  if ((order as any).status === 'PAYMENT_FAILED') {
-    const windowOpen = !(order as any).paymentExpiresAt || Date.parse((order as any).paymentExpiresAt) > Date.now();
+  if (order.status === 'PAYMENT_FAILED') {
+    const windowOpen = !order.paymentExpiresAt || Date.parse(order.paymentExpiresAt) > Date.now();
     const decision = checkOrderTransition('PAYMENT_FAILED', 'PENDING_PAYMENT', 'SYSTEM');
     if (windowOpen && decision.allowed) {
-      (order as any).status = 'PENDING_PAYMENT';
+      order.status = 'PENDING_PAYMENT';
       db.orders = [...db.orders];
     }
   }
 
-  if ((order as any).status !== 'PENDING_PAYMENT') {
+  if (order.status !== 'PENDING_PAYMENT') {
     return res.status(409).json({ success: false, message: 'این سفارش در وضعیت قابل پرداخت نیست.' });
   }
-  if ((order as any).paymentExpiresAt && Date.parse((order as any).paymentExpiresAt) < Date.now()) {
+  if (order.paymentExpiresAt && Date.parse(order.paymentExpiresAt) < Date.now()) {
     return res.status(409).json({ success: false, message: 'مهلت پرداخت این سفارش به پایان رسیده است.' });
   }
 
-  const protocol = req.protocol || 'https';
-  const host = req.get('host') || 'localhost:3000';
-  const callbackUrl = `${protocol}://${host}/api/payments/verify?orderId=${orderId}`;
+  // A course bought through another order in the meantime must not be paid for twice.
+  const owned = new Set(getEntitledCourseIds(order.userMobile));
+  if ((order.items || []).some((i: any) => i.type === 'ONLINE_COURSE' && owned.has(i.courseId))) {
+    return res.status(409).json({ success: false, message: 'یکی از دوره‌های این سفارش قبلاً برای شما فعال شده است. سفارش را لغو و سبد خرید را اصلاح کنید.' });
+  }
+
+  const now = Date.now();
+  const intentsForOrder = db.paymentIntents.filter(pi => pi.orderId === orderId);
+  if (intentsForOrder.some(pi => pi.status === 'VERIFYING')) {
+    return res.status(409).json({ success: false, message: 'پرداخت قبلی شما در حال بررسی است. لطفاً چند لحظه صبر کنید.' });
+  }
+  // Idempotent: a retry (timeout, double click) re-uses the still-valid gateway session
+  // instead of opening a second one for the same order.
+  const live = intentsForOrder.find(pi => pi.status === 'PENDING' && Date.parse(pi.expiresAt) > now && pi.paymentUrl);
+  if (live) {
+    return res.json({
+      success: true,
+      paymentUrl: live.paymentUrl,
+      authority: live.providerAuthority,
+      isSimulated: live.provider === 'simulated',
+      reused: true
+    });
+  }
+
+  const callbackUrl = `${resolveBaseUrl(req)}/api/payments/verify?orderId=${encodeURIComponent(orderId)}`;
 
   const pgResult = await requestPaymentGateway({
     orderId,
     amountToman: order.payableToman,
-    description: `پرداخت آنلاین سفارش ${orderId} در گیس‌آرا`,
+    description: `پرداخت سفارش ${order.orderNumber} در گیس‌آرا`,
     mobile: order.userMobile || order.mobile,
     callbackUrl
   });
 
-  if (!pgResult.success) {
+  if (!pgResult.success || !pgResult.authority) {
+    if (res.headersSent) return; // the request-timeout middleware already answered
     return res.status(503).json({ success: false, message: pgResult.message || 'اتصال به درگاه پرداخت برقرار نشد.' });
   }
 
-  if (pgResult.success && pgResult.authority) {
-    (order as any).paymentRefId = pgResult.authority;
+  order.paymentRefId = pgResult.authority;
 
-    // Persist a payment intent so /payments/verify has something real to
-    // bind the incoming callback against (orderId, amount, authority) —
-    // this is what P0.4 requires and what was previously entirely missing.
-    const intent = {
-      id: `pi-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-      orderId,
-      amountToman: order.payableToman,
-      provider: pgResult.isSimulated ? 'simulated' : 'zarinpal',
-      providerAuthority: pgResult.authority,
-      status: 'PENDING' as const,
-      createdAt: new Date().toISOString(),
-      expiresAt: new Date(Date.now() + 20 * 60 * 1000).toISOString() // 20-minute gateway window
-    };
-    db.paymentIntents = [intent, ...db.paymentIntents];
-  }
+  // Persist a payment intent so /payments/verify can bind the incoming callback to
+  // (orderId, amount, authority). Saved BEFORE responding, so even if the HTTP response
+  // was lost to a timeout, the client's retry finds and re-uses this intent.
+  const intent = {
+    id: newId('pi'),
+    orderId,
+    amountToman: order.payableToman,
+    provider: pgResult.isSimulated ? 'simulated' : 'zarinpal',
+    providerAuthority: pgResult.authority,
+    paymentUrl: pgResult.url,
+    status: 'PENDING' as const,
+    createdAt: new Date().toISOString(),
+    expiresAt: new Date(Date.now() + 20 * 60 * 1000).toISOString() // 20-minute gateway window
+  };
+  db.paymentIntents = [intent, ...db.paymentIntents];
+  db.orders = [...db.orders];
 
+  if (res.headersSent) return;
   res.json({
-    success: pgResult.success,
+    success: true,
     paymentUrl: pgResult.url,
     authority: pgResult.authority,
     isSimulated: pgResult.isSimulated,
@@ -1390,39 +1457,51 @@ apiRouter.post('/payments/request', requireAuth, writeLimiter, async (req: any, 
   });
 });
 
+// Redirect the customer to the account page with a machine-readable outcome + a human message.
+type PayOutcome = 'success' | 'failed' | 'cancelled' | 'pending';
+function payRedirect(res: any, o: { status: PayOutcome; orderId?: string; refId?: string; message?: string }) {
+  const q = new URLSearchParams({ tab: 'orders', paymentStatus: o.status });
+  if (o.orderId) q.set('orderId', o.orderId);
+  if (o.refId) q.set('refId', o.refId);
+  if (o.message) q.set('message', o.message);
+  return res.redirect(`/account?${q.toString()}`);
+}
+
 // Verify Online Payment Callback from Zarinpal / Simulator
 apiRouter.get('/payments/verify', async (req: any, res) => {
-  const { Authority, Authority: authorityQuery, Status, orderId } = req.query;
-  const authority = Authority || authorityQuery;
+  const authority = String(req.query.Authority || '');
+  const gatewayStatus = String(req.query.Status || '');
+  const orderId = String(req.query.orderId || '');
 
   if (!authority || !orderId) {
-    return res.redirect('/orders?paymentStatus=failed&message=کد_شناسه_پرداخت_یافت_نشد');
+    return payRedirect(res, { status: 'failed', message: 'شناسه پرداخت یافت نشد.' });
   }
 
-  const order = db.orders.find(o => o.id === orderId) as any;
+  const order: any = db.orders.find(o => o.id === orderId);
   if (!order) {
-    return res.redirect('/orders?paymentStatus=failed&message=سفارش_یافت_نشد');
+    return payRedirect(res, { status: 'failed', message: 'سفارش یافت نشد.' });
   }
 
-  // --- Binding & idempotency checks (P0.4) ---------------------------------
-  const intent = db.paymentIntents.find(pi => pi.providerAuthority === String(authority));
+  // --- Binding & idempotency checks ---------------------------------------
+  const intent: any = db.paymentIntents.find(pi => pi.providerAuthority === authority);
 
   if (!intent || intent.orderId !== orderId) {
-    // Either no intent was ever created for this authority, or it belongs
-    // to a different order — never trust the query string alone.
-    return res.redirect(`/orders?paymentStatus=failed&orderId=${orderId}&message=شناسه_پرداخت_با_سفارش_مطابقت_ندارد`);
+    // Never trust the query string alone.
+    return payRedirect(res, { status: 'failed', orderId, message: 'شناسه پرداخت با سفارش مطابقت ندارد.' });
+  }
+
+  if (intent.status === 'VERIFYING') {
+    // A second callback for the same authority while the first is still being verified.
+    return payRedirect(res, { status: 'pending', orderId, message: 'پرداخت شما در حال بررسی است. لطفاً چند لحظه بعد وضعیت سفارش را ببینید.' });
   }
 
   if (intent.status !== 'PENDING') {
-    // Already processed — replay of a callback. Idempotency must be decided by
-    // THIS intent's own outcome, not merely the order's current status: an order
-    // can hold several intents (e.g. a declined attempt followed by a successful
-    // retry), and replaying the OLD declined authority must never be reported as
-    // success just because the order was later paid through a different intent.
+    // Replay of an already-processed callback. Decided by THIS intent's own outcome, not just the
+    // order status: an order can hold several intents (declined attempt, then a successful retry).
     if (intent.status === 'SUCCEEDED' && order.status === 'PAID' && order.paymentIntentId === intent.id) {
-      return res.redirect(`/orders?paymentStatus=success&orderId=${orderId}&refId=${order.paymentRefId || ''}`);
+      return payRedirect(res, { status: 'success', orderId, refId: order.paymentRefId || '' });
     }
-    return res.redirect(`/orders?paymentStatus=failed&orderId=${orderId}&message=این_پرداخت_قبلاً_پردازش_شده_است`);
+    return payRedirect(res, { status: 'failed', orderId, message: 'این پرداخت قبلاً پردازش شده است.' });
   }
 
   if (new Date(intent.expiresAt).getTime() < Date.now()) {
@@ -1434,31 +1513,60 @@ apiRouter.get('/payments/verify', async (req: any, res) => {
       releaseReservedStock(order);
       releaseCouponUsage(order);
       db.orders = [...db.orders];
+      serverCache.invalidate('admin_');
     }
-    return res.redirect(`/orders?paymentStatus=failed&orderId=${orderId}&message=مهلت_پرداخت_به_پایان_رسیده_است`);
+    return payRedirect(res, { status: 'failed', orderId, message: 'مهلت پرداخت به پایان رسیده است.' });
   }
 
   if (order.status !== 'PENDING_PAYMENT') {
-    return res.redirect(`/orders?paymentStatus=failed&orderId=${orderId}&message=سفارش_در_وضعیت_قابل_تایید_نیست`);
+    return payRedirect(res, { status: 'failed', orderId, message: 'سفارش در وضعیت قابل تأیید نیست.' });
   }
 
-  if (Status === 'NOK') {
+  // Amount binding — what we are about to verify must be what the order currently costs.
+  if (intent.amountToman !== order.payableToman) {
+    intent.status = 'FAILED';
+    db.paymentIntents = [...db.paymentIntents];
+    return payRedirect(res, { status: 'failed', orderId, message: 'مبلغ پرداخت با مبلغ سفارش مطابقت ندارد.' });
+  }
+
+  if (gatewayStatus !== 'OK') {
     intent.status = 'FAILED';
     db.paymentIntents = [...db.paymentIntents];
     const decision = checkOrderTransition(order.status, 'PAYMENT_FAILED', 'SYSTEM');
     if (decision.allowed) {
       order.status = 'PAYMENT_FAILED';
       db.orders = [...db.orders];
+      serverCache.invalidate('admin_');
     }
-    return res.redirect(`/orders?paymentStatus=cancelled&orderId=${orderId}`);
+    return payRedirect(res, { status: 'cancelled', orderId, message: 'پرداخت توسط شما لغو شد یا از سوی بانک تأیید نشد.' });
   }
 
-  // Amount binding — the amount charged must match what we asked for.
-  const verifyRes = await verifyPaymentGateway(String(authority), intent.amountToman);
+  // Claim the intent SYNCHRONOUSLY, before the first await: two concurrent callbacks can no
+  // longer both pass the PENDING check, and the expiry sweeper skips orders with a live intent.
+  intent.status = 'VERIFYING';
+  db.paymentIntents = [...db.paymentIntents];
+
+  let verifyRes: { success: boolean; refId?: string; message?: string; retryable?: boolean };
+  try {
+    verifyRes = await verifyPaymentGateway(authority, intent.amountToman);
+  } catch (err: any) {
+    verifyRes = { success: false, retryable: true, message: err?.message };
+  }
+
   if (verifyRes.success) {
     const decision = checkOrderTransition(order.status, 'PAID', 'SYSTEM');
     if (!decision.allowed) {
-      return res.redirect(`/orders?paymentStatus=failed&orderId=${orderId}&message=${encodeURIComponent(decision.reason || 'خطای_وضعیت_سفارش')}`);
+      // Money was taken but the order can no longer be paid (e.g. an admin cancelled it while we
+      // were verifying). Never lose that fact: flag it for manual review / refund.
+      intent.status = 'SUCCEEDED';
+      intent.verifiedAt = new Date().toISOString();
+      intent.needsReview = true;
+      db.paymentIntents = [...db.paymentIntents];
+      if (!order.systemLogs) order.systemLogs = [];
+      order.systemLogs.push(`پرداخت موفق (کد ${verifyRes.refId || authority}) برای سفارشی با وضعیت ${order.status} ثبت شد؛ نیازمند بررسی و بازپرداخت دستی.`);
+      db.orders = [...db.orders];
+      logAdminAction('سیستم', 'پرداخت نیازمند بررسی', `سفارش ${order.orderNumber}: پرداخت موفق اما وضعیت سفارش ${order.status} است (کد ${verifyRes.refId || authority}).`);
+      return payRedirect(res, { status: 'failed', orderId, message: 'پرداخت انجام شد اما سفارش دیگر قابل تأیید نیست. تیم پشتیبانی بررسی و با شما تماس می‌گیرد.' });
     }
 
     intent.status = 'SUCCEEDED';
@@ -1467,30 +1575,40 @@ apiRouter.get('/payments/verify', async (req: any, res) => {
 
     order.status = 'PAID';
     order.paidAt = new Date().toISOString();
-    order.paymentRefId = verifyRes.refId || String(authority);
+    order.paymentRefId = verifyRes.refId || authority;
     order.paymentIntentId = intent.id;
-    order.shipmentStatus = order.shipmentStatus || 'PACKING';
+    order.shipmentStatus = order.shipmentStatus || ((order.items || []).some((i: any) => i.type === 'PHYSICAL_PRODUCT') ? 'PACKING' : undefined);
     if (!order.systemLogs) order.systemLogs = [];
-    order.systemLogs.push(`پرداخت با کد پیگیری ${order.paymentRefId} در تاریخ ${new Date().toLocaleTimeString('fa-IR')} تایید شد.`);
+    order.systemLogs.push(`پرداخت با کد پیگیری ${order.paymentRefId} در ${new Date().toISOString()} تأیید شد.`);
     db.orders = [...db.orders];
+    serverCache.invalidate('admin_');
 
-    // Send confirmation SMS if mobile available
+    // Confirmation SMS is best-effort and must never affect the payment outcome.
     const recipientMobile = order.userMobile || order.mobile;
     if (recipientMobile) {
-      sendSMS(recipientMobile, `سفارش ${order.id} با کد پیگیری ${order.paymentRefId} تایید شد. گیس‌آرا`);
+      sendOrderConfirmationSMS(recipientMobile, order.orderNumber, order.paymentRefId).catch(() => {});
     }
 
-    return res.redirect(`/orders?paymentStatus=success&orderId=${orderId}&refId=${order.paymentRefId}`);
-  } else {
-    intent.status = 'FAILED';
-    db.paymentIntents = [...db.paymentIntents];
-    const decision = checkOrderTransition(order.status, 'PAYMENT_FAILED', 'SYSTEM');
-    if (decision.allowed) {
-      order.status = 'PAYMENT_FAILED';
-      db.orders = [...db.orders];
-    }
-    return res.redirect(`/orders?paymentStatus=failed&orderId=${orderId}&message=${encodeURIComponent(verifyRes.message || 'خطا_در_استعلام')}`);
+    return payRedirect(res, { status: 'success', orderId, refId: order.paymentRefId });
   }
+
+  if (verifyRes.retryable) {
+    // The gateway could not be reached: the customer may well have paid. Do NOT mark the attempt
+    // failed — re-open the intent so the outcome is not decided by a network blip.
+    intent.status = 'PENDING';
+    db.paymentIntents = [...db.paymentIntents];
+    return payRedirect(res, { status: 'pending', orderId, message: 'تأیید پرداخت با تأخیر مواجه شد. اگر مبلغ از حساب شما کسر شده، تا چند ساعت آینده به‌صورت خودکار برگشت داده می‌شود یا با پشتیبانی تماس بگیرید.' });
+  }
+
+  intent.status = 'FAILED';
+  db.paymentIntents = [...db.paymentIntents];
+  const decision = checkOrderTransition(order.status, 'PAYMENT_FAILED', 'SYSTEM');
+  if (decision.allowed) {
+    order.status = 'PAYMENT_FAILED';
+    db.orders = [...db.orders];
+    serverCache.invalidate('admin_');
+  }
+  return payRedirect(res, { status: 'failed', orderId, message: verifyRes.message || 'تأیید پرداخت از سمت بانک ناموفق بود.' });
 });
 
 // -----------------------------------------------------------------------------

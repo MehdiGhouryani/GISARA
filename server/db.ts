@@ -71,10 +71,12 @@ export interface DBStructure {
     amountToman: number;
     provider: string;
     providerAuthority: string;
-    status: 'PENDING' | 'SUCCEEDED' | 'FAILED' | 'EXPIRED';
+    paymentUrl?: string;
+    status: 'PENDING' | 'VERIFYING' | 'SUCCEEDED' | 'FAILED' | 'EXPIRED';
     createdAt: string;
     expiresAt: string;
     verifiedAt?: string;
+    needsReview?: boolean;
   }>;
   manualEnrollments: Array<{
     id: string;

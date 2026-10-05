@@ -29,4 +29,24 @@ check('reserved stock returned', product.stock === before);
 check('pending payment intent closed', db.paymentIntents.find((p: any) => p.id === 'pi-x')!.status === 'EXPIRED');
 expireStaleOrders();
 check('second sweep does not double-restore', product.stock === before);
+
+// A customer at the gateway (live intent) must not have the order expired underneath them.
+const base2: any = { ...stale, status: 'PENDING_PAYMENT', stockReleased: false, systemLogs: [], paymentExpiresAt: new Date(Date.now() - 1000).toISOString() };
+const atGateway: any = { ...base2, id: 'order-test-gateway' };
+const verifying: any = { ...base2, id: 'order-test-verifying' };
+db.orders = [atGateway, verifying, ...db.orders];
+db.paymentIntents = [
+  { id: 'pi-live', orderId: atGateway.id, amountToman: 1, provider: 'simulated', providerAuthority: 'B', status: 'PENDING', createdAt: '', expiresAt: new Date(Date.now() + 600000).toISOString() },
+  { id: 'pi-ver', orderId: verifying.id, amountToman: 1, provider: 'simulated', providerAuthority: 'C', status: 'VERIFYING', createdAt: '', expiresAt: new Date(Date.now() - 1000).toISOString() },
+  ...db.paymentIntents
+];
+const before2 = product.stock;
+expireStaleOrders();
+check('order with a live gateway session is NOT expired', (db.orders.find((o: any) => o.id === atGateway.id) as any).status === 'PENDING_PAYMENT');
+check('order whose payment is being verified is NOT expired', (db.orders.find((o: any) => o.id === verifying.id) as any).status === 'PENDING_PAYMENT');
+check('their reserved stock is untouched', product.stock === before2);
+db.paymentIntents.find((p: any) => p.id === 'pi-live')!.expiresAt = new Date(Date.now() - 1000).toISOString();
+db.paymentIntents.find((p: any) => p.id === 'pi-ver')!.status = 'FAILED';
+expireStaleOrders();
+check('once the gateway session lapses the order is expired normally', (db.orders.find((o: any) => o.id === atGateway.id) as any).status === 'EXPIRED');
 process.exit(failures ? 1 : 0);

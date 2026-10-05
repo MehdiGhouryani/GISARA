@@ -8,7 +8,8 @@ import { serverCache } from './cache';
  */
 export function releaseCouponUsage(order: any): boolean {
   if (!order || order.couponRolledBack || !order.couponApplied) return false;
-  const coupon = db.coupons.find(c => c.code === order.couponApplied);
+  const wanted = String(order.couponApplied).trim().toLowerCase();
+  const coupon = db.coupons.find(c => String(c.code).trim().toLowerCase() === wanted);
   if (coupon && coupon.usageCount > 0) {
     coupon.usageCount--;
     db.coupons = [...db.coupons];
@@ -57,6 +58,14 @@ export function expireStaleOrders(now: number = Date.now()): number {
     const unpaid = order.status === 'PENDING_PAYMENT' || order.status === 'PAYMENT_FAILED';
     if (!unpaid || !order.paymentExpiresAt) continue;
     if (Date.parse(order.paymentExpiresAt) >= now) continue;
+
+    // A customer who is at the gateway (or whose payment is being verified right now) must not
+    // have the order expired underneath them: the money would be taken for an order that no
+    // longer exists. The intent's own 20-minute window bounds how long this can last.
+    const hasLiveIntent = (db.paymentIntents as any[]).some(
+      (pi) => pi.orderId === order.id && (pi.status === 'VERIFYING' || (pi.status === 'PENDING' && Date.parse(pi.expiresAt) > now))
+    );
+    if (hasLiveIntent) continue;
 
     order.status = 'EXPIRED';
     if (!order.systemLogs) order.systemLogs = [];

@@ -2,6 +2,7 @@
 # Order + payment state machine test (asserting). Run on a disposable dev DB:
 #   rm -f server/data/db.json && bash scripts/smoke-test-payments.sh
 cd "$(dirname "$0")/.."
+SHIP='{"recipientName":"گیرنده آزمایشی","recipientMobile":"09121234567","province":"تهران","city":"تهران","addressLine":"خیابان آزمایش، پلاک ۱۰، واحد ۲","postalCode":"1234567890"}'
 pkill -f "[t]sx server.ts" 2>/dev/null
 for i in $(seq 1 20); do curl -s -m 1 http://localhost:3000/api/health >/dev/null 2>&1 || break; sleep 0.5; done
 BASE=http://localhost:3000/api
@@ -21,7 +22,7 @@ curl -s -m 5 -c $AD -X POST $BASE/auth/admin/login -H 'Content-Type: application
 
 PID=$(curl -s -m 5 $BASE/products | js "j.data[0].id")
 PRICE=$(curl -s -m 5 $BASE/products | js "j.data[0].priceToman")
-mkorder() { curl -s -m 5 -b $1 -X POST $BASE/orders -H 'Content-Type: application/json' -d "{\"cartItems\":[{\"type\":\"PHYSICAL_PRODUCT\",\"productId\":\"$PID\",\"quantity\":1,\"priceToman\":1}]}" | js "j.order.id"; }
+mkorder() { curl -s -m 5 -b $1 -X POST $BASE/orders -H 'Content-Type: application/json' -d "{\"shippingInfo\":$SHIP,\"cartItems\":[{\"type\":\"PHYSICAL_PRODUCT\",\"productId\":\"$PID\",\"quantity\":1,\"priceToman\":1}]}" | js "j.order.id"; }
 status() { curl -s -m 5 -b $1 $BASE/orders | js "j.data.find(o=>o.id==='$2').status"; }
 reqpay() { curl -s -m 5 -b $1 -X POST $BASE/payments/request -H 'Content-Type: application/json' -d "{\"orderId\":\"$2\"}"; }
 

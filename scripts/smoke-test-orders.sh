@@ -2,6 +2,7 @@
 # Order integrity smoke test. Run on a disposable DB:
 #   rm -f server/data/db.json && bash scripts/smoke-test-orders.sh
 cd "$(dirname "$0")/.."
+SHIP='{"recipientName":"گیرنده آزمایشی","recipientMobile":"09121234567","province":"تهران","city":"تهران","addressLine":"خیابان آزمایش، پلاک ۱۰، واحد ۲","postalCode":"1234567890"}'
 # Make suites order-independent: stop any leftover server and wait until its ports are free.
 pkill -f "[t]sx server.ts" 2>/dev/null; sleep 1
 for i in $(seq 1 20); do
@@ -31,13 +32,13 @@ S0=$(stock)
 
 # 1. quantity validation
 for Q in -5 0 1.5 21 '"abc"'; do
-  C=$(post "{\"cartItems\":[{\"type\":\"PHYSICAL_PRODUCT\",\"productId\":\"$PID\",\"quantity\":$Q}]}" | js "j.success")
+  C=$(post "{\"shippingInfo\":$SHIP,\"cartItems\":[{\"type\":\"PHYSICAL_PRODUCT\",\"productId\":\"$PID\",\"quantity\":$Q}]}" | js "j.success")
   [ "$C" = "false" ]; check "quantity $Q rejected" $?
 done
 [ "$(stock)" = "$S0" ]; check "stock unchanged after rejected quantities" $?
 
 # 2. all-or-nothing: valid line + unknown product => 400, no partial decrement
-R=$(post "{\"cartItems\":[{\"type\":\"PHYSICAL_PRODUCT\",\"productId\":\"$PID\",\"quantity\":1},{\"type\":\"PHYSICAL_PRODUCT\",\"productId\":\"does-not-exist\",\"quantity\":1}]}" | js "j.success")
+R=$(post "{\"shippingInfo\":$SHIP,\"cartItems\":[{\"type\":\"PHYSICAL_PRODUCT\",\"productId\":\"$PID\",\"quantity\":1},{\"type\":\"PHYSICAL_PRODUCT\",\"productId\":\"does-not-exist\",\"quantity\":1}]}" | js "j.success")
 [ "$R" = "false" ]; check "mixed valid+invalid order rejected" $?
 [ "$(stock)" = "$S0" ]; check "no partial stock decrement on rejected order" $?
 
@@ -48,16 +49,16 @@ R=$(post "$LINES" | js "j.success")
 [ "$(stock)" = "$S0" ]; check "stock unchanged after over-demand order rejected" $?
 
 # 4. course line priced by the server, quantity forced to 1
-R=$(post "{\"cartItems\":[{\"type\":\"ONLINE_COURSE\",\"courseId\":\"$CID\",\"quantity\":1,\"priceToman\":1}]}")
+R=$(post "{\"shippingInfo\":$SHIP,\"cartItems\":[{\"type\":\"ONLINE_COURSE\",\"courseId\":\"$CID\",\"quantity\":1,\"priceToman\":1}]}")
 echo "$R" | js "j.order.items[0].priceToman" | grep -q "^$CPRICE$"; check "course priced from server (ignores client price)" $?
 echo "$R" | js "j.order.status" | grep -q PENDING_PAYMENT; check "course order is PENDING_PAYMENT" $?
-R=$(post "{\"cartItems\":[{\"type\":\"ONLINE_COURSE\",\"courseId\":\"$CID\",\"quantity\":2}]}" | js "j.success")
+R=$(post "{\"shippingInfo\":$SHIP,\"cartItems\":[{\"type\":\"ONLINE_COURSE\",\"courseId\":\"$CID\",\"quantity\":2}]}" | js "j.success")
 [ "$R" = "false" ]; check "course quantity >1 rejected" $?
-R=$(post "{\"cartItems\":[{\"type\":\"ONLINE_COURSE\",\"courseId\":\"nope\",\"quantity\":1}]}" | js "j.success")
+R=$(post "{\"shippingInfo\":$SHIP,\"cartItems\":[{\"type\":\"ONLINE_COURSE\",\"courseId\":\"nope\",\"quantity\":1}]}" | js "j.success")
 [ "$R" = "false" ]; check "unknown course rejected" $?
 
 # 5. stock reserved on create, restored on admin cancel, released only once
-O=$(post "{\"cartItems\":[{\"type\":\"PHYSICAL_PRODUCT\",\"productId\":\"$PID\",\"quantity\":2}]}")
+O=$(post "{\"shippingInfo\":$SHIP,\"cartItems\":[{\"type\":\"PHYSICAL_PRODUCT\",\"productId\":\"$PID\",\"quantity\":2}]}")
 OID=$(echo "$O" | js "j.order.id")
 [ "$(stock)" = "$((S0-2))" ]; check "stock reserved (-2) at order creation" $?
 curl -s -m 5 -b $AJAR -X PUT $BASE/orders/$OID/status -H 'Content-Type: application/json' -d '{"status":"CANCELLED"}' | js "j.success" | grep -q true; check "admin can cancel pending order" $?

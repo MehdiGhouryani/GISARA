@@ -2,6 +2,7 @@
 # Admin CRUD + coupon financial integrity + course-delete protection.
 #   rm -f server/data/db.json && bash scripts/smoke-test-crud.sh
 cd "$(dirname "$0")/.."
+SHIP='{"recipientName":"گیرنده آزمایشی","recipientMobile":"09121234567","province":"تهران","city":"تهران","addressLine":"خیابان آزمایش، پلاک ۱۰، واحد ۲","postalCode":"1234567890"}'
 pkill -f "[t]sx server.ts" 2>/dev/null
 for i in $(seq 1 20); do curl -s -m 1 http://localhost:3000/api/health >/dev/null 2>&1 || break; sleep 0.5; done
 BASE=http://localhost:3000/api
@@ -44,7 +45,7 @@ CID=$(echo "$CU" | js "j.data.id")
 [ "$(code -b $AJ -X POST $BASE/coupons -H 'Content-Type: application/json' -d '{"code":"BIGORDER10","discountPercent":10}')" = "409" ]; check "duplicate coupon code rejected" $?
 
 PID2=$(curl -s -m 5 $BASE/products | js "j.data[0].id")
-mkorder() { curl -s -m 5 -b $UJ -X POST $BASE/orders -H 'Content-Type: application/json' -d "{\"cartItems\":[{\"type\":\"PHYSICAL_PRODUCT\",\"productId\":\"$PID2\",\"quantity\":1}],\"couponCode\":\"$1\"}"; }
+mkorder() { curl -s -m 5 -b $UJ -X POST $BASE/orders -H 'Content-Type: application/json' -d "{\"shippingInfo\":$SHIP,\"cartItems\":[{\"type\":\"PHYSICAL_PRODUCT\",\"productId\":\"$PID2\",\"quantity\":1}],\"couponCode\":\"$1\"}"; }
 
 R1=$(mkorder BIGORDER10)
 echo "$R1" | js "j.success" | grep -q false; check "coupon below minOrderToman rejected at checkout" $?
@@ -76,7 +77,7 @@ curl -s -m 5 $BASE/courses | js "j.data.find(c=>c.id==='$COID')?'ok':'bad'" | gr
 [ "$(code $BASE/courses/$COID/lessons/l2)" = "401" ]; check "created course's paid lesson is gated" $?
 curl -s -m 5 -b $AJ -X PUT $BASE/courses/$COID -H 'Content-Type: application/json' -d '{"priceToman":20000}' | js "j.data.priceToman" | grep -q "^20000$"; check "course price editable via PUT" $?
 
-CO=$(curl -s -m 5 -b $UJ -X POST $BASE/orders -H 'Content-Type: application/json' -d "{\"cartItems\":[{\"type\":\"ONLINE_COURSE\",\"courseId\":\"$COID\",\"quantity\":1}]}")
+CO=$(curl -s -m 5 -b $UJ -X POST $BASE/orders -H 'Content-Type: application/json' -d "{\"shippingInfo\":$SHIP,\"cartItems\":[{\"type\":\"ONLINE_COURSE\",\"courseId\":\"$COID\",\"quantity\":1}]}")
 COOID=$(echo "$CO" | js "j.order.id")
 A=$(curl -s -m 5 -b $UJ -X POST $BASE/payments/request -H 'Content-Type: application/json' -d "{\"orderId\":\"$COOID\"}" | js "j.authority")
 curl -s -m 5 "$BASE/payments/verify?Authority=$A&Status=OK&orderId=$COOID" -o /dev/null

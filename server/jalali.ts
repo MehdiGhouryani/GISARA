@@ -40,14 +40,52 @@ export function getTodayJalaliString(): string {
   return `${jy}/${String(jm).padStart(2, '0')}/${String(jd).padStart(2, '0')}`;
 }
 
+import { toLatinDigits } from '../src/shared/digits';
+
+const JALALI_MONTHS = ['فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور', 'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'];
+
 /**
- * Checks if a coupon is expired compared to the current Jalali date
- * @param expiresAtJalali Date in format YYYY/MM/DD
- * @returns true if expired
+ * Parses a Jalali date written either as "YYYY/MM/DD" (any digit script) or in the legacy
+ * human form "۳۰ اسفند ۱۴۰۵". Returns [year, month, day] or null when unrecognised.
+ */
+export function parseJalaliDate(input?: string): [number, number, number] | null {
+  if (!input) return null;
+  const t = toLatinDigits(input).replace(/[\u200c\u200f\u200e]/g, ' ').trim();
+
+  const iso = t.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
+  if (iso) return validJalali(Number(iso[1]), Number(iso[2]), Number(iso[3]));
+
+  const words = t.match(/^(\d{1,2})\s+(\S+)\s+(\d{4})$/);
+  if (words) {
+    const month = JALALI_MONTHS.indexOf(words[2].replace(/ي/g, 'ی').replace(/ك/g, 'ک')) + 1;
+    if (month > 0) return validJalali(Number(words[3]), month, Number(words[1]));
+  }
+  return null;
+}
+
+function validJalali(y: number, m: number, d: number): [number, number, number] | null {
+  if (m < 1 || m > 12 || d < 1 || d > 31 || y < 1300 || y > 1600) return null;
+  if (m > 6 && d > 30) return null;
+  return [y, m, d];
+}
+
+function cmp(a: [number, number, number], b: [number, number, number]): number {
+  return a[0] - b[0] || a[1] - b[1] || a[2] - b[2];
+}
+
+/**
+ * True when the coupon's last valid day is before today (Jalali). The expiry day itself is still valid.
+ * No date = never expires. An unreadable date FAILS CLOSED (treated as expired) so a typo can never
+ * silently give a permanent discount — which is exactly what the old string comparison did.
  */
 export function isJalaliExpired(expiresAtJalali?: string): boolean {
-  if (!expiresAtJalali) return false;
-  const today = getTodayJalaliString();
-  // Lexicographical string comparison works perfectly for fixed-format YYYY/MM/DD strings
-  return today > expiresAtJalali;
+  if (!expiresAtJalali || !String(expiresAtJalali).trim()) return false;
+  const expiry = parseJalaliDate(expiresAtJalali);
+  if (!expiry) {
+    console.warn(`[Jalali] Unreadable coupon expiry "${expiresAtJalali}" - treating as expired.`);
+    return true;
+  }
+  const today = parseJalaliDate(getTodayJalaliString());
+  if (!today) return false;
+  return cmp(today, expiry) > 0;
 }

@@ -300,6 +300,8 @@ export interface UserOrder {
   orderNumber: string;
   items: CartItem[];
   subtotalToman: number;
+  discountToman?: number;
+  couponApplied?: string;
   shippingToman: number;
   payableToman: number;
   status: OrderStatus;

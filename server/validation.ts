@@ -1,5 +1,7 @@
 import { z } from 'zod';
 import { sanitizeInput } from './security';
+import { normalizeMobile, normalizePostalCode, toLatinDigits } from '../src/shared/digits';
+import { parseJalaliDate } from './jalali';
 
 /** Wraps sanitizeInput so a schema field is both typed AND XSS-sanitized in one step. */
 const text = (min = 0, max = 500) => z.string().trim().min(min).max(max).transform(sanitizeInput);
@@ -11,6 +13,29 @@ const httpsOrInternalUrl = z.string().trim().refine(
   (v) => /^https:\/\//.test(v) || v.startsWith('/uploads/'),
   { message: 'آدرس باید https باشد یا مسیر داخلی /uploads/ باشد.' }
 );
+
+
+/** Required, trimmed, sanitized text with Persian error messages (zod defaults are English). */
+const fieldText = (label: string, min: number, max: number) =>
+  z.string({ required_error: `${label} الزامی است.`, invalid_type_error: `${label} نامعتبر است.` })
+    .trim()
+    .min(min, { message: `${label} را کامل وارد کنید.` })
+    .max(max, { message: `${label} بیش از حد طولانی است.` })
+    .transform(sanitizeInput);
+
+/** Delivery details for orders that contain physical goods. Digits are normalised (Persian -> Latin). */
+export const shippingInfoSchema = z.object({
+  recipientName: fieldText('نام و نام خانوادگی گیرنده', 2, 100),
+  recipientMobile: z.string({ required_error: 'شماره موبایل گیرنده الزامی است.', invalid_type_error: 'شماره موبایل گیرنده نامعتبر است.' })
+    .transform(normalizeMobile)
+    .refine((v) => v !== '', { message: 'شماره موبایل گیرنده معتبر نیست (مثال: ۰۹۱۲۱۲۳۴۵۶۷).' }),
+  province: fieldText('استان', 2, 50),
+  city: fieldText('شهر', 2, 50),
+  addressLine: fieldText('نشانی کامل پستی', 10, 300),
+  postalCode: z.string({ required_error: 'کد پستی الزامی است.', invalid_type_error: 'کد پستی نامعتبر است.' })
+    .transform(normalizePostalCode)
+    .refine((v) => v !== '', { message: 'کد پستی باید ۱۰ رقم باشد.' })
+});
 
 export const productCreateSchema = z.object({
   name: text(1, 200),
@@ -83,7 +108,7 @@ export const couponCreateSchema = z.object({
   description: optionalText(300),
   usageLimit: z.number().int().min(1).max(1_000_000).optional(),
   isActive: z.boolean().optional(),
-  expiresAtJalali: z.string().trim().regex(/^\d{4}\/\d{2}\/\d{2}$/, 'تاریخ انقضا باید به فرمت دقیق ۱۴۰۵/۱۲/۲۹ باشد.').optional()
+  expiresAtJalali: z.string().trim().transform(toLatinDigits).refine((v) => /^\d{4}\/\d{2}\/\d{2}$/.test(v) && parseJalaliDate(v) !== null, { message: 'تاریخ انقضا باید به فرمت دقیق ۱۴۰۵/۱۲/۲۹ و معتبر باشد.' }).optional()
 });
 export const couponUpdateSchema = couponCreateSchema.partial();
 

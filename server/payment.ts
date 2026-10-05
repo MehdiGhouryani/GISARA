@@ -3,6 +3,8 @@ import { db } from './db';
 // Simulated payments approve ANY authority, so they must be impossible in production:
 // an unconfigured gateway must fail closed, never "succeed" without real money moving.
 const isProduction = () => process.env.NODE_ENV === 'production';
+// Every outbound gateway call is bounded: a hung bank API must never hang a customer's checkout.
+const GATEWAY_TIMEOUT_MS = 6000;
 const GATEWAY_NOT_CONFIGURED = 'درگاه پرداخت پیکربندی نشده است. لطفاً با پشتیبانی تماس بگیرید.';
 
 interface PaymentRequestOptions {
@@ -50,8 +52,9 @@ export async function requestPaymentGateway(opts: PaymentRequestOptions): Promis
 
     const payload = {
       merchant_id: merchantId,
+      // Amount is sent in RIAL and `currency` is deliberately omitted (Zarinpal's default unit is
+      // Rial). Sending currency:'IRT' together with a x10 amount made the gateway charge 10x.
       amount: amountRial,
-      currency: 'IRT', // IRT = Toman in Zarinpal v4
       description: opts.description,
       callback_url: opts.callbackUrl,
       metadata: {
@@ -63,7 +66,8 @@ export async function requestPaymentGateway(opts: PaymentRequestOptions): Promis
     const res = await fetch(requestEndpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(GATEWAY_TIMEOUT_MS)
     });
 
     const data: any = await res.json();
@@ -93,7 +97,7 @@ export async function requestPaymentGateway(opts: PaymentRequestOptions): Promis
     return {
       success: false,
       url: '',
-      message: `خطای فنی در اتصال به درگاه: ${err.message}`
+      message: err?.name === 'TimeoutError' ? 'پاسخ درگاه پرداخت دیر رسید. لطفاً دوباره تلاش کنید.' : 'خطای فنی در اتصال به درگاه پرداخت. لطفاً دوباره تلاش کنید.'
     };
   }
 }
@@ -101,7 +105,7 @@ export async function requestPaymentGateway(opts: PaymentRequestOptions): Promis
 /**
  * Verify payment authority with ZarinPal API
  */
-export async function verifyPaymentGateway(authority: string, amountToman: number): Promise<{ success: boolean; refId?: string; message?: string }> {
+export async function verifyPaymentGateway(authority: string, amountToman: number): Promise<{ success: boolean; refId?: string; message?: string; retryable?: boolean }> {
   const settings = db.settings?.payment || { provider: 'zarinpal', merchantId: '', sandbox: true };
   const rawMerchantId = (settings.merchantId || process.env.ZARINPAL_MERCHANT_ID || '').trim();
   const merchantId = rawMerchantId.startsWith('your-') ? '' : rawMerchantId;
@@ -126,16 +130,21 @@ export async function verifyPaymentGateway(authority: string, amountToman: numbe
 
     const payload = {
       merchant_id: merchantId,
-      amount: amountToman * 10,
+      amount: amountToman * 10, // Rial, same unit as the payment request
       authority
     };
 
     const res = await fetch(verifyEndpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(GATEWAY_TIMEOUT_MS)
     });
 
+    // A 5xx / unreadable reply says nothing about whether the customer paid: let the caller retry.
+    if (res.status >= 500) {
+      return { success: false, retryable: true, message: 'سرویس تأیید پرداخت موقتاً در دسترس نیست.' };
+    }
     const data: any = await res.json();
 
     if (data?.data?.code === 100 || data?.data?.code === 101) {
@@ -151,9 +160,11 @@ export async function verifyPaymentGateway(authority: string, amountToman: numbe
       };
     }
   } catch (err: any) {
+    // Timeout / network failure: the payment may have succeeded at the bank — never treat as declined.
     return {
       success: false,
-      message: `خطا در استعلام درگاه پرداخت: ${err.message}`
+      retryable: true,
+      message: 'ارتباط با درگاه برای تأیید پرداخت برقرار نشد.'
     };
   }
 }
