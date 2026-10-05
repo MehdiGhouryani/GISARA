@@ -6,3 +6,8 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# runtime database (regenerated from seed data on first boot)
+server/data/*.json
+server/data/*.tmp
+server/data/backups/
