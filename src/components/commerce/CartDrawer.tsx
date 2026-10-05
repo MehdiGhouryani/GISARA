@@ -6,10 +6,14 @@
  * Strictly server-authoritative totals and no fake assumptions
  */
 
-import React, { useState } from 'react';
-import { X, Trash2, Plus, Minus, ArrowLeft, ShoppingBag, ShieldCheck, Tag, Check } from 'lucide-react';
+import React, { useRef } from 'react';
+import { X, Trash2, Plus, Minus, ArrowLeft, ShoppingBag, Tag, Truck } from 'lucide-react';
 import { CartItem, Coupon } from '../../types/domain';
 import { EditorialImage } from '../common/EditorialImage';
+import { useCartTotals } from '../../hooks/useCartTotals';
+import { useDialogA11y } from '../../hooks/useDialogA11y';
+
+const MAX_LINE_QTY = 20;
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -18,9 +22,8 @@ interface CartDrawerProps {
   onUpdateQuantity: (id: string, delta: number) => void;
   onRemoveItem: (id: string) => void;
   onCheckout: () => void;
-  coupons?: Coupon[];
+  /** A coupon is ENTERED only on the checkout page; the drawer just shows (and lets you drop) an applied one. */
   appliedCoupon?: Coupon | null;
-  onApplyCoupon?: (code: string) => Promise<{ success: boolean; message: string }>;
   onRemoveCoupon?: () => void;
 }
 
@@ -31,80 +34,51 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   onUpdateQuantity,
   onRemoveItem,
   onCheckout,
-  coupons = [],
   appliedCoupon = null,
-  onApplyCoupon,
   onRemoveCoupon,
 }) => {
-  const [couponInput, setCouponInput] = useState('');
-  const [couponError, setCouponError] = useState<string | null>(null);
-
-  React.useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onClose]);
+  const panelRef = useRef<HTMLDivElement>(null);
+  useDialogA11y(isOpen, onClose, panelRef);
+  const totals = useCartTotals(items, appliedCoupon);
 
   if (!isOpen) return null;
 
   const physicalItems = items.filter((i) => i.type === 'PHYSICAL_PRODUCT');
   const digitalItems = items.filter((i) => i.type === 'ONLINE_COURSE');
-
-  const subtotal = items.reduce((acc, item) => acc + item.priceToman * item.quantity, 0);
-  const shipping = physicalItems.length > 0 ? 45000 : 0;
-
-  const discountAmount = appliedCoupon
-    ? Math.min(
-        Math.round((subtotal * appliedCoupon.discountPercent) / 100),
-        appliedCoupon.maxDiscountToman || Infinity
-      )
-    : 0;
-
-  const total = Math.max(0, subtotal - discountAmount + shipping);
-
-  const handleApplyCouponSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!couponInput.trim() || !onApplyCoupon) return;
-    setCouponError(null);
-    const res = await onApplyCoupon(couponInput.trim());
-    if (!res.success) {
-      setCouponError(res.message);
-    } else {
-      setCouponError(null);
-      setCouponInput('');
-    }
-  };
+  const itemCount = items.reduce((n, i) => n + i.quantity, 0);
 
   return (
     <div className="fixed inset-0 z-50 overflow-hidden">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/40 backdrop-blur-xs transition-opacity"
+        className="fixed inset-0 bg-black/40 backdrop-blur-xs gisara-fade-in"
         onClick={onClose}
+        aria-hidden="true"
       />
 
       <div
-        className="fixed inset-y-0 left-0 max-w-[420px] w-full bg-[#FFFCF8] shadow-2xl flex flex-col justify-between overflow-hidden z-10 border-r border-[#EAE2D5]"
+        ref={panelRef}
+        tabIndex={-1}
+        className="gisara-drawer-in fixed inset-y-0 end-0 max-w-[420px] w-full bg-[#FFFCF8] shadow-2xl flex flex-col justify-between overflow-hidden z-10 border-s border-[#EAE2D5] focus:outline-none"
         role="dialog"
         aria-modal="true"
-        aria-label="سبد خرید"
+        aria-labelledby="cart-drawer-title"
       >
         {/* Header */}
         <div className="p-4 sm:p-5 border-b border-[#EAE2D5] flex items-center justify-between">
           <div className="flex items-center gap-2">
             <ShoppingBag className="w-5 h-5 text-[#87553B]" />
-            <h2 className="text-base font-bold text-[#171614]">سبد خرید شما</h2>
-            <span className="text-xs text-[#59524A] tabular-nums">({items.length} قلم کالا)</span>
+            <h2 id="cart-drawer-title" className="text-base font-bold text-[#171614]">سبد خرید شما</h2>
+            {itemCount > 0 && <span className="text-xs text-[#59524A] tabular-nums">({itemCount.toLocaleString('fa-IR')} عدد)</span>}
           </div>
 
           <button
+            type="button"
             onClick={onClose}
-            className="p-1 text-[#59524A] hover:text-[#171614] rounded-lg transition-colors cursor-pointer"
+            className="w-11 h-11 -m-2 flex items-center justify-center text-[#59524A] hover:text-[#171614] rounded-lg transition-colors cursor-pointer"
             aria-label="بستن سبد خرید"
           >
-            <X className="w-5 h-5" />
+            <X className="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
 
@@ -142,42 +116,40 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                           <h4 className="text-xs font-bold text-[#171614] truncate leading-snug">
                             {item.title}
                           </h4>
-                          <div className="mt-1 text-xs font-semibold text-[#87553B] tabular-nums">
-                            {item.priceToman.toLocaleString('fa-IR')} تومان
-                          </div>
+                          {item.quantity > 1 && (
+                            <div className="mt-0.5 text-[11px] text-[#59524A] tabular-nums">
+                              قیمت واحد: {item.priceToman.toLocaleString('fa-IR')} تومان
+                            </div>
+                          )}
 
-                          <div className="mt-2 flex items-center justify-between">
+                          <div className="mt-2 flex items-center justify-between gap-2">
                             {/* Quantity controls */}
-                            <div className="flex items-center border border-[#EAE2D5] rounded-md bg-white">
+                            <div className="flex items-center border border-[#EAE2D5] rounded-lg bg-white" role="group" aria-label={`تعداد ${item.title}`}>
                               <button
                                 type="button"
                                 onClick={() => onUpdateQuantity(item.id, 1)}
-                                className="p-1 hover:bg-[#F4EFE7] text-[#171614] rounded-r-md cursor-pointer"
-                                aria-label="افزایش تعداد"
+                                disabled={item.quantity >= MAX_LINE_QTY}
+                                className="w-10 h-10 flex items-center justify-center hover:bg-[#F4EFE7] disabled:opacity-40 disabled:cursor-not-allowed text-[#171614] rounded-e-lg cursor-pointer"
+                                aria-label={`افزایش تعداد ${item.title}`}
                               >
-                                <Plus className="w-3.5 h-3.5" />
+                                <Plus className="w-4 h-4" aria-hidden="true" />
                               </button>
-                              <span className="px-2.5 text-xs font-bold tabular-nums">
-                                {item.quantity}
+                              <span className="min-w-8 text-center text-sm font-bold tabular-nums" aria-live="polite">
+                                {item.quantity.toLocaleString('fa-IR')}
                               </span>
                               <button
                                 type="button"
                                 onClick={() => onUpdateQuantity(item.id, -1)}
-                                className="p-1 hover:bg-[#F4EFE7] text-[#171614] rounded-l-md cursor-pointer"
-                                aria-label="کاهش تعداد"
+                                className="w-10 h-10 flex items-center justify-center hover:bg-[#F4EFE7] text-[#171614] rounded-s-lg cursor-pointer"
+                                aria-label={item.quantity === 1 ? `حذف ${item.title} از سبد` : `کاهش تعداد ${item.title}`}
                               >
-                                <Minus className="w-3.5 h-3.5" />
+                                {item.quantity === 1 ? <Trash2 className="w-4 h-4 text-[#C54636]" aria-hidden="true" /> : <Minus className="w-4 h-4" aria-hidden="true" />}
                               </button>
                             </div>
 
-                            <button
-                              type="button"
-                              onClick={() => onRemoveItem(item.id)}
-                              className="text-stone-400 hover:text-[#C54636] p-1 transition-colors cursor-pointer"
-                              aria-label="حذف از سبد"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
+                            <span className="text-xs font-bold text-[#171614] tabular-nums">
+                              {(item.priceToman * item.quantity).toLocaleString('fa-IR')} تومان
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -209,18 +181,18 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                           <div className="mt-1 text-xs font-semibold text-[#87553B] tabular-nums">
                             {item.priceToman.toLocaleString('fa-IR')} تومان
                           </div>
-                          <span className="text-[10px] text-amber-800 font-medium block mt-0.5">
-                            دسترسی دائمی به پنل یادگیری
+                          <span className="text-xs text-amber-900 font-medium block mt-0.5">
+                            فعال‌سازی پس از تأیید پرداخت
                           </span>
                         </div>
 
                         <button
                           type="button"
                           onClick={() => onRemoveItem(item.id)}
-                          className="text-stone-400 hover:text-[#C54636] p-1 transition-colors cursor-pointer"
-                          aria-label="حذف دوره"
+                          className="w-11 h-11 flex items-center justify-center text-stone-500 hover:text-[#C54636] transition-colors cursor-pointer"
+                          aria-label={`حذف ${item.title} از سبد`}
                         >
-                          <Trash2 className="w-3.5 h-3.5" />
+                          <Trash2 className="w-4 h-4" aria-hidden="true" />
                         </button>
                       </div>
                     ))}
@@ -234,103 +206,63 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
         {/* Footer summary */}
         {items.length > 0 && (
           <div className="p-4 sm:p-5 border-t border-[#EAE2D5] bg-[#FFFCF8]">
-            {/* Coupon Code Entry */}
-            <div className="mb-4 pb-3 border-b border-[#EAE2D5]/70">
-              {appliedCoupon ? (
-                <div className="flex items-center justify-between p-2.5 bg-[#167C55]/10 border border-[#167C55]/30 rounded-xl text-xs">
-                  <div className="flex items-center gap-1.5 text-[#167C55] font-bold">
-                    <Tag className="w-3.5 h-3.5" />
-                    <span>کد {appliedCoupon.code} فعال است ({appliedCoupon.discountPercent}٪ تخفیف)</span>
-                  </div>
-                  {onRemoveCoupon && (
-                    <button
-                      type="button"
-                      onClick={onRemoveCoupon}
-                      className="text-xs text-rose-600 hover:text-rose-800 font-semibold cursor-pointer underline mr-2"
-                    >
-                      حذف کد
-                    </button>
-                  )}
+            {appliedCoupon && (
+              <div className="mb-3 flex items-center justify-between gap-2 p-2.5 bg-[#167C55]/10 border border-[#167C55]/30 rounded-xl text-xs">
+                <div className="flex items-center gap-1.5 text-[#167C55] font-bold">
+                  <Tag className="w-3.5 h-3.5" aria-hidden="true" />
+                  <span>کد {appliedCoupon.code} فعال است</span>
                 </div>
-              ) : (
-                <form onSubmit={handleApplyCouponSubmit} className="space-y-1.5">
-                  <div className="flex gap-2">
-                    <div className="relative flex-1">
-                      <Tag className="w-3.5 h-3.5 text-[#968A7C] absolute right-3 top-2.5 pointer-events-none" />
-                      <input
-                        type="text"
-                        value={couponInput}
-                        onChange={(e) => {
-                          setCouponInput(e.target.value.toUpperCase());
-                          setCouponError(null);
-                        }}
-                        placeholder="کد تخفیف (مثلاً SHANYOON20)"
-                        className="w-full pr-8 pl-2 py-2 bg-white border border-[#EAE2D5] rounded-xl text-xs font-mono uppercase focus:outline-none focus:border-[#87553B]"
-                        dir="ltr"
-                      />
-                    </div>
-                    <button
-                      type="submit"
-                      disabled={!couponInput.trim()}
-                      className="px-3 py-2 bg-[#87553B] hover:bg-[#523120] disabled:bg-stone-300 text-white text-xs font-bold rounded-xl transition-colors cursor-pointer"
-                    >
-                      اعمال
-                    </button>
-                  </div>
-                  {couponError && (
-                    <p className="text-[11px] text-rose-600 font-medium">{couponError}</p>
-                  )}
-                </form>
-              )}
-            </div>
+                {onRemoveCoupon && (
+                  <button type="button" onClick={onRemoveCoupon} className="min-h-9 px-2 text-xs text-rose-700 hover:text-rose-900 font-semibold cursor-pointer underline">
+                    حذف کد
+                  </button>
+                )}
+              </div>
+            )}
 
-            <div className="space-y-2 text-xs text-[#59524A] mb-4">
+            <dl className="space-y-2 text-xs text-[#59524A] mb-4">
               <div className="flex justify-between">
-                <span>مجموع اقلام:</span>
-                <span className="font-semibold text-[#171614] tabular-nums">
-                  {subtotal.toLocaleString('fa-IR')} تومان
-                </span>
+                <dt>مجموع اقلام</dt>
+                <dd className="font-semibold text-[#171614] tabular-nums">{totals.subtotalToman.toLocaleString('fa-IR')} تومان</dd>
               </div>
 
-              {discountAmount > 0 && (
+              {totals.discountToman > 0 && (
                 <div className="flex justify-between text-[#167C55] font-bold">
-                  <span>تخفیف کوپن ({appliedCoupon?.code}):</span>
-                  <span className="tabular-nums">
-                    - {discountAmount.toLocaleString('fa-IR')} تومان
-                  </span>
+                  <dt>تخفیف ({appliedCoupon?.code})</dt>
+                  <dd className="tabular-nums"><bdi>‎−{totals.discountToman.toLocaleString('fa-IR')}</bdi> تومان</dd>
                 </div>
               )}
 
-              {physicalItems.length > 0 && (
+              {totals.hasPhysical && (
                 <div className="flex justify-between">
-                  <span>هزینه بسته‌بندی و ارسال:</span>
-                  <span className="font-semibold text-[#171614] tabular-nums">
-                    {shipping.toLocaleString('fa-IR')} تومان
-                  </span>
+                  <dt>هزینه ارسال</dt>
+                  <dd className="font-semibold text-[#171614] tabular-nums">
+                    {totals.shippingToman === 0 ? <span className="text-[#167C55]">رایگان</span> : `${totals.shippingToman.toLocaleString('fa-IR')} تومان`}
+                  </dd>
                 </div>
+              )}
+
+              {totals.remainingForFreeShippingToman > 0 && (
+                <p className="flex items-center gap-1.5 text-xs text-[#87553B] bg-[#87553B]/10 rounded-lg px-2.5 py-1.5">
+                  <Truck className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                  <span>با {totals.remainingForFreeShippingToman.toLocaleString('fa-IR')} تومان خرید کالای بیشتر، ارسال رایگان می‌شود.</span>
+                </p>
               )}
 
               <div className="pt-2 border-t border-[#EAE2D5] flex justify-between text-sm font-bold text-[#171614]">
-                <span>مبلغ قابل پرداخت:</span>
-                <span className="text-base text-[#87553B] tabular-nums">
-                  {total.toLocaleString('fa-IR')} تومان
-                </span>
+                <dt>مبلغ قابل پرداخت</dt>
+                <dd className="text-base text-[#87553B] tabular-nums">{totals.payableToman.toLocaleString('fa-IR')} تومان</dd>
               </div>
-            </div>
+            </dl>
 
             <button
               type="button"
               onClick={onCheckout}
-              className="w-full py-3 px-4 bg-[#171614] hover:bg-[#87553B] text-white font-bold text-xs sm:text-sm rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md active:scale-98"
+              className="w-full min-h-12 py-3 px-4 bg-[#171614] hover:bg-[#87553B] text-white font-bold text-sm rounded-xl flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-md"
             >
-              <span>تکمیل خرید و ثبت سفارش</span>
-              <ArrowLeft className="w-4 h-4" />
+              <span>ادامه و تکمیل سفارش</span>
+              <ArrowLeft className="w-4 h-4" aria-hidden="true" />
             </button>
-
-            <div className="mt-3 flex items-center justify-center gap-1.5 text-[11px] text-[#59524A]">
-              <ShieldCheck className="w-3.5 h-3.5 text-[#167C55]" />
-              <span>پرداخت امن و تضمین اصالت ابزارها</span>
-            </div>
           </div>
         )}
       </div>

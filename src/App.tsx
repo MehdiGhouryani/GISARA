@@ -117,7 +117,8 @@ const FaqPage = React.lazy(() =>
 const AboutContactFaqPage = React.lazy(() =>
   import('./pages/AboutContactFaqPage').then((m) => ({ default: m.AboutContactFaqPage }))
 );
-const SimulatedGatewayPage = React.lazy(() =>
+// The bank simulator exists ONLY in development builds; production bundles contain no trace of it.
+const SimulatedGatewayPage = !import.meta.env.DEV ? null : React.lazy(() =>
   import('./pages/SimulatedGatewayPage').then((m) => ({ default: m.SimulatedGatewayPage }))
 );
 const AdminDashboardPage = React.lazy(() =>
@@ -125,7 +126,9 @@ const AdminDashboardPage = React.lazy(() =>
 );
 
 // Security & Resilient Storage Utilities
-import { safeGetJSON, safeSetJSON } from './utils/safeStorage';
+import { safeGetJSON, safeRemoveKeys, safeSetJSON } from './utils/safeStorage';
+import { normalizeCode } from './shared/digits';
+import type { PaymentResult } from './pages/AccountPage';
 import { isUserAdminAuthenticated, clearAdminAuthentication } from './utils/security';
 import { ApiClient } from './services/apiClient';
 import { OfflineQueueService } from './utils/offlineQueue';
@@ -153,6 +156,39 @@ const OrderTrackingModal = React.lazy(() =>
 const AdminAuthGuardModal = React.lazy(() =>
   import('./components/admin/AdminAuthGuardModal').then((m) => ({ default: m.AdminAuthGuardModal }))
 );
+
+/** Same per-line ceiling the server enforces (POST /orders). */
+const MAX_LINE_QTY = 20;
+
+/** Union of two carts (e.g. guest cart + saved server cart). Same item -> larger quantity, never summed twice. */
+function mergeCarts(a: CartItem[], b: CartItem[]): CartItem[] {
+  const keyOf = (i: CartItem) => (i.type === 'ONLINE_COURSE' ? `c:${i.courseId}` : `p:${i.productId}`);
+  const map = new Map<string, CartItem>();
+  for (const item of [...a, ...b]) {
+    const k = keyOf(item);
+    const prev = map.get(k);
+    map.set(k, prev ? { ...prev, quantity: item.type === 'ONLINE_COURSE' ? 1 : Math.min(MAX_LINE_QTY, Math.max(prev.quantity, item.quantity)) } : item);
+  }
+  return [...map.values()];
+}
+
+/** Keeps only well-formed cart lines from storage; drops anything tampered/outdated instead of crashing. */
+function sanitizeCart(raw: unknown): CartItem[] {
+  if (!Array.isArray(raw)) return [];
+  const out: CartItem[] = [];
+  for (const it of raw as any[]) {
+    if (!it || typeof it !== 'object') continue;
+    const isCourse = it.type === 'ONLINE_COURSE';
+    const isProduct = it.type === 'PHYSICAL_PRODUCT';
+    if (!isCourse && !isProduct) continue;
+    if (isCourse && typeof it.courseId !== 'string') continue;
+    if (isProduct && typeof it.productId !== 'string') continue;
+    const quantity = isCourse ? 1 : Math.min(20, Math.max(1, Math.trunc(Number(it.quantity) || 0)));
+    if (!quantity || typeof it.id !== 'string' || typeof it.title !== 'string' || !Number.isFinite(Number(it.priceToman))) continue;
+    out.push({ ...it, quantity, priceToman: Number(it.priceToman) });
+  }
+  return out;
+}
 
 const STORAGE_KEYS = {
   CART: 'shanyoon_cart_v1',
@@ -341,31 +377,19 @@ export default function App() {
 
   const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
 
-  const [cartItems, setCartItems] = useState<CartItem[]>(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.CART);
-    return saved ? JSON.parse(saved) : [
-      {
-        id: 'cart-1',
-        type: 'PHYSICAL_PRODUCT',
-        productId: 'prod-1',
-        title: 'اسپری تثبیت‌کننده قوی مو (شاین و مات) ۵۰۰ میل',
-        sku: 'SP-HLD-500',
-        priceToman: 420000,
-        quantity: 1,
-        image: '/assets/products/hairspray.jpg',
-      },
-    ];
-  });
+  // The cart starts EMPTY for a new visitor and survives corrupted/tampered storage (no white screen).
+  const [cartItems, setCartItems] = useState<CartItem[]>(() => sanitizeCart(safeGetJSON<unknown>(STORAGE_KEYS.CART, [])));
 
   const [userRequests, setUserRequests] = useState<WorkshopRequest[]>(() => {
     const saved = localStorage.getItem(STORAGE_KEYS.REQUESTS);
     return saved ? JSON.parse(saved) : mockInitialRequests;
   });
 
-  const [userOrders, setUserOrders] = useState<UserOrder[]>(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.ORDERS);
-    return saved ? JSON.parse(saved) : mockUserOrders;
-  });
+  const [paymentResult, setPaymentResult] = useState<PaymentResult | null>(null);
+
+  // Order history is owned by the server (it contains names, phones and addresses). It is held in memory
+  // only: never seeded with sample orders and never written to browser storage.
+  const [userOrders, setUserOrders] = useState<UserOrder[]>([]);
 
   // Course entitlement is owned by the server (derived from PAID orders). It is never
   // read from or written to browser storage - editing storage cannot grant access.
@@ -556,32 +580,48 @@ export default function App() {
       }
     }
 
-    // Resolve the server session first so loadData knows whether to fetch private data.
-    initSession().finally(() => { loadData(); });
+    // Gateway round trip: the server redirects to /account?tab=orders&paymentStatus=...&orderId=...
+    // Success is NEVER trusted from the URL alone - the order is re-read from the server and must be PAID.
+    async function settlePaymentReturn() {
+      const params = new URLSearchParams(window.location.search);
+      const status = params.get('paymentStatus');
+      if (!status) return;
+      const orderId = params.get('orderId') || undefined;
+      const refId = params.get('refId') || undefined;
+      const message = params.get('message') || undefined;
+      // Drop the one-shot parameters immediately so a refresh or a copied link never replays the result.
+      window.history.replaceState({}, document.title, `${window.location.pathname}?tab=orders`);
 
-    // Check URL parameters for Payment Gateway Redirect Callbacks
-    const urlParams = new URLSearchParams(window.location.search);
-    const paymentStatus = urlParams.get('paymentStatus');
-    const refId = urlParams.get('refId');
-    if (paymentStatus === 'success') {
-      addToast('success', 'پرداخت با موفقیت انجام شد', `کد پیگیری تراکنش بانکی: ${refId || 'تایید شده'}`);
-      // Course access / order history must only be granted from a server-
-      // confirmed order, never assumed client-side. Fetch the real order by
-      // id and sync local state from it (see handleCompleteOrder below).
-      const confirmedOrderId = urlParams.get('orderId');
-      if (confirmedOrderId) {
-        ApiClient.getOrders([]).then((serverOrders) => {
-          const confirmed = (serverOrders || []).find((o: any) => o.id === confirmedOrderId);
-          if (confirmed) {
-            handleCompleteOrder(confirmed);
-          }
-        }).catch(() => {});
+      if (status === 'success') {
+        let confirmed: UserOrder | undefined;
+        try {
+          const serverOrders = await ApiClient.getOrders([]);
+          if (serverOrders && serverOrders.length > 0) setUserOrders(serverOrders);
+          confirmed = (serverOrders || []).find((o: any) => o.id === orderId && (o.status === 'PAID' || o.status === 'COMPLETED'));
+        } catch { /* handled below as "not confirmed yet" */ }
+
+        if (confirmed) {
+          setPaymentResult({ status: 'success', orderId, refId: refId || confirmed.paymentRefId });
+          handleCompleteOrder(confirmed); // refreshes enrollments and empties the cart
+        } else {
+          setPaymentResult({ status: 'pending', orderId, message: 'پرداخت شما ثبت شد ولی هنوز در سامانه تأیید نشده است. چند دقیقه بعد همین صفحه را دوباره باز کنید؛ اگر مبلغ کسر شده بود تأیید نهایی خودکار انجام می‌شود.' });
+        }
+        return;
       }
-      window.history.replaceState({}, document.title, window.location.pathname);
-    } else if (paymentStatus === 'cancelled' || paymentStatus === 'failed') {
-      addToast('info', 'تراکنش ناموفق بود', 'عملیات پرداخت درگاه بانکی لغو گردید یا توسط بانک رد شد. سفارش شما ثبت شده و می‌توانید از بخش سفارش‌های من دوباره پرداخت را انجام دهید.');
-      window.history.replaceState({}, document.title, window.location.pathname);
+
+      if (status === 'failed' || status === 'cancelled' || status === 'pending') {
+        setPaymentResult({ status, orderId, message });
+        try {
+          const serverOrders = await ApiClient.getOrders([]);
+          if (serverOrders && serverOrders.length > 0) setUserOrders(serverOrders);
+        } catch { /* orders are refreshed by loadData as well */ }
+      }
     }
+
+    // Resolve the server session first so loadData knows whether to fetch private data, then settle a
+    // possible return from the payment gateway (it needs the session to read the order).
+    initSession()
+      .finally(() => { setAuthReady(true); loadData(); settlePaymentReturn(); });
   }, []);
 
   // Fetch Admin Data whenever Admin Mode is explicitly activated
@@ -642,16 +682,17 @@ export default function App() {
   // LocalStorage & Server Cart Sync Effect
   useEffect(() => {
     safeSetJSON(STORAGE_KEYS.CART, cartItems);
-    ApiClient.syncCart(cartItems).catch(() => {});
   }, [cartItems]);
+
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEYS.REQUESTS, JSON.stringify(userRequests));
   }, [userRequests]);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(userOrders));
-  }, [userOrders]);
+    // Older builds persisted every order (PII) in the browser; remove that leftover.
+    safeRemoveKeys([STORAGE_KEYS.ORDERS]);
+  }, []);
 
   useEffect(() => {
     // Legacy builds kept a client-side enrollment list; it is meaningless now, remove it.
@@ -928,45 +969,29 @@ export default function App() {
     addToast('success', 'سوال متداول به‌روزرسانی شد', updatedData.question);
   };
 
+  // The server is the only authority on whether a code is valid (active, not expired, capacity left):
+  // there is deliberately NO local fallback, otherwise an expired code could show a discount that the
+  // order would then reject at the very last step.
   const handleApplyCoupon = async (code: string): Promise<{ success: boolean; message: string }> => {
-    const clean = code.trim().toUpperCase();
+    const clean = normalizeCode(code);
+    if (!clean) return { success: false, message: 'کد تخفیف را وارد کنید.' };
 
     try {
       const liveCoupon = await ApiClient.validateCoupon(clean);
-      if (liveCoupon) {
-        const subtotal = cartItems.reduce((acc, item) => acc + item.priceToman * item.quantity, 0);
-        if (liveCoupon.minOrderToman && subtotal < liveCoupon.minOrderToman) {
-          return {
-            success: false,
-            message: `حداقل مبلغ خرید برای این کد ${liveCoupon.minOrderToman.toLocaleString('fa-IR')} تومان است.`,
-          };
-        }
-        setAppliedCoupon(liveCoupon);
-        addToast('success', 'کد تخفیف اعمال شد', `${liveCoupon.discountPercent}٪ تخفیف برای سفارش شما`);
-        return { success: true, message: `کد تخفیف ${liveCoupon.code} با ${liveCoupon.discountPercent}٪ تخفیف اعمال شد.` };
-      }
-    } catch (err: any) {
-      console.warn('Backend coupon validation failed, checking local coupons:', err.message);
-    }
+      if (!liveCoupon) return { success: false, message: 'کد تخفیف معتبر نیست.' };
 
-    // Fallback to local state
-    const found = coupons.find((c) => c.code.toUpperCase() === clean);
-    if (!found) {
-      return { success: false, message: 'کد تخفیف واردشده نامعتبر است یا وجود ندارد.' };
+      const subtotal = cartItems.reduce((acc, item) => acc + item.priceToman * item.quantity, 0);
+      if (liveCoupon.minOrderToman && subtotal < liveCoupon.minOrderToman) {
+        return {
+          success: false,
+          message: `حداقل مبلغ سفارش برای این کد ${liveCoupon.minOrderToman.toLocaleString('fa-IR')} تومان است.`,
+        };
+      }
+      setAppliedCoupon(liveCoupon);
+      return { success: true, message: `کد ${liveCoupon.code} با ${liveCoupon.discountPercent.toLocaleString('fa-IR')}٪ تخفیف اعمال شد.` };
+    } catch (err: any) {
+      return { success: false, message: err?.message || 'بررسی کد تخفیف ممکن نشد. دوباره تلاش کنید.' };
     }
-    if (!found.isActive) {
-      return { success: false, message: 'این کد تخفیف در حال حاضر غیرفعال شده است.' };
-    }
-    const subtotal = cartItems.reduce((acc, item) => acc + item.priceToman * item.quantity, 0);
-    if (found.minOrderToman && subtotal < found.minOrderToman) {
-      return {
-        success: false,
-        message: `حداقل مبلغ خرید برای این کد ${found.minOrderToman.toLocaleString('fa-IR')} تومان است.`,
-      };
-    }
-    setAppliedCoupon(found);
-    addToast('success', 'کد تخفیف اعمال شد', `${found.discountPercent}٪ تخفیف برای سفارش شما`);
-    return { success: true, message: `کد تخفیف ${found.code} با ${found.discountPercent}٪ تخفیف اعمال شد.` };
   };
 
   const handleRemoveCoupon = () => {
@@ -978,9 +1003,20 @@ export default function App() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isConsultationOpen, setIsConsultationOpen] = useState(false);
   const [isOrderTrackingOpen, setIsOrderTrackingOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(true);
-  const [userMobile, setUserMobile] = useState('09121234567');
-  const [userName, setUserName] = useState('مهسا کاظمی');
+  const [trackingOrderId, setTrackingOrderId] = useState('');
+  // Signed OUT until the server confirms a session; `authReady` flips once /auth/me has answered.
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [authReady, setAuthReady] = useState(false);
+  const [userMobile, setUserMobile] = useState('');
+  const [userName, setUserName] = useState('');
+
+  // Server-side cart copy exists only for signed-in users; debounced so rapid +/- clicks send one request.
+  useEffect(() => {
+    if (!authReady || !isLoggedIn) return;
+    const t = window.setTimeout(() => { ApiClient.syncCart(cartItems).catch(() => {}); }, 700);
+    return () => window.clearTimeout(t);
+  }, [cartItems, isLoggedIn, authReady]);
+
   const [userAvatar, setUserAvatar] = useState<string>(() => {
     return localStorage.getItem('shanyoon_user_avatar') || 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=150&q=80';
   });
@@ -1060,7 +1096,7 @@ export default function App() {
       const existing = prev.find((item) => item.productId === product.id);
       if (existing) {
         return prev.map((item) =>
-          item.productId === product.id ? { ...item, quantity: item.quantity + 1 } : item
+          item.productId === product.id ? { ...item, quantity: Math.min(MAX_LINE_QTY, item.quantity + 1) } : item
         );
       }
       return [
@@ -1086,7 +1122,7 @@ export default function App() {
       const existing = prev.find((item) => item.productId === product.id);
       if (existing) {
         return prev.map((item) =>
-          item.productId === product.id ? { ...item, quantity: item.quantity + quantity } : item
+          item.productId === product.id ? { ...item, quantity: Math.min(MAX_LINE_QTY, item.quantity + quantity) } : item
         );
       }
       return [
@@ -1098,7 +1134,7 @@ export default function App() {
           title: product.name,
           sku: product.sku,
           priceToman: product.priceToman,
-          quantity,
+          quantity: Math.min(MAX_LINE_QTY, quantity),
           image: product.image,
         },
       ];
@@ -1108,6 +1144,10 @@ export default function App() {
   };
 
   const handleEnrollCourse = (course: Course) => {
+    if (enrolledCourseIds.includes(course.id)) {
+      addToast('info', 'این دوره قبلاً برای شما فعال شده است', 'از بخش «دوره‌های من» در حساب کاربری ادامه دهید.');
+      return;
+    }
     setCartItems((prev) => {
       const existing = prev.find((item) => item.courseId === course.id);
       if (existing) return prev;
@@ -1133,7 +1173,7 @@ export default function App() {
       prev
         .map((item) => {
           if (item.id === id) {
-            const newQty = item.quantity + delta;
+            const newQty = Math.min(MAX_LINE_QTY, item.quantity + delta);
             return newQty > 0 ? { ...item, quantity: newQty } : null;
           }
           return item;
@@ -1369,20 +1409,31 @@ export default function App() {
     setIsLoggedIn(true);
     ApiClient.getEnrollments().then(setEnrolledCourseIds).catch(() => {});
 
+    // Merge the guest cart with the cart saved on the server for this account (union, never overwrite);
+    // the debounced sync effect then persists the merged result.
     try {
-      if (cartItems.length > 0) {
-        await ApiClient.syncCart(cartItems);
-      } else {
-        const serverCart = await ApiClient.getCart();
-        if (serverCart && serverCart.cart && serverCart.cart.length > 0) {
-          setCartItems(serverCart.cart);
-        }
-      }
+      const serverCart = await ApiClient.getCart();
+      const saved = sanitizeCart(serverCart?.cart);
+      if (saved.length > 0) setCartItems((local) => mergeCarts(local, saved));
     } catch {
-      // Resilient fallback
+      // The local cart is still valid on its own.
     }
 
     addToast('success', 'ورود موفقیت‌آمیز بود', `خوش آمدید ${userData.name}`);
+  };
+
+  // Re-open the bank session for an unpaid order ("پرداخت مجدد" in the account page).
+  const handleRetryOrderPayment = async (orderId: string): Promise<{ success: boolean; message?: string }> => {
+    try {
+      const pg = await ApiClient.requestOnlinePayment(orderId);
+      if (pg?.paymentUrl) {
+        window.location.href = pg.paymentUrl;
+        return { success: true };
+      }
+      return { success: false, message: pg?.message || 'اتصال به درگاه پرداخت برقرار نشد. دوباره تلاش کنید.' };
+    } catch (err: any) {
+      return { success: false, message: err?.message || 'اتصال به درگاه پرداخت برقرار نشد. دوباره تلاش کنید.' };
+    }
   };
 
   const handleLogout = () => {
@@ -1391,6 +1442,12 @@ export default function App() {
     setIsLoggedIn(false);
     setUserMobile('');
     setUserName('');
+    // Shared/borrowed devices: nothing of this account may outlive the session.
+    setCartItems([]);
+    setUserOrders([]);
+    setAppliedCoupon(null);
+    setPaymentResult(null);
+    safeRemoveKeys([STORAGE_KEYS.CART, STORAGE_KEYS.ORDERS, 'shanyoon_user_avatar']);
     handleNavigate('home');
     addToast('info', 'از حساب کاربری خارج شدید');
   };
@@ -1451,7 +1508,7 @@ export default function App() {
   // ---------------------------------------------------------------------------
   // RENDER STOREFRONT / CLIENT VIEW
   // ---------------------------------------------------------------------------
-  if (window.location.pathname.includes('/payment/simulated-gateway')) {
+  if (SimulatedGatewayPage && window.location.pathname.includes('/payment/simulated-gateway')) {
     const params = new URLSearchParams(window.location.search);
     const authority = params.get('authority') || 'SIM-DEMO';
     const orderId = params.get('orderId') || 'ord-123';
@@ -1918,7 +1975,10 @@ export default function App() {
             onAcceptProposal={handleAcceptProposal}
             onDeclineProposal={handleDeclineProposal}
             onLogout={handleLogout}
-            onOpenOrderTracking={() => setIsOrderTrackingOpen(true)}
+            onOpenOrderTracking={(order) => { setTrackingOrderId(order?.id || ''); setIsOrderTrackingOpen(true); }}
+            paymentResult={paymentResult}
+            onDismissPaymentResult={() => setPaymentResult(null)}
+            onRetryPayment={handleRetryOrderPayment}
           />
         )}
 
@@ -1927,11 +1987,13 @@ export default function App() {
           <CheckoutPage
             items={cartItems}
             isLoggedIn={isLoggedIn}
+            authReady={authReady}
             userMobile={userMobile}
             appliedCoupon={appliedCoupon}
             onApplyCoupon={handleApplyCoupon}
             onRemoveCoupon={handleRemoveCoupon}
             onOpenAuth={() => setIsAuthModalOpen(true)}
+            onOpenCart={() => setIsCartOpen(true)}
             onNavigateHome={() => handleNavigate('home')}
             onCompleteOrder={handleCompleteOrder}
           />
@@ -2007,9 +2069,7 @@ export default function App() {
             isOpen={isCartOpen}
             onClose={() => setIsCartOpen(false)}
             items={cartItems}
-            coupons={coupons}
             appliedCoupon={appliedCoupon}
-            onApplyCoupon={handleApplyCoupon}
             onRemoveCoupon={handleRemoveCoupon}
             onUpdateQuantity={handleUpdateCartQuantity}
             onRemoveItem={handleRemoveCartItem}
@@ -2074,6 +2134,7 @@ export default function App() {
             isOpen={isOrderTrackingOpen}
             onClose={() => setIsOrderTrackingOpen(false)}
             orders={userOrders}
+            initialOrderCode={trackingOrderId}
           />
         )}
       </React.Suspense>

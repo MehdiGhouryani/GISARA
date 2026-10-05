@@ -92,3 +92,15 @@ export function safeRemoveSession(key: string): void {
     // ignore
   }
 }
+
+/** Removes keys from localStorage, ignoring storage errors (private mode, disabled storage). */
+export function safeRemoveKeys(keys: string[]): void {
+  if (typeof window === 'undefined' || !window.localStorage) return;
+  for (const key of keys) {
+    try {
+      window.localStorage.removeItem(key);
+    } catch {
+      // ignore
+    }
+  }
+}

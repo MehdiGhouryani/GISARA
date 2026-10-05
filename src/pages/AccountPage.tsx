@@ -31,6 +31,14 @@ import {
 } from 'lucide-react';
 import { EditorialImage } from '../components/common/EditorialImage';
 
+/** Outcome of a bank-gateway round trip, shown as a persistent banner on the orders tab. */
+export interface PaymentResult {
+  status: 'success' | 'failed' | 'cancelled' | 'pending';
+  orderId?: string;
+  refId?: string;
+  message?: string;
+}
+
 interface AccountPageProps {
   userMobile: string;
   userName: string;
@@ -45,7 +53,12 @@ interface AccountPageProps {
   onAcceptProposal: (requestId: string) => void;
   onDeclineProposal: (requestId: string) => void;
   onLogout: () => void;
-  onOpenOrderTracking?: () => void;
+  /** Receives the order whose tracking the user asked for. */
+  onOpenOrderTracking?: (order?: UserOrder) => void;
+  paymentResult?: PaymentResult | null;
+  onDismissPaymentResult?: () => void;
+  /** Starts a new bank session for an unpaid order; on success the browser leaves for the gateway. */
+  onRetryPayment?: (orderId: string) => Promise<{ success: boolean; message?: string }>;
 }
 
 export const AccountPage: React.FC<AccountPageProps> = ({
@@ -63,8 +76,29 @@ export const AccountPage: React.FC<AccountPageProps> = ({
   onDeclineProposal,
   onLogout,
   onOpenOrderTracking,
+  paymentResult = null,
+  onDismissPaymentResult,
+  onRetryPayment,
 }) => {
-  const [activeTab, setActiveTab] = useState<'ORDERS' | 'COURSES' | 'REQUESTS' | 'CERTIFICATES'>('ORDERS');
+  const [activeTab, setActiveTab] = useState<'ORDERS' | 'COURSES' | 'REQUESTS' | 'CERTIFICATES'>(() => {
+    // Deep link support: /account?tab=courses (the gateway returns with ?tab=orders).
+    const tab = (new URLSearchParams(window.location.search).get('tab') || '').toUpperCase();
+    return tab === 'COURSES' || tab === 'REQUESTS' || tab === 'CERTIFICATES' ? tab : 'ORDERS';
+  });
+  const [retryingOrderId, setRetryingOrderId] = useState<string | null>(null);
+  const [retryError, setRetryError] = useState<{ orderId: string; message: string } | null>(null);
+
+  const handleRetry = async (orderId: string) => {
+    if (!onRetryPayment || retryingOrderId) return;
+    setRetryingOrderId(orderId);
+    setRetryError(null);
+    const res = await onRetryPayment(orderId);
+    // On success the browser is already navigating to the bank: keep the button busy until it leaves.
+    if (!res.success) {
+      setRetryingOrderId(null);
+      setRetryError({ orderId, message: res.message || 'اتصال به درگاه برقرار نشد.' });
+    }
+  };
   const [selectedOrderForInvoice, setSelectedOrderForInvoice] = useState<UserOrder | null>(null);
   const [selectedCertificate, setSelectedCertificate] = useState<Certificate | null>(null);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
@@ -289,6 +323,45 @@ export const AccountPage: React.FC<AccountPageProps> = ({
       {/* TAB 1: ORDERS */}
       {activeTab === 'ORDERS' && (
         <div className="space-y-6">
+          {paymentResult && (
+            <div
+              role={paymentResult.status === 'success' ? 'status' : 'alert'}
+              className={`rounded-2xl border p-4 sm:p-5 flex items-start gap-3 text-xs leading-6 ${
+                paymentResult.status === 'success'
+                  ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
+                  : paymentResult.status === 'pending'
+                  ? 'bg-amber-50 border-amber-200 text-amber-900'
+                  : 'bg-rose-50 border-rose-200 text-rose-900'
+              }`}
+            >
+              {paymentResult.status === 'success' ? <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5" aria-hidden="true" /> : <Clock className="w-5 h-5 shrink-0 mt-0.5" aria-hidden="true" />}
+              <div className="flex-1 min-w-0">
+                <div className="font-bold text-sm">
+                  {paymentResult.status === 'success' && 'پرداخت با موفقیت انجام شد'}
+                  {paymentResult.status === 'pending' && 'پرداخت در حال بررسی است'}
+                  {paymentResult.status === 'cancelled' && 'پرداخت لغو شد'}
+                  {paymentResult.status === 'failed' && 'پرداخت انجام نشد'}
+                </div>
+                {paymentResult.status === 'success' ? (
+                  <p>
+                    سفارش شما تأیید شد.
+                    {paymentResult.refId && <> کد پیگیری بانکی: <bdi dir="ltr" className="font-mono font-bold">{paymentResult.refId}</bdi></>}
+                  </p>
+                ) : (
+                  <p>{paymentResult.message || 'تراکنش به نتیجه نرسید.'}</p>
+                )}
+                {(paymentResult.status === 'failed' || paymentResult.status === 'cancelled') && (
+                  <p className="mt-1">سفارش شما نگه داشته شده است؛ تا پایان مهلت پرداخت می‌توانید از دکمه «پرداخت مجدد» همین سفارش استفاده کنید.</p>
+                )}
+              </div>
+              {onDismissPaymentResult && (
+                <button type="button" onClick={onDismissPaymentResult} aria-label="بستن پیام" className="shrink-0 w-8 h-8 -m-1 flex items-center justify-center rounded-lg hover:bg-black/5 cursor-pointer">
+                  <X className="w-4 h-4" aria-hidden="true" />
+                </button>
+              )}
+            </div>
+          )}
+
           {orders.length === 0 ? (
             <div className="text-center py-16 bg-[#FFFCF8] rounded-2xl border border-[#DED7CD] p-6">
               <p className="text-sm font-semibold text-[#171614]">تاکنون سفارشی ثبت نکرده‌اید.</p>
@@ -318,10 +391,22 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                         <span>مشاهده فاکتور</span>
                       </button>
 
-                      {onOpenOrderTracking && (
+                      {onRetryPayment && (ord.status === 'PENDING_PAYMENT' || ord.status === 'PAYMENT_FAILED') && (
                         <button
                           type="button"
-                          onClick={onOpenOrderTracking}
+                          onClick={() => handleRetry(ord.id)}
+                          disabled={retryingOrderId !== null}
+                          aria-busy={retryingOrderId === ord.id}
+                          className="min-h-9 px-3 py-1.5 bg-[#2F6B51] hover:bg-[#24543F] disabled:opacity-60 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+                        >
+                          <span>{retryingOrderId === ord.id ? 'در حال اتصال به درگاه…' : 'پرداخت مجدد'}</span>
+                        </button>
+                      )}
+
+                      {onOpenOrderTracking && (ord.status === 'PAID' || ord.status === 'COMPLETED') && ord.items.some((i: CartItem) => i.type === 'PHYSICAL_PRODUCT') && (
+                        <button
+                          type="button"
+                          onClick={() => onOpenOrderTracking(ord)}
                           className="px-3 py-1.5 bg-[#87553B]/10 hover:bg-[#87553B]/20 text-[#87553B] rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
                         >
                           <Truck className="w-3.5 h-3.5 text-[#87553B]" />
@@ -365,8 +450,18 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                       </div>
                     )}
 
+                    {(ord.status === 'PENDING_PAYMENT' || ord.status === 'PAYMENT_FAILED') && ord.paymentExpiresAt && (
+                      <div className="w-full text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2" role={retryError?.orderId === ord.id ? 'alert' : undefined}>
+                        {retryError?.orderId === ord.id
+                          ? retryError.message
+                          : Date.parse(ord.paymentExpiresAt) > Date.now()
+                          ? `مهلت پرداخت: حدود ${Math.max(1, Math.ceil((Date.parse(ord.paymentExpiresAt) - Date.now()) / 60000)).toLocaleString('fa-IR')} دقیقه دیگر؛ پس از آن سفارش لغو و موجودی آزاد می‌شود.`
+                          : 'مهلت پرداخت رو به پایان است.'}
+                      </div>
+                    )}
+
                     <div className="flex items-baseline gap-2 mr-auto">
-                      <span className="text-xs text-[#5E5A54]">مبلغ پرداختی:</span>
+                      <span className="text-xs text-[#5E5A54]">{ord.status === 'PAID' || ord.status === 'COMPLETED' ? 'مبلغ پرداختی:' : 'مبلغ سفارش:'}</span>
                       <span className="text-base font-bold text-[#7A5E4D] tabular-nums">
                         {ord.payableToman.toLocaleString('fa-IR')} تومان
                       </span>

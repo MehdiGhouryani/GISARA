@@ -443,7 +443,9 @@ apiRouter.post('/orders', requireAuth, writeLimiter, (req: any, res) => {
   const idempotencyKey = typeof rawKey === 'string' ? rawKey.trim().slice(0, 100) : '';
   if (idempotencyKey) {
     const prior = (db.orders as any[]).find(o => o.userMobile === req.user.mobile && o.idempotencyKey === idempotencyKey);
-    if (prior) {
+    // Only an order that can still be paid is replayed; if it was paid/expired/cancelled the key is spent
+    // and a genuinely new request gets a new order.
+    if (prior && (prior.status === 'PENDING_PAYMENT' || prior.status === 'PAYMENT_FAILED')) {
       return res.status(200).json({ success: true, replayed: true, message: 'این سفارش قبلاً ثبت شده است.', order: prior });
     }
   }
@@ -939,19 +941,31 @@ apiRouter.delete('/techniques/:id', requireAdmin, (req: any, res) => {
 // 8. Coupons Engine
 // -----------------------------------------------------------------------------
 apiRouter.get('/coupons/validate/:code', couponLimiter, (req, res) => {
-  const coupon = db.coupons.find(c => c.code.toLowerCase() === req.params.code.toLowerCase());
+  const wanted = normalizeCode(req.params.code);
+  const coupon: any = db.coupons.find(c => normalizeCode(c.code) === wanted);
   if (!coupon || !coupon.isActive) {
-    return res.status(404).json({ success: false, message: 'کد تخفیف معتبر نیست یا منقضی شده است.' });
+    return res.status(404).json({ success: false, message: 'کد تخفیف معتبر نیست.' });
   }
   if (isJalaliExpired(coupon.expiresAtJalali)) {
     return res.status(404).json({ success: false, message: 'کد تخفیف منقضی شده است.' });
   }
-  if ((coupon as any).usageLimit && coupon.usageCount >= (coupon as any).usageLimit) {
+  if (coupon.usageLimit && coupon.usageCount >= coupon.usageLimit) {
     return res.status(404).json({ success: false, message: 'ظرفیت استفاده از این کد تخفیف به پایان رسیده است.' });
   }
-  // minOrderToman cannot be fully checked without the cart total; the order-creation
-  // route enforces it authoritatively. This endpoint reports it so the UI can warn early.
-  res.json({ success: true, data: coupon });
+  // minOrderToman cannot be fully checked without the cart total; the order-creation route enforces
+  // it authoritatively. Only the fields the storefront needs are exposed (no usage counters).
+  res.json({
+    success: true,
+    data: {
+      id: coupon.id,
+      code: coupon.code,
+      discountPercent: coupon.discountPercent,
+      maxDiscountToman: coupon.maxDiscountToman,
+      minOrderToman: coupon.minOrderToman,
+      expiresAtJalali: coupon.expiresAtJalali,
+      isActive: true
+    }
+  });
 });
 
 apiRouter.get('/coupons', requireAdmin, (req, res) => {

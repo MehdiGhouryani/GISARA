@@ -10,6 +10,10 @@ const LEGACY_AUTH_TOKEN_KEY = 'gisara_jwt_token_v1';
 export interface CacheOptions {
   ttlMs?: number;
   skipCache?: boolean;
+  /** The server de-duplicates this call (idempotency key / session reuse), so a POST may be retried safely. */
+  idempotent?: boolean;
+  /** Extra request headers (e.g. Idempotency-Key). */
+  headers?: Record<string, string>;
 }
 
 interface CacheEntry {
@@ -153,10 +157,13 @@ export class ApiClient {
 
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
+      ...(options?.headers || {}),
     };
 
-    // 3. Retry loop with Exponential Backoff (1s, 2s, 4s - skips 404 errors)
-    const maxRetries = 3;
+    // 3. Retry loop with Exponential Backoff (1s, 2s, 4s - skips 404 errors).
+    // Only reads are retried freely. A write is retried (once) only when the server is known to be
+    // idempotent for it - otherwise a lost response would create a duplicate order / payment.
+    const maxRetries = method === 'GET' ? 3 : options?.idempotent ? 1 : 0;
     let attempt = 0;
 
     while (attempt <= maxRetries) {
@@ -194,7 +201,7 @@ export class ApiClient {
           if (fallbackData !== undefined) {
             return fallbackData;
           }
-          throw new Error(resData?.message || (statusCode === 404 ? `آدرس مورد نظر یافت نشد (404)` : `خطای کلاینت (${statusCode})`));
+          throw Object.assign(new Error(resData?.message || (statusCode === 404 ? `آدرس مورد نظر یافت نشد (404)` : `خطای کلاینت (${statusCode})`)), { status: statusCode });
         }
 
         const contentType = response.headers.get('content-type') || '';
@@ -225,7 +232,7 @@ export class ApiClient {
             this.recordFailure();
             return fallbackData;
           }
-          throw new Error(resData?.message || `خطای سرور (${response.status})`);
+          throw Object.assign(new Error(resData?.message || `خطای سرور (${response.status})`), { status: response.status });
         }
 
         this.recordSuccess();
@@ -401,11 +408,12 @@ export class ApiClient {
   }
 
   static async validateCoupon(code: string): Promise<any> {
-    return this.request(`/coupons/validate/${code}`, 'GET');
+    return this.request(`/coupons/validate/${encodeURIComponent(code)}`, 'GET', undefined, undefined, { skipCache: true });
   }
 
-  static async submitOrder(orderData: any): Promise<any> {
-    return this.request('/orders', 'POST', orderData);
+  /** `idempotencyKey` makes a retried/double-submitted request return the SAME order instead of a second one. */
+  static async submitOrder(orderData: any, idempotencyKey?: string): Promise<any> {
+    return this.request('/orders', 'POST', orderData, undefined, idempotencyKey ? { headers: { 'Idempotency-Key': idempotencyKey }, idempotent: true } : undefined);
   }
 
   static async getOrders(fallback: any[]): Promise<any[]> {
@@ -503,7 +511,8 @@ export class ApiClient {
   }
 
   static async requestOnlinePayment(orderId: string): Promise<any> {
-    return this.request('/payments/request', 'POST', { orderId });
+    // The server re-uses a still-valid gateway session for the same order, so this is safe to retry.
+    return this.request('/payments/request', 'POST', { orderId }, undefined, { idempotent: true });
   }
 
   static async uploadImage(imageBase64: string, filename?: string): Promise<{ success: boolean; url: string; filename: string; sizeKb: number; message?: string }> {

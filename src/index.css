@@ -195,3 +195,17 @@
     backdrop-filter: blur(8px) !important;
   }
 }
+
+/* Slide-over drawers (cart). The drawer sits on the inline-end edge, so it enters from that side. */
+@keyframes gisara-drawer-in {
+  from { transform: translateX(var(--gisara-drawer-from, -100%)); opacity: 0.6; }
+  to { transform: translateX(0); opacity: 1; }
+}
+.gisara-drawer-in { animation: gisara-drawer-in 220ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+[dir="ltr"] .gisara-drawer-in { --gisara-drawer-from: 100%; }
+@keyframes gisara-fade-in { from { opacity: 0; } to { opacity: 1; } }
+.gisara-fade-in { animation: gisara-fade-in 180ms ease-out both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .gisara-drawer-in, .gisara-fade-in { animation: none; }
+}

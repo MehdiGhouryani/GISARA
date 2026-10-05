@@ -37,7 +37,7 @@ export const OrderTrackingModal: React.FC<OrderTrackingModalProps> = ({
   orders,
   initialOrderCode = '',
 }) => {
-  const [searchQuery, setSearchQuery] = useState(initialOrderCode || (orders[0]?.id ?? 'ORD-849201'));
+  const [searchQuery, setSearchQuery] = useState(initialOrderCode || (orders[0]?.id ?? ''));
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
   useEffect(() => {
