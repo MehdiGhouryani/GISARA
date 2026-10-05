@@ -1,0 +1,1507 @@
+{
+  "styles": [
+    {
+      "id": "style-1",
+      "name": "شینیون کلاسیک اروپایی",
+      "slug": "classic-european-updo",
+      "primaryImage": "https://images.unsplash.com/photo-1519699047748-de8e457a634e?auto=format&fit=crop&w=1000&q=80&fm=webp",
+      "summary": "شینیون شیک و مینیمال با پیچش‌های منظم و فرم بیضی در پشت سر؛ ایده‌آل برای مراسم‌های رسمی و فرمالیته.",
+      "description": "این مدل با ساختار فشرده و تمیز خود، نماد ظرافت در آرایش موی کلاسیک است. در این شیوه از حداقل سنجاق‌های نمایان استفاده شده و تمرکز روی براق‌بودن خطوط مو و ماندگاری بالا در طول مراسم است.",
+      "occasion": "مجلسی",
+      "difficulty": "متوسط",
+      "approxMinutes": 45,
+      "status": "PUBLISHED",
+      "techniqueIds": [
+        "tech-1",
+        "tech-2",
+        "tech-5"
+      ],
+      "productIds": [
+        "prod-1",
+        "prod-2",
+        "prod-3"
+      ],
+      "courseId": "course-1",
+      "articleIds": [
+        "art-2"
+      ],
+      "viewsCount": 1420,
+      "createdAt": "2026-08-10T10:00:00Z"
+    },
+    {
+      "id": "style-2",
+      "name": "شینیون خطی رمانتیک",
+      "slug": "romantic-textured-chignon",
+      "primaryImage": "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=1000&q=80&fm=webp",
+      "summary": "شینیون باز و نیمه‌بسته با خطوط مواج و کرلی‌های نرم دور صورت؛ پرطرفدارترین سبک برای عروس.",
+      "description": "شینیون خطی یا تکسچر، تکنیکی است که با رهاسازی برخی تارهای ابریشمی مو و خط‌اندازی با نوک شانه دم‌باریک، بافتی ارگانیک، زنده و بسیار رمانتیک ایجاد می‌کند.",
+      "occasion": "عروس",
+      "difficulty": "پیشرفته",
+      "approxMinutes": 60,
+      "status": "PUBLISHED",
+      "techniqueIds": [
+        "tech-2",
+        "tech-4",
+        "tech-5"
+      ],
+      "productIds": [
+        "prod-1",
+        "prod-4",
+        "prod-5"
+      ],
+      "courseId": "course-1",
+      "articleIds": [
+        "art-2",
+        "art-3"
+      ],
+      "viewsCount": 2850,
+      "createdAt": "2026-08-15T12:00:00Z"
+    },
+    {
+      "id": "style-3",
+      "name": "شینیون بافت فرانسوی مدرن",
+      "slug": "modern-french-braided-updo",
+      "primaryImage": "https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=1000&q=80&fm=webp",
+      "summary": "ترکیب بافت‌های برجسته هلندی و فرانسوی در تاج سر متصل به شینیون پایین گردن.",
+      "description": "ترکیب بافت و شینیون علاوه بر استحکام فوق‌العاده برای مراسم‌های طولانی، به موهای کم‌پشت حجم مضاعف می‌بخشد و استایلی جذاب و جوان‌پسند می‌سازد.",
+      "occasion": "فرمالیته",
+      "difficulty": "متوسط",
+      "approxMinutes": 50,
+      "status": "PUBLISHED",
+      "techniqueIds": [
+        "tech-1",
+        "tech-3"
+      ],
+      "productIds": [
+        "prod-2",
+        "prod-4"
+      ],
+      "courseId": "course-3",
+      "articleIds": [
+        "art-1"
+      ],
+      "viewsCount": 980,
+      "createdAt": "2026-08-20T14:30:00Z"
+    },
+    {
+      "id": "style-4",
+      "name": "شینیون حجیم گوجه‌ای پایین (Low Bun)",
+      "slug": "voluminous-low-bun",
+      "primaryImage": "https://images.unsplash.com/photo-1580618672591-eb180b1a973f?auto=format&fit=crop&w=1000&q=80&fm=webp",
+      "summary": "شینیون شیک و قرینه در گودی گردن با زیرسازی پروتز مشبک برای موهای لخت و کم‌حجم.",
+      "description": "این مدل با تکیه بر زیرسازی قوی پروتز مویی و پوش‌دهی لایه‌به‌لایه، بدون احساس سنگینی روی سر، فرمی کشیده و سلطنتی به گردن و پشت سر می‌بخشد.",
+      "occasion": "نامزدی",
+      "difficulty": "مبتدی",
+      "approxMinutes": 35,
+      "status": "PUBLISHED",
+      "techniqueIds": [
+        "tech-2",
+        "tech-3"
+      ],
+      "productIds": [
+        "prod-1",
+        "prod-2"
+      ],
+      "courseId": "course-2",
+      "articleIds": [
+        "art-4"
+      ],
+      "viewsCount": 1640,
+      "createdAt": "2026-08-22T08:00:00Z"
+    },
+    {
+      "id": "style-5",
+      "name": "شینیون باز مواج هالیوودی (Hollywood Waves)",
+      "slug": "hollywood-waves-glam",
+      "primaryImage": "https://images.unsplash.com/photo-1562322140-8baeececf3df?auto=format&fit=crop&w=1000&q=80&fm=webp",
+      "summary": "موج‌های براق، پیوسته و بدون وز با الهام از فرش قرمز سینمای کلاسیک.",
+      "description": "مهم‌ترین چالش این سبک یکپارچگی خطوط موج است؛ هر بخش مو باید دقیقاً هم‌جهت با بخش دیگر بابلیس خورده و با برس چوبی پهن به شکل یکپارچه باز شود.",
+      "occasion": "مجلسی",
+      "difficulty": "پیشرفته",
+      "approxMinutes": 70,
+      "status": "PUBLISHED",
+      "techniqueIds": [
+        "tech-4",
+        "tech-5"
+      ],
+      "productIds": [
+        "prod-1",
+        "prod-3",
+        "prod-4"
+      ],
+      "courseId": "course-2",
+      "articleIds": [
+        "art-1",
+        "art-3"
+      ],
+      "viewsCount": 3100,
+      "createdAt": "2026-08-25T11:00:00Z"
+    },
+    {
+      "id": "style-6",
+      "name": "شینیون کژوال مینیمال با گیره مخفی",
+      "slug": "minimal-casual-updo",
+      "primaryImage": "https://images.unsplash.com/photo-1595476108010-b4d1f102b1b1?auto=format&fit=crop&w=1000&q=80&fm=webp",
+      "summary": "سبکی سبک‌بار و سریع مناسب مهمانی‌های عصرانه و جلسات رسمی بدون تکلف.",
+      "description": "در این مدل بدون استفاده از تافت‌های سنگین، ساختار مو با چرخش‌های ساده و استفاده از پودر حجم‌دهنده شکل می‌گیرد و در طول روز کاملاً طبیعی به نظر می‌رسد.",
+      "occasion": "روزمره",
+      "difficulty": "مبتدی",
+      "approxMinutes": 25,
+      "status": "PUBLISHED",
+      "techniqueIds": [
+        "tech-2"
+      ],
+      "productIds": [
+        "prod-2",
+        "prod-4"
+      ],
+      "courseId": "course-1",
+      "articleIds": [
+        "art-1"
+      ],
+      "viewsCount": 820,
+      "createdAt": "2026-08-28T09:15:00Z"
+    },
+    {
+      "id": "style-7",
+      "name": "شینیون تاج بالاسری مجلل (High Crown Bun)",
+      "slug": "high-crown-glam-bun",
+      "primaryImage": "https://images.unsplash.com/photo-1492106087820-71f1a00d2b11?auto=format&fit=crop&w=1000&q=80&fm=webp",
+      "summary": "شینیون بالاسری با ایجاد پف متناسب در تاج سر؛ بهترین انتخاب برای صورت‌های گرد و پیشانی کوتاه.",
+      "description": "این مدل با مرکزیت در نقطه کانونی بالای سر، خط دید بصری را بالا کشیده و طول چهره را کشیده‌تر و متناسب‌تر جلوه می‌دهد. ایده‌آل برای همراهی با تاج و تور عروس.",
+      "occasion": "عروس",
+      "difficulty": "پیشرفته",
+      "approxMinutes": 55,
+      "status": "PUBLISHED",
+      "techniqueIds": [
+        "tech-2",
+        "tech-3"
+      ],
+      "productIds": [
+        "prod-1",
+        "prod-3"
+      ],
+      "courseId": "course-2",
+      "articleIds": [
+        "art-2"
+      ],
+      "viewsCount": 2150,
+      "createdAt": "2026-08-29T10:00:00Z"
+    },
+    {
+      "id": "style-8",
+      "name": "شینیون خطی طرفین با چتری رها (Side Swept Textured)",
+      "slug": "side-swept-textured-chignon",
+      "primaryImage": "https://images.unsplash.com/photo-1527799820374-dcf8d9d4a388?auto=format&fit=crop&w=1000&q=80&fm=webp",
+      "summary": "شینیون اریب با رهاسازی چتری کج؛ نرم‌کننده زوایای فک در صورت‌های مربعی و مستطیلی.",
+      "description": "تکنیک اریب‌سازی و رهاسازی دسته‌های نرم مو در خط فک و پیشانی، زوایای تیز چهره را تعدیل کرده و ظاهری بسیار رمانتیک و ملایم پدید می‌آورد.",
+      "occasion": "نامزدی",
+      "difficulty": "متوسط",
+      "approxMinutes": 50,
+      "status": "PUBLISHED",
+      "techniqueIds": [
+        "tech-4",
+        "tech-5"
+      ],
+      "productIds": [
+        "prod-2",
+        "prod-4"
+      ],
+      "courseId": "course-1",
+      "articleIds": [
+        "art-3"
+      ],
+      "viewsCount": 1780,
+      "createdAt": "2026-08-30T14:00:00Z"
+    },
+    {
+      "id": "style-9",
+      "name": "شینیون عربی پرحجم و تکنیکال (Arabic High Glam)",
+      "slug": "arabic-high-glam-chignon",
+      "primaryImage": "https://images.unsplash.com/photo-1516914943479-89db7d9ae7f2?auto=format&fit=crop&w=1000&q=80&fm=webp",
+      "summary": "شینیون بسیار باشکوه با لایه‌بندی‌های حجیم و خطوط براق برجسته مناسب عروسی‌های مجلل.",
+      "description": "در این مدل از زیرسازی دوگانه پروتز و اسپری‌های تثبیت‌کننده قوی (Hard Hold) استفاده می‌شود تا حجم و زیبایی موها در طول مراسم‌های طولانی کاملاً ثابت بماند.",
+      "occasion": "عروس",
+      "difficulty": "پیشرفته",
+      "approxMinutes": 75,
+      "status": "PUBLISHED",
+      "techniqueIds": [
+        "tech-1",
+        "tech-3",
+        "tech-5"
+      ],
+      "productIds": [
+        "prod-1",
+        "prod-3",
+        "prod-5"
+      ],
+      "courseId": "course-3",
+      "articleIds": [
+        "art-2"
+      ],
+      "viewsCount": 3400,
+      "createdAt": "2026-09-01T16:00:00Z"
+    },
+    {
+      "id": "style-10",
+      "name": "شینیون بوهو رمانتیک با گل‌سر طبیعی (Bohemian Braid)",
+      "slug": "bohemian-braided-updo",
+      "primaryImage": "https://images.unsplash.com/photo-1526047932273-341f2a7631f9?auto=format&fit=crop&w=1000&q=80&fm=webp",
+      "summary": "استایلی آزاد، نامنظم و جذاب با بافت‌های هلندی باز و تزئین با شکوفه‌ها و گل‌های طبیعی.",
+      "description": "سبک بوهو حس شادابی، طبیعت و صمیمیت را به تصویر می‌کشد. هیچ خط خشکی در این مدل دیده نمی‌شود و موها به‌صورت فرریخته و طبیعی بافته می‌شوند.",
+      "occasion": "فرمالیته",
+      "difficulty": "مبتدی",
+      "approxMinutes": 40,
+      "status": "PUBLISHED",
+      "techniqueIds": [
+        "tech-1",
+        "tech-4"
+      ],
+      "productIds": [
+        "prod-2",
+        "prod-4"
+      ],
+      "courseId": "course-1",
+      "articleIds": [
+        "art-1"
+      ],
+      "viewsCount": 1290,
+      "createdAt": "2026-09-03T11:20:00Z"
+    },
+    {
+      "id": "style-11",
+      "name": "شینیون ارگونومیک یقه ایستاده و حجاب (High Neck Hijab Bun)",
+      "slug": "high-neck-hijab-ergonomic-bun",
+      "primaryImage": "https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?auto=format&fit=crop&w=1000&q=80&fm=webp",
+      "summary": "شینیون فشرده و ارگونومیک در گودی پشت سر؛ طراحی‌شده برای لباس‌های یقه ایستاده، توربان و حجاب.",
+      "description": "این مدل به‌گونه‌ای پیاده‌سازی می‌شود که هیچ برآمدگی مزاحمی در تماس با یقه لباس یا کلاه حجاب ایجاد نکند و در عین حال فرم پشت سر را گرد و برجسته نگه دارد.",
+      "occasion": "مجلسی",
+      "difficulty": "متوسط",
+      "approxMinutes": 40,
+      "status": "PUBLISHED",
+      "techniqueIds": [
+        "tech-2",
+        "tech-3"
+      ],
+      "productIds": [
+        "prod-1",
+        "prod-2"
+      ],
+      "courseId": "course-2",
+      "articleIds": [
+        "art-4"
+      ],
+      "viewsCount": 1910,
+      "createdAt": "2026-09-05T09:00:00Z"
+    },
+    {
+      "id": "style-12",
+      "name": "شینیون فرانسوی گره پیچ‌دار (Twisted French Roll)",
+      "slug": "twisted-french-roll-classic",
+      "primaryImage": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=1000&q=80&fm=webp",
+      "summary": "پیچش مخروطی عمودی در پشت سر؛ اصیل‌ترین شینیون سلطنتی با ظاهر صیقلی و بدون وز.",
+      "description": "شینیون فرانسوی رولی از سنتی‌ترین و در عین حال شیک‌ترین مدل‌های رسمی دنیاست. اجرای دقیق مرکز ثقل و تمیزی خط پیچش عمودی، راز زیبایی این مدل است.",
+      "occasion": "مجلسی",
+      "difficulty": "پیشرفته",
+      "approxMinutes": 50,
+      "status": "PUBLISHED",
+      "techniqueIds": [
+        "tech-2",
+        "tech-5"
+      ],
+      "productIds": [
+        "prod-1",
+        "prod-3"
+      ],
+      "courseId": "course-3",
+      "articleIds": [
+        "art-2"
+      ],
+      "viewsCount": 1530,
+      "createdAt": "2026-09-08T13:30:00Z"
+    },
+    {
+      "id": "style-13",
+      "name": "شینیون شلوغ و مِسی باب روز (Messy Glam Bun)",
+      "slug": "messy-glam-bun-tendrils",
+      "primaryImage": "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=1000&q=80&fm=webp",
+      "summary": "گوجه‌ای شلوغ با تارهای کرلی رها در دور صورت؛ پوشش‌دهنده عالی برای پیشانی بلند.",
+      "description": "ترکیب مدرن شلوغی کنترل‌شده با تارهای موج‌دار دور گونه و پیشانی، حس جوانی و شادابی فوق‌العاده‌ای ایجاد کرده و پهنای پیشانی را به‌خوبی متعادل می‌کند.",
+      "occasion": "نامزدی",
+      "difficulty": "مبتدی",
+      "approxMinutes": 35,
+      "status": "PUBLISHED",
+      "techniqueIds": [
+        "tech-4"
+      ],
+      "productIds": [
+        "prod-2",
+        "prod-4"
+      ],
+      "courseId": "course-1",
+      "articleIds": [
+        "art-1"
+      ],
+      "viewsCount": 2420,
+      "createdAt": "2026-09-12T15:00:00Z"
+    },
+    {
+      "id": "style-14",
+      "name": "شینیون وینتیج دهه ۵۰ با تور عروس (Retro Vintage Roll)",
+      "slug": "retro-vintage-birdcage-chignon",
+      "primaryImage": "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1000&q=80&fm=webp",
+      "summary": "موج‌های مجلل هالیوودی در جلو سر همراه با گوجه‌ای صیقلی در پشت؛ ایده‌آل برای عکاسی فرمالیته.",
+      "description": "این سبک جذاب با الهام از دهه ۵۰ میلادی، با تورهای فرانسوی کوچک (Birdcage Veil) و رژلب‌های قرمز در عکاسی‌های فرمالیته فوق‌العاده درخشان جلوه می‌کند.",
+      "occasion": "فرمالیته",
+      "difficulty": "پیشرفته",
+      "approxMinutes": 65,
+      "status": "PUBLISHED",
+      "techniqueIds": [
+        "tech-4",
+        "tech-5"
+      ],
+      "productIds": [
+        "prod-1",
+        "prod-3",
+        "prod-5"
+      ],
+      "courseId": "course-2",
+      "articleIds": [
+        "art-3"
+      ],
+      "viewsCount": 1670,
+      "createdAt": "2026-09-15T10:00:00Z"
+    },
+    {
+      "id": "style-15",
+      "name": "شینیون نیمه‌باز با تاج بافت و کرلی ابریشمی",
+      "slug": "half-up-half-down-crown-braid",
+      "primaryImage": "https://images.unsplash.com/photo-1509967419530-da38b4704bc6?auto=format&fit=crop&w=1000&q=80&fm=webp",
+      "summary": "جمع‌کردن بخش بالایی موها با بافت هلندی و رهاسازی کرلی‌های براق در پشت شانه.",
+      "description": "یکی از پرطرفدارترین سبک‌ها برای جشن‌های عقد و تولد که ضمن جمع نگه داشتن موهای جلوی سر از روی صورت، زیبایی بلند بودن موها در پشت را به نمایش می‌گذارد.",
+      "occasion": "نامزدی",
+      "difficulty": "متوسط",
+      "approxMinutes": 45,
+      "status": "PUBLISHED",
+      "techniqueIds": [
+        "tech-1",
+        "tech-4"
+      ],
+      "productIds": [
+        "prod-2",
+        "prod-4"
+      ],
+      "courseId": "course-1",
+      "articleIds": [
+        "art-1"
+      ],
+      "viewsCount": 2980,
+      "createdAt": "2026-09-18T12:00:00Z"
+    },
+    {
+      "id": "style-16",
+      "name": "شینیون دم‌اسبی خطی و مجلل (Textured Glam Ponytail)",
+      "slug": "textured-glam-ponytail",
+      "primaryImage": "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?auto=format&fit=crop&w=1000&q=80&fm=webp",
+      "summary": "دم‌اسبی بلند با خط‌اندازی‌های برجسته و حجم‌دهی در تاج؛ سبک مدرن برای لباس‌های یقه دکلته.",
+      "description": "استایلی فوق‌العاده مدرن، جسورانه و هالیوودی که قد گردن و شانه را بسیار کشیده‌تر نشان داده و با لباس‌های شب یقه باز ترکیبی شاهکار خلق می‌کند.",
+      "occasion": "مجلسی",
+      "difficulty": "پیشرفته",
+      "approxMinutes": 50,
+      "status": "PUBLISHED",
+      "techniqueIds": [
+        "tech-2",
+        "tech-4",
+        "tech-5"
+      ],
+      "productIds": [
+        "prod-1",
+        "prod-3",
+        "prod-4"
+      ],
+      "courseId": "course-3",
+      "articleIds": [
+        "art-3"
+      ],
+      "viewsCount": 3120,
+      "createdAt": "2026-09-20T14:00:00Z"
+    }
+  ],
+  "techniques": [
+    {
+      "id": "tech-1",
+      "name": "بافت فرانسوی و تکنیک هلندی معکوس",
+      "slug": "french-and-dutch-braiding",
+      "summary": "یادگیری اصولی تقسیم‌بندی دسته‌ها و کنترل کشش تارهای مو برای بافت‌های برجسته و بادوام.",
+      "steps": [
+        {
+          "number": 1,
+          "title": "تقسیم‌بندی مثلثی در تاج سر",
+          "description": "با شانه دم‌باریک فلزی یک مثلث متساوی‌الساقین از جلوی رستنگاه تا فرق سر جدا کنید.",
+          "tip": "از واکس موی سبک برای جلوگیری از وز شدن خورده‌موها استفاده کنید."
+        },
+        {
+          "number": 2,
+          "title": "عبور دسته‌ها از زیر (تکنیک معکوس هلندی)",
+          "description": "برای ایجاد حجم سه بعدی، دسته‌های کناری را به جای روی دسته میانی، از زیر آن رد کنید."
+        },
+        {
+          "number": 3,
+          "title": "خط‌اندازی و کشش ملایم لبه‌ها (Pancaking)",
+          "description": "پس از اتمام بافت، لبه‌های بیرونی را به آرامی با دو انگشت بکشید تا پهن و حجیم شود.",
+          "tip": "از پایین به بالا بکشید تا فرم گره‌ها باز نشود."
+        }
+      ],
+      "commonMistakes": [
+        "کشش بیش از حد که باعث درد پوست سر مشتری و سفت شدن غیرطبیعی بافت می‌شود.",
+        "برداشتن دسته‌های نامتقارن که تقارن شینیون را به هم می‌زند.",
+        "عدم استفاده از ژل واکس مات برای تارهای ریز رستنگاه."
+      ],
+      "videoDurationMinutes": 14,
+      "difficulty": "متوسط",
+      "status": "PUBLISHED",
+      "toolIds": [
+        "prod-2",
+        "prod-5"
+      ],
+      "courseId": "course-3",
+      "styleIds": [
+        "style-1",
+        "style-3"
+      ]
+    },
+    {
+      "id": "tech-2",
+      "name": "پوش‌دهی ریشه و ایجاد حجم ماندگار (Teasing & Backcombing)",
+      "slug": "root-teasing-and-volume",
+      "summary": "هنر پنهان شینیون؛ ایجاد اسکلت مقاوم در زیر مو بدون گره‌خوردن سطحی.",
+      "steps": [
+        {
+          "number": 1,
+          "title": "زاویه نگه‌داشتن دسته مو",
+          "description": "دسته مو را با زاویه ۹۰ درجه نسبت به کف سر با کشش یکنواخت بالا نگه دارید."
+        },
+        {
+          "number": 2,
+          "title": "حرکت رفت‌وبرگشت شانه دندانه‌ریز",
+          "description": "شانه را در فاصله ۵ سانتی‌متری ریشه قرار داده و فقط در جهت ریشه فشار دهید؛ هرگز شانه را بالا و پایین نبرید."
+        },
+        {
+          "number": 3,
+          "title": "فیکس موضعی با پودر حجم‌دهنده",
+          "description": "روی ریشه پوش‌داده‌شده مقدار کمی پودر مات بپاشید تا بافت قفل شود."
+        }
+      ],
+      "commonMistakes": [
+        "بالا و پایین بردن اره‌ای شانه که به کاتیکول مو آسیب زده و شانه کردن مو را پس از مراسم غیرممکن می‌کند.",
+        "پوش دادن لایه بیرونی و قابل رویت مو."
+      ],
+      "videoDurationMinutes": 11,
+      "difficulty": "مبتدی",
+      "status": "PUBLISHED",
+      "toolIds": [
+        "prod-2",
+        "prod-4"
+      ],
+      "courseId": "course-1",
+      "styleIds": [
+        "style-1",
+        "style-2",
+        "style-4"
+      ]
+    },
+    {
+      "id": "tech-3",
+      "name": "زیرسازی با پروتز اسفنجی و توری مو",
+      "slug": "hair-padding-and-donut-structure",
+      "summary": "شکل‌دهی استخوان‌بندی پایدار برای شینیون‌های حجیم در موهای کوتاه و متوسط.",
+      "steps": [
+        {
+          "number": 1,
+          "title": "انتخاب سایز و رنگ مناسب پروتز",
+          "description": "پروتز باید دقیقاً هم‌رنگ پایه موی مشتری باشد تا در صورت جابجایی احتمالی تارها نمایان نشود."
+        },
+        {
+          "number": 2,
+          "title": "دوخت نامرئی با سنجاق U",
+          "description": "پروتز را با سنجاق‌های موج‌دار U شکل به ریشه پوش‌داده‌شده سر قلاب کنید."
+        }
+      ],
+      "commonMistakes": [
+        "استفاده از پروتز سیاه برای موهای بلوند یا شکلاتی روشن.",
+        "شل بستن پایه‌ها که باعث تکان خوردن شینیون حین راه رفتن مشتری می‌شود."
+      ],
+      "videoDurationMinutes": 9,
+      "difficulty": "متوسط",
+      "status": "PUBLISHED",
+      "toolIds": [
+        "prod-2"
+      ],
+      "courseId": "course-1",
+      "styleIds": [
+        "style-3",
+        "style-4"
+      ]
+    },
+    {
+      "id": "tech-4",
+      "name": "فر هالیوودی و زاویه‌بندی با بابلیس سرامیکی",
+      "slug": "hollywood-curling-angles",
+      "summary": "تنظیم حرارت دقیق و تکنیک پیچیدن ribbon برای دستیابی به براق‌ترین فرهای بدون وز.",
+      "steps": [
+        {
+          "number": 1,
+          "title": "اسپری محافظ حرارت و براق‌کننده",
+          "description": "قبل از تماس حرارت، دسته مو را با لایه بسیار سبکی از اسپری محافظ بپوشانید."
+        },
+        {
+          "number": 2,
+          "title": "چرخش افقی لوله بابلیس",
+          "description": "برای موج پیوسته، تمام دسته‌های یک سمت سر باید در زاویه کاملاً افقی و در یک جهت چرخانده شوند."
+        },
+        {
+          "number": 3,
+          "title": "خنک‌سازی با کلیپس اردکی",
+          "description": "تا زمانی که مو داغ است آن را رها نکنید؛ با کلیپس ۵ دقیقه جمع نگه‌دارید تا حلقه تثبیت شود."
+        }
+      ],
+      "commonMistakes": [
+        "شانه زدن فرها قبل از خنک شدن کامل که باعث از بین رفتن آنی حالت فر می‌شود.",
+        "درجه حرارت بالای ۲۰۰ درجه روی موهای دکلره شده."
+      ],
+      "videoDurationMinutes": 18,
+      "difficulty": "پیشرفته",
+      "status": "PUBLISHED",
+      "toolIds": [
+        "prod-3",
+        "prod-5"
+      ],
+      "courseId": "course-2",
+      "styleIds": [
+        "style-2",
+        "style-5"
+      ]
+    },
+    {
+      "id": "tech-5",
+      "name": "خط‌اندازی و تفکیک لایه‌ای با کرم مو و شانه دم‌باریک",
+      "slug": "line-detailing-and-separation",
+      "summary": "ایجاد شیارهای منظم و رگه‌های سه‌بعدی روی سطح شینیون‌های اروپایی مدرن.",
+      "steps": [
+        {
+          "number": 1,
+          "title": "آغشته‌سازی نوک انگشتان به روغن آرگان یا کرم شاین",
+          "description": "مقدار بسیار کم کرم به نوک دو انگشت شست و سبابه زده شود."
+        },
+        {
+          "number": 2,
+          "title": "نیشگون گرفتن خطوط (Pinching)",
+          "description": "فاصله‌های منظم ۱.۵ سانتی‌متری را با نوک انگشتان بیرون بکشید."
+        },
+        {
+          "number": 3,
+          "title": "اسپری موضعی خشک با فاصله ۳۰ سانتی‌متری",
+          "description": "اسپری فیکس خشک را از فاصله دور بزنید تا خطوط خیس و به هم چسبیده نشوند."
+        }
+      ],
+      "commonMistakes": [
+        "اسپری زدن از فاصله نزدیک (زیر ۱۵ سانت) که قطرات مایع ایجاد کرده و خطوط را می‌خواباند.",
+        "تعداد خطوط بیش از حد که جلوه کار را شلخته و آماتور می‌کند."
+      ],
+      "videoDurationMinutes": 16,
+      "difficulty": "پیشرفته",
+      "status": "PUBLISHED",
+      "toolIds": [
+        "prod-1",
+        "prod-2"
+      ],
+      "courseId": "course-1",
+      "styleIds": [
+        "style-1",
+        "style-2",
+        "style-5"
+      ]
+    }
+  ],
+  "articles": [
+    {
+      "id": "art-1",
+      "title": "راهنمای کامل مراقبت از موهای تحت براشینگ و شینیون مداوم",
+      "slug": "complete-hair-care-guide-for-styling",
+      "category": "مراقبت از مو",
+      "summary": "راهکارهای علمی برای جلوگیری از خشکی کاتیکول، موخوره و شکستگی تارها بر اثر استفاده روزمره از ابزارهای حرارتی.",
+      "content": "موی سالم، بوم نقاشی یک شینیون چشم‌نواز است. اگر کاتیکول‌های مو بر اثر حرارت نسنجیده آسیب دیده باشند، حتی قوی‌ترین محصولات فیکس‌کننده نیز نمی‌توانند درخششی طبیعی به کار ببخشند. در این مقاله به بررسی ۳ مرحله کلیدی در روتین موهای تحت شینیون می‌پردازیم:\n    \n۱. پروتکل قبل از براشینگ: استفاده از سرم‌های بر پایه سیلیکون‌های سبک جهت ایجاد سپر محافظتی.\n۲. کنترل دما: درجه حرارت متناسب با ضخامت تار مو (۱۴۰ درجه برای موهای رنگ‌شده، ۱۸۰ درجه برای موهای ضخیم طبیعی).\n۳. پاکسازی عمقی هفتگی: استفاده از شامپوهای Clarifying جهت پاکسازی رسوبات پودر و تافت از روزنه‌های پوست سر.",
+      "readTimeMinutes": 6,
+      "publishedAt": "2026-09-12",
+      "author": {
+        "name": "مهتاب فرهمند",
+        "role": "متخصص سلامت مو و تریکولوژی",
+        "avatar": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=600&q=80&fm=webp"
+      },
+      "heroImage": "https://images.unsplash.com/photo-1527799820374-dcf8d9d4a388?auto=format&fit=crop&w=1000&q=80&fm=webp",
+      "relatedStyleIds": [
+        "style-3",
+        "style-6"
+      ],
+      "relatedProductIds": [
+        "prod-3",
+        "prod-4"
+      ]
+    },
+    {
+      "id": "art-2",
+      "title": "۷ نکته مهم برای ماندگاری شینیون عروس در آب‌وهوای شرجی و گرم",
+      "slug": "7-tips-for-bridal-chignon-longevity",
+      "category": "آموزش تخصصی",
+      "summary": "چگونه شینیون عروس را در برابر رطوبت تالار، تعریق و تحرک ۱۲ ساعته بیمه کنیم؟ تجارب مربیان باسابقه.",
+      "content": "عروس مهم‌ترین مشتری هر سالن است و شینیون او باید از ساعت ۱۰ صبح در عکاسی عمارت تا انتهای شب در رقص و تالار بی‌نقص بماند.\n\n۱. خشک کردن ریشه با باد سرد: پس از ویو زدن، ریشه‌ها حتماً با باد خنک شانه شوند.\n۲. استفاده از تافت‌های بدون آب (Dry Hairspray): اسپری‌هایی که در فرمول خود الکل سریع‌تبخیر دارند و رطوبت پس نمی‌دهند.\n۳. قفل کردن سنجاق‌ها به صورت ضربدری: دو سنجاق در زاویه ۴۵ درجه که روی هم قرار می‌گیرند، نیروی کشش را تا ۴ برابر افزایش می‌دهند.",
+      "readTimeMinutes": 8,
+      "publishedAt": "2026-09-18",
+      "author": {
+        "name": "سارا محمدی",
+        "role": "مستر بین‌المللی شینیون عروس",
+        "avatar": "https://images.unsplash.com/photo-1580894732444-8ecded7900cd?auto=format&fit=crop&w=600&q=80&fm=webp"
+      },
+      "heroImage": "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=1000&q=80&fm=webp",
+      "relatedStyleIds": [
+        "style-1",
+        "style-2"
+      ],
+      "relatedProductIds": [
+        "prod-1",
+        "prod-2"
+      ],
+      "relatedCourseId": "course-1"
+    },
+    {
+      "id": "art-3",
+      "title": "اشتباهات رایج در فیکس کردن شینیون خطی و نحوه اصلاح آن‌ها",
+      "slug": "common-mistakes-in-textured-updo",
+      "category": "آموزش تخصصی",
+      "summary": "چرا خطوط شینیون بعد از نیم ساعت باز می‌شوند یا به هم می‌چسبند؟ ریشه‌یابی و راهکارهای عملی.",
+      "content": "بزرگترین اشتباه در استایل خطی، کار با موهای خیس از اسپری است. خط‌اندازی فقط زمانی باید انجام شود که تارها با پودر حجم‌دهنده چسبندگی پیدا کرده‌اند نه با مایع تافت.",
+      "readTimeMinutes": 5,
+      "publishedAt": "2026-09-20",
+      "author": {
+        "name": "نازنین احمدی",
+        "role": "مدرس تکنیک‌های مدرن شینیون",
+        "avatar": "https://images.unsplash.com/photo-1594744803329-e58b31de8bf5?auto=format&fit=crop&w=600&q=80&fm=webp"
+      },
+      "heroImage": "https://images.unsplash.com/photo-1580618672591-eb180b1a973f?auto=format&fit=crop&w=1000&q=80&fm=webp",
+      "relatedStyleIds": [
+        "style-2"
+      ],
+      "relatedProductIds": [
+        "prod-1",
+        "prod-4"
+      ]
+    },
+    {
+      "id": "art-4",
+      "title": "راهنمای انتخاب سنجاق و موپران بر اساس تراکم و رنگ مو",
+      "slug": "bobby-pins-selection-guide",
+      "category": "راهنمای خرید",
+      "summary": "بررسی تفاوت سنجاق مویی، سنجاق ریز، سنجاق U و روش پنهان‌سازی آن‌ها در کار نهایی.",
+      "content": "سنجاق‌ها استخوان‌بندی نامرئی شینیون هستند. سنجاق مناسب نباید فلز صیقلی لیز داشته باشد بلکه باید روکش مات پودری داشته باشد تا در میان تارها لیز نخورد.",
+      "readTimeMinutes": 4,
+      "publishedAt": "2026-09-22",
+      "author": {
+        "name": "مریم قنبری",
+        "role": "آرایشگر ارشد و پژوهشگر ابزار",
+        "avatar": "https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?auto=format&fit=crop&w=600&q=80&fm=webp"
+      },
+      "heroImage": "https://images.unsplash.com/photo-1522337660859-02fbefca4702?auto=format&fit=crop&w=1000&q=80&fm=webp",
+      "relatedProductIds": [
+        "prod-2"
+      ]
+    }
+  ],
+  "products": [
+    {
+      "id": "prod-1",
+      "name": "اسپری تثبیت‌کننده قوی مو (شاین و مات) ۵۰۰ میل",
+      "slug": "professional-strong-hold-hairspray",
+      "category": "تثبیت‌کننده‌ها",
+      "brand": "Silhouette Professional",
+      "priceToman": 420000,
+      "compareAtPriceToman": 480000,
+      "sku": "SP-HLD-500",
+      "stock": 24,
+      "rating": 4.8,
+      "reviewsCount": 145,
+      "image": "https://images.unsplash.com/photo-1608248597359-57753e18a8ea?auto=format&fit=crop&w=800&q=80&fm=webp",
+      "images": [
+        "https://images.unsplash.com/photo-1608248597359-57753e18a8ea?auto=format&fit=crop&w=800&q=80&fm=webp"
+      ],
+      "summary": "اسپری فوق‌العاده قوی با فناوری میکرو-پخش که بدون ایجاد شوره و سفیدک، خطوط را ساعت‌ها نگه می‌دارد.",
+      "description": "اسپری حرفه‌ای شنیون با خشک‌شدن آنی در کسری از ثانیه؛ انتخابی مطمئن برای شینیون‌های خطی و عروس. این محصول بر خلاف اسپری‌های معمولی به راحتی با شانه زدن تمیز خارج می‌شود و به مو آسیب نمی‌زند.",
+      "specifications": {
+        "حجم": "۵۰۰ میلی‌لیتر",
+        "میزان ماندگاری": "فوق‌العاده قوی (شماره ۵)",
+        "نوع اثر": "بدون شوره، ضد رطوبت هوا",
+        "کشور مبدا": "آلمان"
+      },
+      "status": "PUBLISHED",
+      "relatedStyleIds": [
+        "style-1",
+        "style-2",
+        "style-5"
+      ]
+    },
+    {
+      "id": "prod-2",
+      "name": "مجموعه سنجاق شنیون حرفه‌ای مات (۵۰۰ عددی)",
+      "slug": "professional-matte-bobby-pins-pack",
+      "category": "کش و سنجاق",
+      "brand": "MasterPin Pro",
+      "priceToman": 240000,
+      "sku": "PIN-MAT-500",
+      "stock": 45,
+      "rating": 4.9,
+      "reviewsCount": 88,
+      "image": "https://images.unsplash.com/photo-1522337660859-02fbefca4702?auto=format&fit=crop&w=800&q=80&fm=webp",
+      "images": [
+        "https://images.unsplash.com/photo-1522337660859-02fbefca4702?auto=format&fit=crop&w=800&q=80&fm=webp"
+      ],
+      "summary": "شامل سنجاق‌های موج‌دار، سنجاق مویی U و سنجاق ریز ته‌گرد با روکش مات ضد لغزش.",
+      "description": "این پک کامل نیاز یک آرایشگر حرفه‌ای را برای ده‌ها شینیون برطرف می‌کند. نوک گرد این سنجاق‌ها از خراشیدن پوست سر جلوگیری کرده و فنریت فولادی آن‌ها مانع از دفرمگی پس از مصرف می‌شود.",
+      "specifications": {
+        "تعداد": "۵۰۰ عدد در جعبه تفکیک‌شده",
+        "رنگ": "مشکی مات / قهوه‌ای شکلاتی",
+        "جنس": "فولاد آبکاری شده ضد زنگ"
+      },
+      "status": "PUBLISHED",
+      "relatedStyleIds": [
+        "style-1",
+        "style-3",
+        "style-4"
+      ]
+    },
+    {
+      "id": "prod-3",
+      "name": "برس حرارتی سرامیکی حجم‌دهنده و ضد وز",
+      "slug": "thermal-ceramic-styling-brush",
+      "category": "ابزار دستی",
+      "brand": "CeramicFlow",
+      "priceToman": 930000,
+      "compareAtPriceToman": 1100000,
+      "sku": "BRS-THM-01",
+      "stock": 12,
+      "rating": 4.7,
+      "reviewsCount": 52,
+      "image": "https://images.unsplash.com/photo-1527799820374-dcf8d9d4a388?auto=format&fit=crop&w=800&q=80&fm=webp",
+      "images": [
+        "https://images.unsplash.com/photo-1527799820374-dcf8d9d4a388?auto=format&fit=crop&w=800&q=80&fm=webp"
+      ],
+      "summary": "مناسب براشینگ سریع و آماده‌سازی ریشه قبل از شروع شینیون با صفحات تورمالین یونی.",
+      "description": "این برس سرامیکی با توزیع یکدست گرما بدون داغ شدن نقطه‌ای، الکتریسیته ساکن مو را تخلیه کرده و لطافتی شبیه به ابریشم به موها می‌بخشد تا دست‌اندازی برای بافت و خط بسیار روان گردد.",
+      "specifications": {
+        "پوشش لوله": "نانو سرامیک و تورمالین",
+        "قطر لوله": "۴۵ میلی‌متر",
+        "دستگیره": "ارگونومیک ضد تعریق سیلیکونی"
+      },
+      "status": "PUBLISHED",
+      "relatedStyleIds": [
+        "style-1",
+        "style-5"
+      ]
+    },
+    {
+      "id": "prod-4",
+      "name": "پودر حجم‌دهنده مات و حالت‌دهنده ریشه",
+      "slug": "matte-root-volumizing-powder",
+      "category": "تثبیت‌کننده‌ها",
+      "brand": "DustUp Texture",
+      "priceToman": 280000,
+      "sku": "POW-VOL-50",
+      "stock": 30,
+      "rating": 4.8,
+      "reviewsCount": 79,
+      "image": "https://images.unsplash.com/photo-1556228720-195a672e8a03?auto=format&fit=crop&w=800&q=80&fm=webp",
+      "images": [
+        "https://images.unsplash.com/photo-1556228720-195a672e8a03?auto=format&fit=crop&w=800&q=80&fm=webp"
+      ],
+      "summary": "ایجاد بافت اصطکاکی نامرئی در ریشه مو برای پوش‌های ماندگار و خطوط برجسته سه بعدی.",
+      "description": "پودر فرمولاسیون سبک بر پایه سیلیکات طبیعی که به محض نشستن روی ریشه، چربی اضافی را جذب کرده و حجم شگفت‌انگیزی بدون نیاز به سشوارکشی طولانی ایجاد می‌کند.",
+      "specifications": {
+        "وزن": "۵۰ گرم",
+        "جلوه": "کاملاً مات طبیعی",
+        "قابلیت شستشو": "آسان با آب گرم"
+      },
+      "status": "PUBLISHED",
+      "relatedStyleIds": [
+        "style-2",
+        "style-4",
+        "style-6"
+      ]
+    },
+    {
+      "id": "prod-5",
+      "name": "کیت کلیپس کروکودیلی و گیره‌های تقسیم‌بندی سالنی (۱۲ عددی)",
+      "slug": "crocodile-sectioning-clips-pack",
+      "category": "گیره و تقسیم‌بندی",
+      "brand": "SalonGrip",
+      "priceToman": 160000,
+      "sku": "CLP-SEC-12",
+      "stock": 60,
+      "rating": 4.6,
+      "reviewsCount": 34,
+      "image": "https://images.unsplash.com/photo-1522337660859-02fbefca4702?auto=format&fit=crop&w=800&q=80&fm=webp",
+      "images": [
+        "https://images.unsplash.com/photo-1522337660859-02fbefca4702?auto=format&fit=crop&w=800&q=80&fm=webp"
+      ],
+      "summary": "گیره‌های فنری با دندانه‌های دولایه کروکودیلی برای مهار مطمئن دسته‌های ضخیم مو حین کار.",
+      "description": "ابزاری ضروری روی میز هر آرایشگر. دندانه‌های لاستیکی داخلی مانع از جاانداختن روی موهای اتوکشیده و فرخورده می‌شوند.",
+      "specifications": {
+        "تعداد": "۱۲ عدد",
+        "رنگ": "مشکی مات / نوک‌مدادی",
+        "فنر": "استیل ضد زنگ تقویت‌شده"
+      },
+      "status": "PUBLISHED",
+      "relatedStyleIds": [
+        "style-2",
+        "style-3"
+      ]
+    }
+  ],
+  "courses": [
+    {
+      "id": "course-1",
+      "name": "دوره جامع شینیون عروس و تکنیک‌های اروپایی",
+      "slug": "master-bridal-chignon-european",
+      "kind": "ONLINE",
+      "summary": "آموزش صفر تا صد ۸ سبک شینیون محبوب عروس به همراه فرمول‌های پایداری در گرما و شناخت فرم چهره.",
+      "description": "این دوره پرمخاطب‌ترین مرجع آنلاین شینیون است که توسط سارا محمدی تدریس می‌شود. در این دوره تکنیک‌های تقسیم‌بندی، ایجاد اسکلت، خط‌اندازی دقیق، کار با انواع پروتز و فیکس نهایی به صورت ماکرو و با دوربین‌های فول اچ‌دی آموزش داده شده است.",
+      "instructorId": "inst-1",
+      "priceToman": 2850000,
+      "compareAtPriceToman": 3500000,
+      "level": "جامع و حرفه‌ای",
+      "durationMinutes": 480,
+      "status": "PUBLISHED",
+      "heroImage": "https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=1000&q=80&fm=webp",
+      "modules": [
+        {
+          "id": "mod-1",
+          "title": "فصل اول: زیرسازی، فرم‌شناسی چهره و موادشناسی",
+          "lessons": [
+            {
+              "id": "les-1",
+              "title": "مقدمه و بررسی ابزارهای حیاتی میز کار",
+              "durationMinutes": 18,
+              "isPreview": true
+            },
+            {
+              "id": "les-2",
+              "title": "آناتومی جمجمه و هارمونی شینیون با زاویه فک",
+              "durationMinutes": 24,
+              "isPreview": true
+            },
+            {
+              "id": "les-3",
+              "title": "تکنیک براشینگ کششی برای موهای زبر و فر",
+              "durationMinutes": 32,
+              "isPreview": false
+            }
+          ]
+        },
+        {
+          "id": "mod-2",
+          "title": "فصل دوم: شینیون کلاسیک و نحوه قرارگیری تاج",
+          "lessons": [
+            {
+              "id": "les-4",
+              "title": "تقسیم‌بندی ۵ گانه و ایجاد صدف سر",
+              "durationMinutes": 42,
+              "isPreview": false
+            },
+            {
+              "id": "les-5",
+              "title": "تکنیک گره مخفی در گودی گردن",
+              "durationMinutes": 38,
+              "isPreview": false
+            },
+            {
+              "id": "les-6",
+              "title": "اتصال محکم تاج عروس و تور سر بدون ریزش",
+              "durationMinutes": 28,
+              "isPreview": false
+            }
+          ]
+        },
+        {
+          "id": "mod-3",
+          "title": "فصل سوم: شینیون‌های خطی و رمانتیک مدرن",
+          "lessons": [
+            {
+              "id": "les-7",
+              "title": "کار با پودر حجم‌دهنده و کشش خطوط",
+              "durationMinutes": 45,
+              "isPreview": false
+            },
+            {
+              "id": "les-8",
+              "title": "تکنیک فیکس لایه‌ای با تافت مات",
+              "durationMinutes": 35,
+              "isPreview": false
+            }
+          ]
+        }
+      ],
+      "prerequisites": [
+        "آشنایی مقدماتی با براشینگ و اتوکشی مو"
+      ],
+      "targetAudience": [
+        "آرایشگران سالنی",
+        "هنرجویان علاقه‌مند به کار شینیون عروس",
+        "شینیون‌کارهای خواهان ارتقای تکنیک"
+      ]
+    },
+    {
+      "id": "course-2",
+      "name": "مسترکلاس تخصصی فر هالیوودی و استایل‌های مواج",
+      "slug": "masterclass-hollywood-waves",
+      "kind": "ONLINE",
+      "summary": "راز امواج یکدست، آیینه کردن تارها و حفظ فرها بدون ایجاد سنگینی و ماسیدگی.",
+      "description": "یکی از پردرآمدترین و در عین حال چالش‌برانگیزترین لاین‌های استایل مو، امواج هالیوودی است. در این دوره تمام زوایای پیچیدن بابلیس، تکنیک شانه کردن بدون وز و استفاده از گیره‌های تخصصی را یاد می‌گیرید.",
+      "instructorId": "inst-2",
+      "priceToman": 1950000,
+      "compareAtPriceToman": 2400000,
+      "level": "پیشرفته",
+      "durationMinutes": 310,
+      "status": "PUBLISHED",
+      "heroImage": "https://images.unsplash.com/photo-1562322140-8baeececf3df?auto=format&fit=crop&w=1000&q=80&fm=webp",
+      "modules": [
+        {
+          "id": "mod-4",
+          "title": "فصل اول: اصول حرارت و جهت‌دهی بابلیس",
+          "lessons": [
+            {
+              "id": "les-9",
+              "title": "بررسی انواع سایز لوله بابلیس و بازتاب نور",
+              "durationMinutes": 22,
+              "isPreview": true
+            },
+            {
+              "id": "les-10",
+              "title": "پیچش یکدست تمام لایه‌های راست و چپ سر",
+              "durationMinutes": 40,
+              "isPreview": false
+            }
+          ]
+        },
+        {
+          "id": "mod-5",
+          "title": "فصل دوم: شانه زدن و تبدیل حلقه‌ها به یک موج پیوسته",
+          "lessons": [
+            {
+              "id": "les-11",
+              "title": "نحوه استفاده از روغن فینیشینگ و برس پهن",
+              "durationMinutes": 35,
+              "isPreview": false
+            },
+            {
+              "id": "les-12",
+              "title": "مهار موخوره با اسپری شاین و سشوار ملایم",
+              "durationMinutes": 26,
+              "isPreview": false
+            }
+          ]
+        }
+      ],
+      "prerequisites": [
+        "مهارت کار با بابلیس مخروطی و استوانه‌ای"
+      ],
+      "targetAudience": [
+        "شینیون‌کاران حرفه‌ای",
+        "هیراستایلیست‌های فشن و مدلینگ"
+      ]
+    },
+    {
+      "id": "course-3",
+      "name": "تکنیک‌های تلفیقی بافت و شینیون فرمالیته",
+      "slug": "braided-updo-fusion",
+      "kind": "ONLINE",
+      "summary": "آموزش ۱۰ مدل بافت ترکیبی، طنابی، اینفینیتی و آبشاری متصل به شینیون‌های کژوال.",
+      "description": "مناسب عکاسی‌های فرمالیته و استایل‌های مدرن با حس ارگانیک و طبیعی.",
+      "instructorId": "inst-3",
+      "priceToman": 1450000,
+      "level": "متوسط",
+      "durationMinutes": 260,
+      "status": "PUBLISHED",
+      "heroImage": "https://images.unsplash.com/photo-1519699047748-de8e457a634e?auto=format&fit=crop&w=1000&q=80&fm=webp",
+      "modules": [
+        {
+          "id": "mod-6",
+          "title": "فصل اول: پایه‌های بافت برجسته",
+          "lessons": [
+            {
+              "id": "les-13",
+              "title": "بافت هلندی و فرانسوی تمیز",
+              "durationMinutes": 25,
+              "isPreview": true
+            },
+            {
+              "id": "les-14",
+              "title": "تکنیک پنکیک کردن و دوبرابر کردن حجم بافت",
+              "durationMinutes": 30,
+              "isPreview": false
+            }
+          ]
+        }
+      ],
+      "prerequisites": [
+        "آشنایی با بافت ساده سه تایی"
+      ],
+      "targetAudience": [
+        "هنرجویان و علاقه‌مندان به مدل‌های جوان‌پسند"
+      ]
+    }
+  ],
+  "instructors": [
+    {
+      "id": "inst-1",
+      "name": "سارا محمدی",
+      "slug": "sara-mohammadi",
+      "portrait": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=600&q=80&fm=webp",
+      "specialty": "شینیون کلاسیک و سبک‌های مجلل عروس",
+      "experienceYears": 12,
+      "bio": "دارای مدارک بین‌المللی از آکادمی‌های برتر استانبول و پاریس؛ با بیش از یک دهه سابقه آموزش صدها هنرجوی موفق در سراسر کشور.",
+      "coveredCityIds": [
+        "city-tehran",
+        "city-isfahan",
+        "city-shiraz"
+      ],
+      "status": "ACTIVE",
+      "coursesCount": 3,
+      "workshopsCount": 24,
+      "rating": 4.95,
+      "portfolioImages": [
+        "/assets/styles/classic-european.jpg",
+        "/assets/styles/romantic-textured.jpg"
+      ]
+    },
+    {
+      "id": "inst-2",
+      "name": "نازنین احمدی",
+      "slug": "nazanin-ahmadi",
+      "portrait": "https://images.unsplash.com/photo-1580894732444-8ecded7900cd?auto=format&fit=crop&w=600&q=80&fm=webp",
+      "specialty": "شینیون خطی، امواج هالیوودی و بافت‌های مدرن",
+      "experienceYears": 8,
+      "bio": "مدرس دوره‌های تخصصی استایل موهای ژورنالی، داور مسابقات آرایشگری کشوری و طراح سبک‌های مینیمال عروس.",
+      "coveredCityIds": [
+        "city-tehran",
+        "city-mashhad"
+      ],
+      "status": "ACTIVE",
+      "coursesCount": 2,
+      "workshopsCount": 16,
+      "rating": 4.88,
+      "portfolioImages": [
+        "/assets/styles/hollywood-waves.jpg"
+      ]
+    },
+    {
+      "id": "inst-3",
+      "name": "مریم قنبری",
+      "slug": "maryam-ghanbari",
+      "portrait": "https://images.unsplash.com/photo-1594744803329-e58b31de8bf5?auto=format&fit=crop&w=600&q=80&fm=webp",
+      "specialty": "تکنیک‌های سریع سالنی و زیرسازی موهای کم‌پشت",
+      "experienceYears": 10,
+      "bio": "متخصص اصلاح ساختار شینیون بر اساس ارگونومی سر مشتری و مدیریت زمان در روزهای شلوغ سالن.",
+      "coveredCityIds": [
+        "city-tehran",
+        "city-tabriz"
+      ],
+      "status": "ACTIVE",
+      "coursesCount": 1,
+      "workshopsCount": 12,
+      "rating": 4.82,
+      "portfolioImages": [
+        "/assets/styles/braided-french.jpg"
+      ]
+    }
+  ],
+  "cities": [
+    {
+      "id": "city-tehran",
+      "name": "تهران",
+      "slug": "tehran",
+      "province": "تهران",
+      "description": "کارگاه‌های عملی و جلسات حضوری با حضور اساتید برتر در سالن‌های مجهز ونک، فرماینه و سعادت‌آباد.",
+      "image": "https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=800&q=80&fm=webp",
+      "activeInstructorsCount": 3,
+      "activeSessionsCount": 4
+    },
+    {
+      "id": "city-isfahan",
+      "name": "اصفهان",
+      "slug": "isfahan",
+      "province": "اصفهان",
+      "description": "دوره‌های حضوری شینیون عروس و فرمالیته در سالن‌های مجهز چهارباغ بالا و مرداویج اصفهان.",
+      "image": "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=800&q=80&fm=webp",
+      "activeInstructorsCount": 2,
+      "activeSessionsCount": 2
+    },
+    {
+      "id": "city-shiraz",
+      "name": "شیراز",
+      "slug": "shiraz",
+      "province": "فارس",
+      "description": "ورکشاپ‌های فشرده تکنیک‌های اروپایی و خطی با ظرفیت محدود در هتل چمران شیراز.",
+      "image": "https://images.unsplash.com/photo-1519699047748-de8e457a634e?auto=format&fit=crop&w=800&q=80&fm=webp",
+      "activeInstructorsCount": 2,
+      "activeSessionsCount": 2
+    },
+    {
+      "id": "city-mashhad",
+      "name": "مشهد",
+      "slug": "mashhad",
+      "province": "خراسان رضوی",
+      "description": "دوره‌های تخصصی رفع اشکال و آپدیت شینیون‌کاران در سجاد و احمدآباد مشهد.",
+      "image": "https://images.unsplash.com/photo-1580618672591-eb180b1a973f?auto=format&fit=crop&w=800&q=80&fm=webp",
+      "activeInstructorsCount": 2,
+      "activeSessionsCount": 2
+    },
+    {
+      "id": "city-tabriz",
+      "name": "تبریز",
+      "slug": "tabriz",
+      "province": "آذربایجان شرقی",
+      "description": "ورکشاپ‌های عملی با تجهیزات کامل و مدل زنده در ولیعصر تبریز.",
+      "image": "https://images.unsplash.com/photo-1562322140-8baeececf3df?auto=format&fit=crop&w=800&q=80&fm=webp",
+      "activeInstructorsCount": 1,
+      "activeSessionsCount": 1
+    },
+    {
+      "id": "city-ahvaz",
+      "name": "اهواز",
+      "slug": "ahvaz",
+      "province": "خوزستان",
+      "description": "تکنیک‌های ماندگاری شینیون در اقلیم گرم و مرطوب در کیانپارس اهواز.",
+      "image": "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=800&q=80&fm=webp",
+      "activeInstructorsCount": 1,
+      "activeSessionsCount": 1
+    },
+    {
+      "id": "city-rasht",
+      "name": "رشت",
+      "slug": "rasht",
+      "province": "گیلان",
+      "description": "کارگاه‌های تخصصی شینیون‌های ضد رطوبت و خطی رمانتیک در گلسار رشت.",
+      "image": "https://images.unsplash.com/photo-1519699047748-de8e457a634e?auto=format&fit=crop&w=800&q=80&fm=webp",
+      "activeInstructorsCount": 1,
+      "activeSessionsCount": 1
+    },
+    {
+      "id": "city-karaj",
+      "name": "کرج",
+      "slug": "karaj",
+      "province": "البرز",
+      "description": "مسترکلاس‌های عملی و رفع اشکال شینیون در جهانشهر و گوهردشت کرج.",
+      "image": "https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=800&q=80&fm=webp",
+      "activeInstructorsCount": 2,
+      "activeSessionsCount": 2
+    },
+    {
+      "id": "city-kermanshah",
+      "name": "کرمانشاه",
+      "slug": "kermanshah",
+      "province": "کرمانشاه",
+      "description": "دوره فشرده تکنیک‌های زیرسازی و وزگیری در نوبهار کرمانشاه.",
+      "image": "https://images.unsplash.com/photo-1580618672591-eb180b1a973f?auto=format&fit=crop&w=800&q=80&fm=webp",
+      "activeInstructorsCount": 1,
+      "activeSessionsCount": 1
+    },
+    {
+      "id": "city-qom",
+      "name": "قم",
+      "slug": "qom",
+      "province": "قم",
+      "description": "دوره‌های شینیون سالنی سریع و محجبه در سالن‌های تخصصی قم.",
+      "image": "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=800&q=80&fm=webp",
+      "activeInstructorsCount": 1,
+      "activeSessionsCount": 1
+    },
+    {
+      "id": "city-yazd",
+      "name": "یزد",
+      "slug": "yazd",
+      "province": "یزد",
+      "description": "کارگاه‌های آموزشی تکنیک‌های شینیون کلاسیک و اروپایی در یزد.",
+      "image": "https://images.unsplash.com/photo-1519699047748-de8e457a634e?auto=format&fit=crop&w=800&q=80&fm=webp",
+      "activeInstructorsCount": 1,
+      "activeSessionsCount": 1
+    },
+    {
+      "id": "city-kerman",
+      "name": "کرمان",
+      "slug": "kerman",
+      "province": "کرمان",
+      "description": "ورکشاپ رفع اشکال شینیون و زیرسازی با پروتز در کرمان.",
+      "image": "https://images.unsplash.com/photo-1562322140-8baeececf3df?auto=format&fit=crop&w=800&q=80&fm=webp",
+      "activeInstructorsCount": 1,
+      "activeSessionsCount": 1
+    },
+    {
+      "id": "city-urmia",
+      "name": "ارومیه",
+      "slug": "urmia",
+      "province": "آذربایجان غربی",
+      "description": "آموزش حضوری تکنیک‌های فر هالیوودی و امواج رترو در ارومیه.",
+      "image": "https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=800&q=80&fm=webp",
+      "activeInstructorsCount": 1,
+      "activeSessionsCount": 1
+    },
+    {
+      "id": "city-sari",
+      "name": "ساری",
+      "slug": "sari",
+      "province": "مازندران",
+      "description": "کارگاه شینیون‌های ساحلی و مقاوم در برابر رطوبت در ساری و شمال کشور.",
+      "image": "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=800&q=80&fm=webp",
+      "activeInstructorsCount": 1,
+      "activeSessionsCount": 1
+    },
+    {
+      "id": "city-bandarabbas",
+      "name": "بندرعباس",
+      "slug": "bandarabbas",
+      "province": "هرمزگان",
+      "description": "مسترکلاس تخصصی شینیون عروس خلیجی و خطی مقاوم در بندرعباس.",
+      "image": "https://images.unsplash.com/photo-1580618672591-eb180b1a973f?auto=format&fit=crop&w=800&q=80&fm=webp",
+      "activeInstructorsCount": 1,
+      "activeSessionsCount": 1
+    },
+    {
+      "id": "city-hamedan",
+      "name": "همدان",
+      "slug": "hamedan",
+      "province": "همدان",
+      "description": "دوره‌های فشرده بافت و شینیون تلفیقی در همدان.",
+      "image": "https://images.unsplash.com/photo-1519699047748-de8e457a634e?auto=format&fit=crop&w=800&q=80&fm=webp",
+      "activeInstructorsCount": 1,
+      "activeSessionsCount": 1
+    }
+  ],
+  "sessions": [
+    {
+      "id": "sess-1",
+      "courseId": "course-1",
+      "courseName": "کارگاه عملی شینیون عروس و اروپایی",
+      "cityId": "city-tehran",
+      "cityName": "تهران",
+      "instructorId": "inst-1",
+      "instructorName": "سارا محمدی",
+      "instructorPortrait": "/assets/instructors/sara-mohammadi.jpg",
+      "slug": "bridal-updo-tehran-mehr1405",
+      "venueName": "آکادمی مرکزی شنیون مو - ونک",
+      "venueAddress": "تهران، میدان ونک، خیابان ملاصدرا (آدرس دقیق پس از تأیید ارسال می‌شود)",
+      "dateJalali": "۱۵ و ۱۶ مهر ۱۴۰۵ (دو روزه)",
+      "timeSlot": "۱۰:۰۰ الی ۱۷:۰۰",
+      "capacity": 10,
+      "registeredCount": 7,
+      "priceToman": 4200000,
+      "status": "OPEN"
+    },
+    {
+      "id": "sess-2",
+      "courseId": "course-2",
+      "courseName": "ورکشاپ پیشرفته فر هالیوودی و امواج رترو",
+      "cityId": "city-tehran",
+      "cityName": "تهران",
+      "instructorId": "inst-2",
+      "instructorName": "نازنین احمدی",
+      "instructorPortrait": "/assets/instructors/nazanin-ahmadi.jpg",
+      "slug": "hollywood-waves-tehran-aban1405",
+      "venueName": "استودیو تخصصی فرمانیه",
+      "venueAddress": "تهران، فرمانیه (آدرس دقیق پس از تأیید ارسال می‌شود)",
+      "dateJalali": "۲۸ مهر ۱۴۰۵",
+      "timeSlot": "۰۹:۳۰ الی ۱۵:۳۰",
+      "capacity": 8,
+      "registeredCount": 8,
+      "priceToman": 3500000,
+      "status": "FULL"
+    },
+    {
+      "id": "sess-3",
+      "courseId": "course-1",
+      "courseName": "مسترکلاس حضوری شینیون خطی و عروس",
+      "cityId": "city-isfahan",
+      "cityName": "اصفهان",
+      "instructorId": "inst-1",
+      "instructorName": "سارا محمدی",
+      "instructorPortrait": "/assets/instructors/sara-mohammadi.jpg",
+      "slug": "bridal-updo-isfahan-aban1405",
+      "venueName": "سالن گردهمایی چهارباغ بالا",
+      "venueAddress": "اصفهان، چهارباغ بالا",
+      "dateJalali": "۵ آبان ۱۴۰۵",
+      "timeSlot": "۱۰:۰۰ الی ۱۸:۰۰",
+      "capacity": 12,
+      "registeredCount": 5,
+      "priceToman": 3800000,
+      "status": "OPEN"
+    }
+  ],
+  "requests": [
+    {
+      "id": "req-101",
+      "userId": "user-demo",
+      "kind": "JOIN_SESSION",
+      "sessionId": "sess-1",
+      "courseId": "course-1",
+      "cityId": "city-tehran",
+      "fullName": "مهسا کاظمی",
+      "mobile": "09121234567",
+      "experienceLevel": "آرایشگر نوپا",
+      "participantCount": 1,
+      "preferredDays": "پنجشنبه و جمعه",
+      "notes": "علاقه‌مند به یادگیری اتصال تاج عروس و خط‌اندازی با دست چپ.",
+      "status": "UNDER_REVIEW",
+      "submittedAt": "2026-09-23T14:20:00Z"
+    },
+    {
+      "id": "req-102",
+      "userId": "user-demo",
+      "kind": "REQUEST_NEW_SESSION",
+      "courseId": "course-2",
+      "cityId": "city-shiraz",
+      "fullName": "مهسا کاظمی",
+      "mobile": "09121234567",
+      "experienceLevel": "مدرس و حرفه‌ای",
+      "participantCount": 2,
+      "preferredDays": "آخر هفته‌ها",
+      "status": "SCHEDULE_PROPOSED",
+      "submittedAt": "2026-09-20T09:00:00Z",
+      "proposal": {
+        "id": "prop-202",
+        "cityName": "شیراز",
+        "instructorName": "سارا محمدی",
+        "dateJalali": "۲۰ آبان ۱۴۰۵",
+        "venueName": "هتل چمران شیراز - سالن کنفرانس VIP",
+        "priceToman": 3600000,
+        "expiresAt": "2026-09-28T23:59:59Z"
+      }
+    }
+  ],
+  "orders": [
+    {
+      "id": "ord-8401",
+      "orderNumber": "SHN-8401",
+      "items": [
+        {
+          "id": "item-1",
+          "type": "PHYSICAL_PRODUCT",
+          "productId": "prod-1",
+          "title": "اسپری تثبیت‌کننده قوی مو (شاین و مات) ۵۰۰ میل",
+          "sku": "SP-HLD-500",
+          "priceToman": 420000,
+          "quantity": 2,
+          "image": "/assets/products/hairspray.jpg"
+        },
+        {
+          "id": "item-2",
+          "type": "PHYSICAL_PRODUCT",
+          "productId": "prod-2",
+          "title": "مجموعه سنجاق شنیون حرفه‌ای مات (۵۰۰ عددی)",
+          "sku": "PIN-MAT-500",
+          "priceToman": 240000,
+          "quantity": 1,
+          "image": "/assets/products/pins.jpg"
+        }
+      ],
+      "subtotalToman": 1080000,
+      "shippingToman": 45000,
+      "payableToman": 1125000,
+      "status": "PAID",
+      "createdAt": "2026-09-21T18:40:00Z",
+      "paidAt": "2026-09-21T18:45:12Z",
+      "shippingAddress": {
+        "recipientName": "مهسا کاظمی",
+        "mobile": "09121234567",
+        "province": "تهران",
+        "city": "تهران",
+        "addressLine": "خیابان شریعتی، بالاتر از پل رومی، پلاک ۴۲، واحد ۳",
+        "postalCode": "1934812345"
+      }
+    }
+  ],
+  "coupons": [
+    {
+      "id": "coup-1",
+      "code": "SHANYOON20",
+      "discountPercent": 20,
+      "maxDiscountToman": 400000,
+      "minOrderToman": 500000,
+      "description": "۲۰٪ تخفیف ویژه افتتاحیه و اعضای جدید آکادمی",
+      "isActive": true,
+      "expiresAtJalali": "۳۰ اسفند ۱۴۰۵",
+      "usageCount": 142
+    },
+    {
+      "id": "coup-2",
+      "code": "AROUS",
+      "discountPercent": 15,
+      "maxDiscountToman": 600000,
+      "minOrderToman": 800000,
+      "description": "۱۵٪ تخفیف برای پک‌های استایلینگ و ابزار تخصصی عروس",
+      "isActive": true,
+      "expiresAtJalali": "۱۵ آبان ۱۴۰۵",
+      "usageCount": 89
+    },
+    {
+      "id": "coup-3",
+      "code": "VIP10",
+      "discountPercent": 10,
+      "maxDiscountToman": 300000,
+      "minOrderToman": 300000,
+      "description": "۱۰٪ تخفیف ویژه تمامی سفارش‌ها و دوره‌ها بدون سقف",
+      "isActive": true,
+      "expiresAtJalali": "۲۹ اسفند ۱۴۰۵",
+      "usageCount": 310
+    }
+  ],
+  "certificates": [
+    {
+      "id": "cert-1",
+      "certificateCode": "CERT-SHN-94821",
+      "courseId": "course-1",
+      "courseTitle": "مسترکلاس جامع شینیون‌های خطی و اروپایی",
+      "studentName": "مهسا کاظمی",
+      "studentMobile": "09121234567",
+      "issueDateJalali": "۱۵ شهریور ۱۴۰۵",
+      "instructorName": "سارا محمدی",
+      "hoursCount": 48,
+      "grade": "عالی (A+)",
+      "status": "ISSUED"
+    },
+    {
+      "id": "cert-2",
+      "certificateCode": "CERT-SHN-88210",
+      "courseId": "course-2",
+      "courseTitle": "تکنیک‌های حرفه‌ای حجم‌دهی و پروتز مو",
+      "studentName": "مهسا کاظمی",
+      "studentMobile": "09121234567",
+      "issueDateJalali": "۲۸ مرداد ۱۴۰۵",
+      "instructorName": "نگار امینی",
+      "hoursCount": 24,
+      "grade": "ممتاز (A)",
+      "status": "ISSUED"
+    }
+  ],
+  "settings": {
+    "payment": {
+      "provider": "zarinpal",
+      "merchantId": "",
+      "sandbox": true
+    },
+    "sms": {
+      "provider": "kavenegar",
+      "apiKey": "",
+      "patternCode": "otp_verify"
+    }
+  },
+  "auditLogs": [],
+  "otps": [],
+  "paymentIntents": [],
+  "manualEnrollments": []
+}

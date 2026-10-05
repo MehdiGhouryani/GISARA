@@ -1,0 +1,197 @@
+@import "tailwindcss";
+
+@layer base {
+  ::selection {
+    background-color: rgba(197, 155, 99, 0.25);
+    color: #171614;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+    /* Modern Firefox scrollbar: ultra-slim and subtle */
+    scrollbar-width: thin;
+    scrollbar-color: rgba(197, 155, 99, 0.4) transparent;
+  }
+
+  body {
+    overflow-x: hidden;
+  }
+
+  /* Universal slim, modern scrollbar for RTL left-side and all containers */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(197, 155, 99, 0.35) transparent;
+  }
+
+  /* WebKit browsers (Chrome, Edge, Safari, Opera) */
+  ::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgba(197, 155, 99, 0.35);
+    border-radius: 9999px;
+    transition: background-color 0.25s ease;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #87553B;
+  }
+
+  ::-webkit-scrollbar-thumb:active {
+    background: #6E422C;
+  }
+
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  /* Ultra-smooth interactive transitions with luxury deceleration easing */
+  button, 
+  a, 
+  [role="button"] {
+    transition-property: color, background-color, border-color, box-shadow, transform, opacity;
+    transition-duration: 280ms;
+    transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  /* Smooth card hover elevation */
+  article {
+    transition-property: color, background-color, border-color, box-shadow, transform;
+    transition-duration: 350ms;
+    transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+}
+
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar,
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar,
+  .scrollbar-none {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+/* Premium Obsidian Admin Theme Overrides */
+.min-h-screen.bg-\[\#0a0908\] {
+  --admin-bg-deep: #0c0b0a;
+  --admin-bg-panel: #141211;
+  --admin-bg-input: #1a1817;
+  --admin-border: #26211e;
+  --admin-border-light: #2e2925;
+  --admin-text-gold: #e2b87f;
+  --admin-accent-amber: #d97706;
+
+  /* Target nested elements dynamically to convert light style properties to rich dark obsidian */
+  .bg-\[\#FFFCF8\],
+  .bg-\[\#ffffff\],
+  .bg-white,
+  .bg-stone-50 {
+    background-color: var(--admin-bg-panel) !important;
+    color: #f5f4f2 !important;
+  }
+
+  .border-\[\#EAE2D5\],
+  .border-stone-200,
+  .border-\[\#DED7CD\],
+  .border-stone-100 {
+    border-color: var(--admin-border) !important;
+  }
+
+  .text-\[\#171614\],
+  .text-stone-800,
+  .text-stone-900 {
+    color: #f5f4f2 !important;
+  }
+
+  .text-\[\#59524A\],
+  .text-\[\#5E5A54\],
+  .text-stone-500,
+  .text-stone-600 {
+    color: #c5c1bb !important;
+  }
+
+  /* Deep dark inputs */
+  input[type="text"],
+  input[type="number"],
+  select,
+  textarea {
+    background-color: var(--admin-bg-input) !important;
+    border-color: var(--admin-border) !important;
+    color: #f5f4f2 !important;
+  }
+
+  input::placeholder {
+    color: #716c66 !important;
+  }
+
+  /* Table styling */
+  tr:hover {
+    background-color: rgba(255, 252, 248, 0.03) !important;
+  }
+
+  thead {
+    background-color: var(--admin-bg-input) !important;
+    color: var(--admin-text-gold) !important;
+    border-bottom: 2px solid var(--admin-border) !important;
+  }
+
+  /* Quick fix for nested content buttons or secondary tabs */
+  .bg-\[\#F4EFE7\]\/60 {
+    background-color: rgba(26, 24, 23, 0.6) !important;
+    color: #c5c1bb !important;
+  }
+
+  .bg-\[\#F4EFE7\]\/50 {
+    background-color: rgba(26, 24, 23, 0.5) !important;
+  }
+
+  .bg-\[\#F4EFE7\] {
+    background-color: var(--admin-bg-input) !important;
+    color: #f5f4f2 !important;
+  }
+
+  .bg-stone-100 {
+    background-color: var(--admin-bg-input) !important;
+    color: #f5f4f2 !important;
+  }
+
+  .bg-amber-100\/70,
+  .bg-amber-100 {
+    background-color: rgba(217, 119, 6, 0.15) !important;
+    color: #f59e0b !important;
+  }
+
+  .bg-rose-50 {
+    background-color: rgba(244, 63, 94, 0.1) !important;
+    color: #fda4af !important;
+  }
+
+  .bg-rose-100 {
+    background-color: rgba(244, 63, 94, 0.2) !important;
+  }
+
+  .bg-emerald-50,
+  .bg-emerald-100 {
+    background-color: rgba(16, 185, 129, 0.12) !important;
+    color: #34d399 !important;
+  }
+
+  /* Modal layout overlays */
+  .fixed.inset-0.bg-black\/50,
+  .fixed.inset-0.bg-stone-900\/60 {
+    background-color: rgba(0, 0, 0, 0.8) !important;
+    backdrop-filter: blur(8px) !important;
+  }
+}

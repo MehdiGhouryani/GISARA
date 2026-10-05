@@ -1,0 +1,6 @@
+{
+  "name": "گیسآرا",
+  "description": "گیسآرا آکادمی تخصصی شینیون مو در ایران است. دورههای آنلاین و ورکشاپ حضوری آموزش شینیون، ژورنال مدلها و فروش آنلاین ابزار حرفهای شینیون را در گیسآرا تجربه کنید.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
