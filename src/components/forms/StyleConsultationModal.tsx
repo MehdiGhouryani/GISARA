@@ -7,7 +7,8 @@
  * Forehead Height, Neckline Ergonomics & Style Vibe.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useDialogA11y } from '../../hooks/useDialogA11y';
 import {
   Sparkles,
   X,
@@ -90,17 +91,15 @@ export const StyleConsultationModal: React.FC<StyleConsultationModalProps> = ({
   const [aiSource, setAiSource] = useState<string>('expert_rule_engine');
   const [keyAdvicePoints, setKeyAdvicePoints] = useState<string[]>([]);
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
-  const [minMatchFilter, setMinMatchFilter] = useState<number>(80);
+  const [aiError, setAiError] = useState<string | null>(null);
+  // Ids the server's engine recommends (authoritative order); local rules only fill in the rest.
+  const [serverStyleIds, setServerStyleIds] = useState<string[]>([]);
+  const [serverProductIds, setServerProductIds] = useState<string[]>([]);
+  const [shareError, setShareError] = useState(false);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const requestSeq = useRef(0); // a slow answer to an abandoned request must never overwrite newer state
 
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    if (isOpen) {
-      window.addEventListener('keydown', handleKeyDown);
-    }
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
+  useDialogA11y(isOpen, onClose, panelRef);
 
   if (!isOpen) return null;
 
@@ -122,27 +121,36 @@ export const StyleConsultationModal: React.FC<StyleConsultationModalProps> = ({
     setStep(1);
     setAiAdviceText('');
     setKeyAdvicePoints([]);
+    setAiError(null);
+    setServerStyleIds([]);
+    setServerProductIds([]);
+    requestSeq.current++; // drop any answer still on its way
+    setIsGeneratingAI(false);
   };
 
   const triggerResultsStep = async () => {
+    const seq = ++requestSeq.current;
     setStep(5);
     setIsGeneratingAI(true);
+    setAiError(null);
+    setAiAdviceText('');
+    setKeyAdvicePoints([]);
 
     try {
       const res = await ApiClient.getAIConsultation(prefs);
-      if (res && res.aiAdvice) {
-        setAiAdviceText(res.aiAdvice);
-        setAiSource(res.source || 'expert_rule_engine');
-        if (res.keyAdvicePoints && res.keyAdvicePoints.length > 0) {
-          setKeyAdvicePoints(res.keyAdvicePoints);
-        }
-      } else {
-        setAiAdviceText('بر اساس آنالیز هوشمند هندسه چهره، قد پیشانی و نوع یقه لباس، شینیون‌های تکسچر با پوش تاج سر بهترین تعادل بصری را ایجاد می‌کنند.');
-      }
-    } catch {
-      setAiAdviceText('بر اساس مشخصات ثبتی شما، شینیون خطی با رهاسازی موهای پیرامون پیشانی و فیکساتور متوسط بالاترین تناسب را دارا می‌باشد.');
+      if (seq !== requestSeq.current) return;
+      if (!res || !res.aiAdvice) throw new Error('پاسخ مشاوره خالی بود.');
+      setAiAdviceText(res.aiAdvice);
+      setAiSource(res.source || 'expert_rule_engine');
+      setKeyAdvicePoints(res.keyAdvicePoints || []);
+      setServerStyleIds(res.recommendedStyleIds || []);
+      setServerProductIds(res.recommendedProductIds || []);
+    } catch (err: any) {
+      if (seq !== requestSeq.current) return;
+      // No invented advice: the person is told the analysis did not arrive and can retry.
+      setAiError(err?.message || 'دریافت تحلیل مشاوره انجام نشد.');
     } finally {
-      setIsGeneratingAI(false);
+      if (seq === requestSeq.current) setIsGeneratingAI(false);
     }
   };
 
@@ -249,26 +257,32 @@ export const StyleConsultationModal: React.FC<StyleConsultationModalProps> = ({
           reasons.push('بافت خطی و مدرن رمانتیک');
         }
 
-        const matchPercent = Math.min(99, Math.max(72, score));
+        // `score` is only used to ORDER styles; it is not shown as a percentage (it is not a probability).
 
         return {
           style,
-          matchScore: matchPercent,
+          matchScore: score,
           reasons: reasons.slice(0, 3), // Top 3 matching rationale tags
         };
       })
       .sort((a, b) => b.matchScore - a.matchScore);
   };
 
-  const allScoredStyles = runRecommenderEngine();
-  const filteredScoredStyles = allScoredStyles.filter((s) => s.matchScore >= minMatchFilter);
-  const matchedItem = allScoredStyles[0] || { style: styles[0], matchScore: 98, reasons: [] };
-  const matchedStyle = matchedItem.style;
-  const matchedScore = matchedItem.matchScore;
-  const alternativeScoredStyles = allScoredStyles.slice(1, 4);
+  const localRanking = runRecommenderEngine();
+  // The server engine's picks come first (in its order); the local rules rank everything else.
+  const orderedStyles: ScoredStyle[] = [
+    ...serverStyleIds.map((id) => localRanking.find((x) => x.style.id === id)).filter((x): x is ScoredStyle => !!x),
+    ...localRanking.filter((x) => !serverStyleIds.includes(x.style.id)),
+  ];
+  const matchedItem = orderedStyles[0];
+  const matchedStyle = matchedItem?.style;
+  const alternativeScoredStyles = orderedStyles.slice(1, 4);
 
-  // Recommended Products
-  const matchedProducts = products.slice(0, 3);
+  // Only products the server actually recommended; no arbitrary "first three products".
+  const matchedProducts: Product[] = serverProductIds
+    .map((id) => products.find((p) => p.id === id))
+    .filter((p): p is Product => !!p)
+    .slice(0, 3);
 
   const handleProductAdd = (prod: Product, e: React.MouseEvent) => {
     onAddToCart(prod, e);
@@ -288,16 +302,19 @@ export const StyleConsultationModal: React.FC<StyleConsultationModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity"
+        className="fixed inset-0 bg-black/60 backdrop-blur-xs gisara-fade-in"
         onClick={onClose}
+        aria-hidden="true"
       />
 
       {/* Main Dialog Modal */}
       <div
-        className="relative bg-[#FFFCF8] rounded-2xl max-w-2xl w-full p-5 sm:p-8 shadow-2xl border border-[#EAE2D5] z-10 text-right overflow-hidden my-auto animate-in fade-in zoom-in-95 duration-200"
+        ref={panelRef}
+        tabIndex={-1}
+        className="relative bg-[#FFFCF8] rounded-2xl max-w-2xl w-full p-5 sm:p-8 shadow-2xl border border-[#EAE2D5] z-10 text-start overflow-hidden my-auto gisara-fade-in focus:outline-none"
         role="dialog"
         aria-modal="true"
-        aria-label="موتور هوشمند پیشنهاددهنده شینیون مو"
+        aria-labelledby="consult-title"
       >
         {/* Header */}
         <div className="flex items-center justify-between pb-4 border-b border-[#EAE2D5]/70 mb-5">
@@ -307,15 +324,12 @@ export const StyleConsultationModal: React.FC<StyleConsultationModalProps> = ({
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-base sm:text-lg font-black text-[#171614]">
-                  موتور پیشنهاددهنده شینیون گیس‌آرا
+                <h2 id="consult-title" className="text-base sm:text-lg font-black text-[#171614]">
+                  مشاوره انتخاب شینیون
                 </h2>
-                <span className="px-2 py-0.5 rounded-full bg-[#87553B]/10 text-[#87553B] border border-[#87553B]/20 text-[10px] font-bold">
-                  Gemini Recommender
-                </span>
               </div>
-              <p className="text-[11px] sm:text-xs text-[#59524A]">
-                فیلتر و رتبه‌بندی هوشمند بر اساس هندسه چهره، قد پیشانی و نوع لباس
+              <p className="text-xs text-[#59524A]">
+                پیشنهاد مدل بر اساس فرم چهره، قد پیشانی و نوع لباس
               </p>
             </div>
           </div>
@@ -323,10 +337,10 @@ export const StyleConsultationModal: React.FC<StyleConsultationModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 text-[#59524A] hover:text-[#171614] rounded-lg transition-colors cursor-pointer"
+            className="w-11 h-11 -m-2 flex items-center justify-center text-[#59524A] hover:text-[#171614] rounded-lg transition-colors cursor-pointer"
             aria-label="بستن پنجره"
           >
-            <X className="w-5 h-5" />
+            <X className="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
 
@@ -395,6 +409,7 @@ export const StyleConsultationModal: React.FC<StyleConsultationModalProps> = ({
                     key={opt.id}
                     type="button"
                     onClick={() => setPrefs((p) => ({ ...p, faceShape: opt.id as any }))}
+                    aria-pressed={prefs.faceShape === opt.id}
                     className={`p-2.5 rounded-xl border text-right transition-all cursor-pointer ${
                       prefs.faceShape === opt.id
                         ? 'border-[#87553B] bg-[#87553B]/10 ring-1 ring-[#87553B] font-bold text-[#171614]'
@@ -436,6 +451,7 @@ export const StyleConsultationModal: React.FC<StyleConsultationModalProps> = ({
                     key={fh.id}
                     type="button"
                     onClick={() => setPrefs((p) => ({ ...p, foreheadHeight: fh.id as any }))}
+                    aria-pressed={prefs.foreheadHeight === fh.id}
                     className={`p-3 rounded-xl border text-right transition-all cursor-pointer ${
                       prefs.foreheadHeight === fh.id
                         ? 'border-[#87553B] bg-[#87553B]/10 ring-1 ring-[#87553B] font-bold text-[#171614]'
@@ -468,6 +484,7 @@ export const StyleConsultationModal: React.FC<StyleConsultationModalProps> = ({
                     key={l.id}
                     type="button"
                     onClick={() => setPrefs((p) => ({ ...p, hairLength: l.id as any }))}
+                    aria-pressed={prefs.hairLength === l.id}
                     className={`p-2.5 rounded-xl border text-center text-xs font-semibold transition-all cursor-pointer ${
                       prefs.hairLength === l.id
                         ? 'border-[#87553B] bg-[#87553B]/10 text-[#87553B]'
@@ -494,6 +511,7 @@ export const StyleConsultationModal: React.FC<StyleConsultationModalProps> = ({
                     key={d.id}
                     type="button"
                     onClick={() => setPrefs((p) => ({ ...p, hairDensity: d.id as any }))}
+                    aria-pressed={prefs.hairDensity === d.id}
                     className={`p-2.5 rounded-xl border text-center text-xs font-semibold transition-all cursor-pointer ${
                       prefs.hairDensity === d.id
                         ? 'border-[#87553B] bg-[#87553B]/10 text-[#87553B]'
@@ -521,6 +539,7 @@ export const StyleConsultationModal: React.FC<StyleConsultationModalProps> = ({
                     key={t.id}
                     type="button"
                     onClick={() => setPrefs((p) => ({ ...p, hairTexture: t.id as any }))}
+                    aria-pressed={prefs.hairTexture === t.id}
                     className={`p-2.5 rounded-xl border text-center text-xs font-semibold transition-all cursor-pointer ${
                       prefs.hairTexture === t.id
                         ? 'border-[#87553B] bg-[#87553B]/10 text-[#87553B]'
@@ -553,6 +572,7 @@ export const StyleConsultationModal: React.FC<StyleConsultationModalProps> = ({
                     key={occ.id}
                     type="button"
                     onClick={() => setPrefs((p) => ({ ...p, occasion: occ.id as any }))}
+                    aria-pressed={prefs.occasion === occ.id}
                     className={`p-2.5 rounded-xl border text-center text-xs font-semibold transition-all cursor-pointer ${
                       prefs.occasion === occ.id
                         ? 'border-[#87553B] bg-[#87553B]/10 text-[#87553B]'
@@ -580,6 +600,7 @@ export const StyleConsultationModal: React.FC<StyleConsultationModalProps> = ({
                     key={neck.id}
                     type="button"
                     onClick={() => setPrefs((p) => ({ ...p, neckline: neck.id as any }))}
+                    aria-pressed={prefs.neckline === neck.id}
                     className={`p-3 rounded-xl border text-right transition-all cursor-pointer ${
                       prefs.neckline === neck.id
                         ? 'border-[#87553B] bg-[#87553B]/5 ring-2 ring-[#87553B]/20'
@@ -612,6 +633,7 @@ export const StyleConsultationModal: React.FC<StyleConsultationModalProps> = ({
                   key={v.id}
                   type="button"
                   onClick={() => setPrefs((p) => ({ ...p, styleVibe: v.id as any }))}
+                    aria-pressed={prefs.styleVibe === v.id}
                   className={`p-3.5 rounded-xl border text-right transition-all cursor-pointer flex flex-col justify-between ${
                     prefs.styleVibe === v.id
                       ? 'border-[#87553B] bg-[#87553B]/5 ring-2 ring-[#87553B]/20 text-[#171614]'
@@ -637,28 +659,34 @@ export const StyleConsultationModal: React.FC<StyleConsultationModalProps> = ({
             {/* AI / Expert Advisory Banner */}
             <div className="bg-gradient-to-br from-[#171614] via-[#381F13] to-[#87553B] text-white p-5 sm:p-6 rounded-2xl shadow-xl relative overflow-hidden border border-[#C59B63]/40">
               <div className="flex items-center justify-between gap-4 mb-3">
-                <span className="px-3 py-1 bg-[#C59B63] text-[#171614] rounded-full text-[11px] font-black tracking-wide shadow-xs flex items-center gap-1">
-                  <Zap className="w-3.5 h-3.5 fill-current" />
-                  <span>تطابق اختصاصی · {matchedScore}٪ همخوانی</span>
+                <span className="px-3 py-1 bg-[#C59B63] text-[#171614] rounded-full text-xs font-black shadow-xs flex items-center gap-1">
+                  <Zap className="w-3.5 h-3.5 fill-current" aria-hidden="true" />
+                  <span>پیشنهاد اول برای شما</span>
                 </span>
-                <span className="text-xs text-[#F5E3C9] font-bold flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-[#C59B63]" />
-                  <span>
-                    {aiSource === 'gemini_ai'
-                      ? 'تحلیل هوش مصنوعی Gemini'
-                      : 'تحلیل موتور کارشناسی شینیون گیس‌آرا'}
+                {!aiError && !isGeneratingAI && (
+                  <span className="text-xs text-[#F5E3C9] font-bold flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-[#C59B63]" aria-hidden="true" />
+                    <span>{aiSource === 'gemini_ai' ? 'تحلیل هوش مصنوعی' : 'تحلیل کارشناسی گیس‌آرا'}</span>
                   </span>
-                </span>
+                )}
               </div>
 
               <h3 className="text-lg sm:text-xl font-black mb-2 text-[#F5E3C9]">
-                پیشنهاد رتبه ۱ موتور: {matchedStyle.name}
+                {matchedStyle?.name}
               </h3>
 
               {isGeneratingAI ? (
-                <div className="py-3 flex items-center gap-3 text-stone-300 text-xs font-semibold">
-                  <Loader2 className="w-5 h-5 animate-spin text-[#C59B63]" />
-                  <span>در حال تحلیل هندسه چهره، قد پیشانی و مدل یقه لباس...</span>
+                <div className="py-3 flex items-center gap-3 text-stone-300 text-xs font-semibold" role="status">
+                  <Loader2 className="w-5 h-5 animate-spin text-[#C59B63]" aria-hidden="true" />
+                  <span>در حال تحلیل مشخصات شما…</span>
+                </div>
+              ) : aiError ? (
+                <div role="alert" className="py-1 space-y-3">
+                  <p className="text-sm text-stone-100 leading-7">تحلیل متنی مشاوره دریافت نشد ({aiError}). فهرست مدل‌های زیر بر اساس انتخاب‌های شما همچنان معتبر است.</p>
+                  <button type="button" onClick={triggerResultsStep} className="min-h-10 px-4 bg-white/15 hover:bg-white/25 text-white text-xs font-bold rounded-lg inline-flex items-center gap-2 cursor-pointer">
+                    <RotateCcw className="w-4 h-4" aria-hidden="true" />
+                    تلاش مجدد برای تحلیل
+                  </button>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -683,8 +711,8 @@ export const StyleConsultationModal: React.FC<StyleConsultationModalProps> = ({
               )}
             </div>
 
-            {/* Recommender Top Choice Card */}
-            <div className="bg-[#FAF7F2] p-4.5 rounded-2xl border border-[#C59B63]/40 flex flex-col sm:flex-row items-center gap-4 shadow-sm">
+            {/* Top Choice Card */}
+            {matchedStyle && <div className="bg-[#FAF7F2] p-4.5 rounded-2xl border border-[#C59B63]/40 flex flex-col sm:flex-row items-center gap-4 shadow-sm">
               <div className="w-28 h-32 sm:w-36 sm:h-40 shrink-0 rounded-xl overflow-hidden border border-[#EAE2D5]">
                 <EditorialImage
                   src={matchedStyle.primaryImage}
@@ -697,9 +725,6 @@ export const StyleConsultationModal: React.FC<StyleConsultationModalProps> = ({
                 <div className="flex items-center justify-center sm:justify-start gap-2 flex-wrap">
                   <span className="text-[10px] font-bold text-[#87553B] bg-[#87553B]/10 px-2.5 py-0.5 rounded-md">
                     مناسبت: {matchedStyle.occasion}
-                  </span>
-                  <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-md">
-                    رتبه ۱ Recommender
                   </span>
                 </div>
 
@@ -736,74 +761,47 @@ export const StyleConsultationModal: React.FC<StyleConsultationModalProps> = ({
                   <ChevronLeft className="w-4 h-4" />
                 </button>
               </div>
-            </div>
+            </div>}
 
-            {/* Alternative Filtered Recommendations */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
+            {/* Alternative styles */}
+            {alternativeScoredStyles.length > 0 && (
+              <div className="space-y-3">
                 <h4 className="text-xs font-bold text-[#171614] flex items-center gap-1.5">
-                  <Filter className="w-4 h-4 text-[#87553B]" />
-                  <span>مدل‌های جایگزین دارای بالاترین همخوانی:</span>
+                  <Filter className="w-4 h-4 text-[#87553B]" aria-hidden="true" />
+                  <span>مدل‌های جایگزین مناسب شما:</span>
                 </h4>
 
-                <div className="flex items-center gap-2 text-[11px] text-[#59524A]">
-                  <span>حداقل تطابق:</span>
-                  <select
-                    value={minMatchFilter}
-                    onChange={(e) => setMinMatchFilter(Number(e.target.value))}
-                    className="p-1 bg-white border border-[#EAE2D5] rounded-md text-[11px] text-[#171614]"
-                  >
-                    <option value={70}>۷۰٪ به بالا</option>
-                    <option value={80}>۸۰٪ به بالا</option>
-                    <option value={90}>۹۰٪ به بالا</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {alternativeScoredStyles
-                  .filter((s) => s.matchScore >= minMatchFilter)
-                  .map((item) => (
-                    <div
-                      key={item.style.id}
-                      onClick={() => {
-                        onClose();
-                        onSelectStyle(item.style);
-                      }}
-                      className="p-3 bg-[#FFFCF8] rounded-xl border border-[#EAE2D5] hover:border-[#87553B] transition-all cursor-pointer flex items-center gap-3 group"
-                    >
-                      <div className="w-14 h-16 rounded-lg overflow-hidden shrink-0 border border-[#EAE2D5]">
-                        <EditorialImage
-                          src={item.style.primaryImage}
-                          alt={item.style.name}
-                          aspectRatio="1:1"
-                        />
-                      </div>
-
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-xs font-bold text-[#171614] truncate group-hover:text-[#87553B]">
-                            {item.style.name}
-                          </span>
-                          <span className="text-[10px] font-bold text-[#87553B] bg-[#87553B]/10 px-1.5 py-0.5 rounded">
-                            {item.matchScore}٪
-                          </span>
+                <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3 list-none p-0 m-0">
+                  {alternativeScoredStyles.map((item) => (
+                    <li key={item.style.id}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onClose();
+                          onSelectStyle(item.style);
+                        }}
+                        className="w-full text-start p-3 bg-[#FFFCF8] rounded-xl border border-[#EAE2D5] hover:border-[#87553B] transition-colors cursor-pointer flex items-center gap-3 group min-h-16"
+                      >
+                        <div className="w-14 h-16 rounded-lg overflow-hidden shrink-0 border border-[#EAE2D5]">
+                          <EditorialImage src={item.style.primaryImage} alt="" aspectRatio="1:1" />
                         </div>
-                        <p className="text-[10px] text-[#59524A] truncate">
-                          {item.reasons[0] || item.style.summary}
-                        </p>
-                      </div>
-                    </div>
+                        <div className="flex-1 min-w-0">
+                          <span className="block text-xs font-bold text-[#171614] truncate group-hover:text-[#87553B]">{item.style.name}</span>
+                          <span className="block text-xs text-[#59524A] truncate mt-0.5">{item.reasons[0] || item.style.summary}</span>
+                        </div>
+                      </button>
+                    </li>
                   ))}
+                </ul>
               </div>
-            </div>
+            )}
 
-            {/* Essential Tools Required for this Style */}
-            <div className="space-y-3 pt-2">
+            {/* Tools recommended by the server engine */}
+            {matchedProducts.length > 0 && <div className="space-y-3 pt-2">
               <div className="flex items-center justify-between">
                 <h4 className="text-xs font-bold text-[#171614] flex items-center gap-1.5">
                   <ShoppingBag className="w-4 h-4 text-[#87553B]" />
-                  <span>ابزار و فیکساتورهای پیشنهادی برای این مدل:</span>
+                  <span>ابزار پیشنهادی برای این مدل:</span>
                 </h4>
 
                 <button
@@ -811,7 +809,7 @@ export const StyleConsultationModal: React.FC<StyleConsultationModalProps> = ({
                   onClick={handleAddAllProducts}
                   className="text-xs font-bold text-[#87553B] hover:underline cursor-pointer"
                 >
-                  + خرید یکجای پک ابزار
+                  افزودن همه به سبد
                 </button>
               </div>
 
@@ -865,62 +863,47 @@ export const StyleConsultationModal: React.FC<StyleConsultationModalProps> = ({
                   );
                 })}
               </div>
-            </div>
+            </div>}
 
-            {/* Share, Copy & Print Consultation Actions */}
-            <div className="pt-4 border-t border-[#EAE2D5] flex flex-wrap items-center justify-between gap-3 bg-[#FAF7F2] p-4 rounded-2xl border border-[#EAE2D5]">
-              <div className="text-xs font-bold text-[#171614] flex items-center gap-1.5">
-                <Sparkles className="w-4 h-4 text-[#87553B]" />
-                <span>شناسنامه پیشنهاد سیستم گیس‌آرا آماده است:</span>
-              </div>
+            {/* Share / copy */}
+            {matchedStyle && (() => {
+              const summary = `مشاوره شینیون گیس‌آرا\nمدل پیشنهادی: ${matchedStyle.name}${aiAdviceText ? `\n${aiAdviceText}` : ''}`;
+              return (
+                <div className="pt-4 border-t border-[#EAE2D5] flex flex-wrap items-center justify-between gap-3 bg-[#FAF7F2] p-4 rounded-2xl">
+                  <div className="text-xs font-bold text-[#171614]">خلاصه این پیشنهاد را نگه دارید یا بفرستید:</div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        try {
+                          await navigator.clipboard.writeText(summary);
+                          setShareError(false);
+                          setCopiedSummary(true);
+                          setTimeout(() => setCopiedSummary(false), 2500);
+                        } catch {
+                          setShareError(true);
+                        }
+                      }}
+                      className="min-h-10 px-3 bg-white border border-[#EAE2D5] hover:border-[#87553B] text-xs font-semibold text-[#171614] rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer"
+                    >
+                      {copiedSummary ? <Check className="w-3.5 h-3.5 text-emerald-600" aria-hidden="true" /> : <Copy className="w-3.5 h-3.5 text-[#87553B]" aria-hidden="true" />}
+                      <span aria-live="polite">{copiedSummary ? 'کپی شد' : 'کپی خلاصه'}</span>
+                    </button>
 
-              <div className="flex flex-wrap items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    const text = `✨ شناسنامه پیشنهاد هوشمند شینیون گیس‌آرا (GisAra)\nمدل رتبه ۱: ${matchedStyle.name}\nتطابق: ${matchedScore}٪\nتحلیل تخصصی: ${aiAdviceText}\nمشاهده در سامانه تخصصی گیس‌آرا: https://gisara.ir`;
-                    navigator.clipboard.writeText(text);
-                    setCopiedSummary(true);
-                    setTimeout(() => setCopiedSummary(false), 2500);
-                  }}
-                  className="px-3 py-1.5 bg-white border border-[#EAE2D5] hover:border-[#87553B] text-xs font-semibold text-[#171614] rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
-                  title="کپی خلاصه پیشنهاد در کلیپ‌بورد"
-                >
-                  {copiedSummary ? (
-                    <>
-                      <Check className="w-3.5 h-3.5 text-emerald-600" />
-                      <span className="text-emerald-700">کپی شد</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-3.5 h-3.5 text-[#87553B]" />
-                      <span>کپی شناسنامه</span>
-                    </>
-                  )}
-                </button>
-
-                <a
-                  href={`https://wa.me/?text=${encodeURIComponent(`✨ شناسنامه پیشنهادی شینیون گیس‌آرا\nمدل پیشنهادی: ${matchedStyle.name}\nتطابق: ${matchedScore}٪\nتحلیل: ${aiAdviceText}`)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-3 py-1.5 bg-[#25D366] hover:bg-[#20ba59] text-white text-xs font-bold rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
-                  title="ارسال شناسنامه به واتساپ"
-                >
-                  <Share2 className="w-3.5 h-3.5" />
-                  <span>ارسال به واتساپ</span>
-                </a>
-
-                <button
-                  type="button"
-                  onClick={() => window.print()}
-                  className="px-3 py-1.5 bg-[#171614] hover:bg-[#87553B] text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
-                  title="چاپ شناسنامه"
-                >
-                  <Printer className="w-3.5 h-3.5" />
-                  <span>چاپ</span>
-                </button>
-              </div>
-            </div>
+                    <a
+                      href={`https://wa.me/?text=${encodeURIComponent(summary)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="min-h-10 px-3 bg-[#1f8f4a] hover:bg-[#177a3d] text-white text-xs font-bold rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer"
+                    >
+                      <Share2 className="w-3.5 h-3.5" aria-hidden="true" />
+                      <span>ارسال در واتساپ</span>
+                    </a>
+                  </div>
+                  {shareError && <p role="alert" className="w-full text-xs text-rose-700">کپی انجام نشد؛ متن را به‌صورت دستی انتخاب و کپی کنید.</p>}
+                </div>
+              );
+            })()}
           </div>
         )}
 
@@ -972,7 +955,7 @@ export const StyleConsultationModal: React.FC<StyleConsultationModalProps> = ({
               className="mr-auto px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#87553B] to-[#C59B63] text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer transition-all shadow-md hover:shadow-lg hover:scale-102"
             >
               <Sparkles className="w-4 h-4" />
-              <span>فیلتر و رتبه‌بندی با Recommender Engine</span>
+              <span>نمایش پیشنهادها</span>
             </button>
           )}
 

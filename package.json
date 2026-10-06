@@ -17,7 +17,7 @@
     "test:payments": "rm -f server/data/db.json && bash scripts/smoke-test-payments.sh",
     "test:expiry": "rm -f server/data/db.json && tsx scripts/test-order-expiry.ts",
     "test:course-access": "rm -f server/data/db.json && tsx scripts/test-course-access.ts && bash scripts/smoke-test-course-access.sh",
-    "test": "npm run test:validation && npm run test:pricing && npm run test:course-timeline && npm run test:security && npm run test:orders && npm run test:edge && npm run test:academy && npm run test:auth && npm run test:expiry && npm run test:course-access && npm run test:import && npm run test:crud && npm run test:server && npm run test:prod",
+    "test": "npm run test:validation && npm run test:pricing && npm run test:course-timeline && npm run test:consultation && npm run test:security && npm run test:orders && npm run test:edge && npm run test:academy && npm run test:auth && npm run test:expiry && npm run test:course-access && npm run test:import && npm run test:crud && npm run test:server && npm run test:prod",
     "test:import": "tsx scripts/test-db-import.ts",
     "test:prod": "NODE_ENV=production tsx scripts/test-prod-fail-closed.ts && bash scripts/smoke-test-hardening.sh",
     "test:validation": "tsx scripts/test-validation.ts",
@@ -27,7 +27,8 @@
     "test:edge": "rm -f server/data/db.json && bash scripts/smoke-test-edge.sh",
     "test:course-timeline": "tsx scripts/test-course-access-timeline.ts",
     "test:academy": "rm -f server/data/db.json && bash scripts/smoke-test-academy.sh",
-    "test:auth": "rm -f server/data/db.json && bash scripts/smoke-test-auth.sh"
+    "test:auth": "rm -f server/data/db.json && bash scripts/smoke-test-auth.sh",
+    "test:consultation": "tsx scripts/test-consultation.ts"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",

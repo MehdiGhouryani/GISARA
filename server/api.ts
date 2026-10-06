@@ -34,6 +34,7 @@ import { isJalaliExpired } from './jalali';
 import { computeTotals } from '../src/shared/pricing';
 import { normalizeCode, normalizeMobile, digitsOnly } from '../src/shared/digits';
 import { newId, newOrderNumber } from './ids';
+import { toEngineParams } from './consultationInput';
 import { generateExpertStylingAdvice } from './expertStylingEngine';
 
 export const apiRouter = Router();
@@ -1271,8 +1272,9 @@ apiRouter.post('/admin/enrollments', requireAdmin, writeLimiter, (req: any, res)
 // 10. AI Smart Style Consultation Endpoint with Resilient Failover Engine
 // -----------------------------------------------------------------------------
 apiRouter.post('/ai/consultation', aiLimiter, validateBody(aiConsultationSchema), async (req, res) => {
-  const { faceShape, foreheadHeight, hairLength, hairDensity, hairTexture, occasion, neckline, styleVibe } = req.body;
-  const expertResult = generateExpertStylingAdvice(req.body);
+  // The body holds validated option IDs; the engine and the prompt speak Persian.
+  const { faceShape, foreheadHeight, hairLength, hairDensity, hairTexture, occasion, neckline, styleVibe } = toEngineParams(req.body);
+  const expertResult = generateExpertStylingAdvice({ faceShape, foreheadHeight, hairLength, hairDensity, hairTexture, occasion, neckline, styleVibe });
 
   const aiKey = process.env.GEMINI_API_KEY || '';
   if (!aiKey) {

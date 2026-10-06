@@ -513,16 +513,8 @@ export class ApiClient {
     recommendedProductIds?: string[];
     keyAdvicePoints?: string[];
   }> {
-    return this.request('/ai/consultation', 'POST', prefs, {
-      aiAdvice: 'بر اساس فرم هندسی صورت و ویژگی‌های موی شما، شینیون‌های خطی و تکسچر با فیکساتور متوسط بهترین تعادل بصری را ایجاد می‌کنند.',
-      matchScore: 98,
-      source: 'expert_rule_engine',
-      keyAdvicePoints: [
-        'ایجاد تعادل بصری در چهره متناسب با قد پیشانی',
-        'تلطیف خطوط سرشانه با هماهنگی مدل یقه لباس',
-        'زیرسازی اصولی و فیکس یکنواخت با ماندگاری بالا'
-      ]
-    });
+    // No invented fallback: if the analysis cannot be produced the caller shows a real error with a retry.
+    return this.request('/ai/consultation', 'POST', prefs);
   }
 
   // ---------------------------------------------------------------------------

@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { sanitizeInput } from './security';
 import { normalizeMobile, normalizePostalCode, toLatinDigits } from '../src/shared/digits';
 import { parseJalaliDate } from './jalali';
+import { optionIds, ConsultationField } from './consultationInput';
 
 /** Wraps sanitizeInput so a schema field is both typed AND XSS-sanitized in one step. */
 const text = (min = 0, max = 500) => z.string().trim().min(min).max(max).transform(sanitizeInput);
@@ -195,12 +196,12 @@ export const workshopRequestSchema = z.object({
   notes: optionalText(1000)
 });
 
-// Short free-text fields interpolated into an LLM prompt: cap length hard so the
-// endpoint cannot be used to smuggle long injected instructions or burn tokens.
-const aiField = z.string().trim().max(60).transform(sanitizeInput).optional();
+// Closed option sets (never free text): the values end up in an LLM prompt, so only known IDs are accepted.
+const aiOption = (field: ConsultationField) => z.enum(optionIds(field), { message: 'گزینه انتخاب‌شده معتبر نیست.' }).optional();
 export const aiConsultationSchema = z.object({
-  faceShape: aiField, foreheadHeight: aiField, hairLength: aiField, hairDensity: aiField,
-  hairTexture: aiField, occasion: aiField, neckline: aiField, styleVibe: aiField
+  faceShape: aiOption('faceShape'), foreheadHeight: aiOption('foreheadHeight'), hairLength: aiOption('hairLength'),
+  hairDensity: aiOption('hairDensity'), hairTexture: aiOption('hairTexture'), occasion: aiOption('occasion'),
+  neckline: aiOption('neckline'), styleVibe: aiOption('styleVibe')
 });
 
 export const articleCreateSchema = z.object({
