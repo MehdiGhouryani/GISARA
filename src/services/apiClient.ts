@@ -302,7 +302,9 @@ export class ApiClient {
 
   /** Course ids the signed-in user is entitled to. Server-derived from PAID orders. */
   static async getEnrollments(): Promise<string[]> {
-    const res = await this.request<{ courseIds?: string[] }>('/me/enrollments', 'GET', undefined, { courseIds: [] });
+    // No fallback on purpose: a failure must be distinguishable from "owns nothing", otherwise a paying
+    // customer is shown the "buy" button / a locked course during a hiccup.
+    const res = await this.request<{ courseIds?: string[] }>('/me/enrollments', 'GET', undefined, undefined, { skipCache: true });
     return Array.isArray(res?.courseIds) ? res.courseIds : [];
   }
 
@@ -429,6 +431,23 @@ export class ApiClient {
   // ---------------------------------------------------------------------------
   static async getCourses(fallback: any[]): Promise<any[]> {
     return this.request('/courses', 'GET', undefined, fallback);
+  }
+
+  /** Admin: every course (all statuses, with lesson media URLs). */
+  static async getAdminCourses(): Promise<any[]> {
+    return this.request<any[]>('/admin/courses', 'GET', undefined, undefined, { skipCache: true });
+  }
+
+  static async createCourse(course: any): Promise<any> {
+    return this.request('/courses', 'POST', course);
+  }
+
+  static async updateCourse(id: string, patch: any): Promise<any> {
+    return this.request(`/courses/${encodeURIComponent(id)}`, 'PUT', patch);
+  }
+
+  static async deleteCourse(id: string): Promise<any> {
+    return this.request(`/courses/${encodeURIComponent(id)}`, 'DELETE');
   }
 
   static async getSessions(fallback: any[]): Promise<any[]> {

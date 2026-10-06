@@ -22,7 +22,7 @@ import { requestPaymentGateway, verifyPaymentGateway } from './payment';
 import { checkOrderTransition } from './orderStateMachine';
 import { releaseReservedStock, releaseCouponUsage } from './orderLifecycle';
 import { validateImport, snapshotBeforeImport, IMPORTABLE_COLLECTIONS } from './dbImport';
-import { validateBody, shippingInfoSchema, productCreateSchema, productUpdateSchema, styleCreateSchema, styleUpdateSchema, courseCreateSchema, courseUpdateSchema, couponCreateSchema, couponUpdateSchema, certificateCreateSchema, settingsUpdateSchema, workshopRequestSchema, aiConsultationSchema, articleCreateSchema, articleUpdateSchema, techniqueCreateSchema, techniqueUpdateSchema, sessionCreateSchema, sessionUpdateSchema } from './validation';
+import { validateBody, shippingInfoSchema, courseRuleIssues, productCreateSchema, productUpdateSchema, styleCreateSchema, styleUpdateSchema, courseCreateSchema, courseUpdateSchema, couponCreateSchema, couponUpdateSchema, certificateCreateSchema, settingsUpdateSchema, workshopRequestSchema, aiConsultationSchema, articleCreateSchema, articleUpdateSchema, techniqueCreateSchema, techniqueUpdateSchema, sessionCreateSchema, sessionUpdateSchema } from './validation';
 import { getEntitledCourseIds, hasCourseAccess, toPublicCourse, findLesson } from './courseAccess';
 import { isJalaliExpired } from './jalali';
 import { computeTotals } from '../src/shared/pricing';
@@ -727,12 +727,34 @@ apiRouter.get('/courses/:courseId/lessons/:lessonId', (req: any, res) => {
 // Admin course/lesson management (R-29: previously no way to create or edit a
 // course at all). Access control for lesson content is enforced by courseAccess.ts
 // regardless of what's created here.
+// Admin view of the catalogue: ALL statuses and every lesson incl. media URLs (the public list is PUBLISHED-only).
+apiRouter.get('/admin/courses', requireAdmin, (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  res.json({ success: true, data: db.courses });
+});
+
+function uniqueCourseSlug(base: string, ignoreId?: string): string {
+  const clean = base.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^\p{L}\p{N}-]+/gu, '') || 'course';
+  let slug = clean;
+  let n = 2;
+  while (db.courses.some(c => c.slug === slug && c.id !== ignoreId)) slug = `${clean}-${n++}`;
+  return slug;
+}
+
+const sumLessonMinutes = (modules: any[]) =>
+  (modules || []).reduce((acc, m) => acc + (m.lessons || []).reduce((a: number, l: any) => a + (l.durationMinutes || 0), 0), 0);
+
 apiRouter.post('/courses', requireAdmin, writeLimiter, validateBody(courseCreateSchema), (req: any, res) => {
   const body = req.body;
+  const modules = (body.modules || []).map((m: any, mi: number) => ({
+    id: m.id || `mod-${mi + 1}`,
+    title: m.title || '',
+    lessons: m.lessons.map((l: any) => ({ ...l, durationMinutes: l.durationMinutes ?? 0, isPreview: !!l.isPreview }))
+  }));
   const newCourse: any = {
     id: newId('course'),
     name: body.name,
-    slug: body.slug || body.name.toLowerCase().replace(/\s+/g, '-'),
+    slug: uniqueCourseSlug(body.slug || body.name),
     kind: body.kind || 'ONLINE',
     summary: body.summary || '',
     description: body.description || '',
@@ -740,13 +762,13 @@ apiRouter.post('/courses', requireAdmin, writeLimiter, validateBody(courseCreate
     priceToman: body.priceToman,
     compareAtPriceToman: body.compareAtPriceToman,
     level: body.level || 'مبتدی',
-    durationMinutes: body.durationMinutes ?? 0,
+    durationMinutes: body.durationMinutes ?? sumLessonMinutes(modules),
     status: body.status || 'DRAFT',
-    modules: (body.modules || []).map((m: any, mi: number) => ({
-      id: m.id || `mod-${mi + 1}`,
-      title: m.title || '',
-      lessons: m.lessons.map((l: any) => ({ ...l }))
-    }))
+    heroImage: body.heroImage || '',
+    previewVideoUrl: body.previewVideoUrl,
+    prerequisites: body.prerequisites || [],
+    targetAudience: body.targetAudience || [],
+    modules
   };
   db.courses = [newCourse, ...db.courses];
   serverCache.invalidate('courses');
@@ -768,7 +790,13 @@ apiRouter.put('/courses/:id', requireAdmin, writeLimiter, validateBody(courseUpd
       lessons: m.lessons.map((l: any) => ({ ...l }))
     }));
   }
+  if (patch.slug) patch.slug = uniqueCourseSlug(patch.slug, db.courses[idx].id);
   const updated = { ...db.courses[idx], ...patch };
+  // Re-check the rules on the MERGED course: flipping only `status` to PUBLISHED on an empty course must fail too.
+  const ruleIssues = courseRuleIssues({ status: updated.status, modules: updated.modules });
+  if (ruleIssues.length > 0) {
+    return res.status(400).json({ success: false, message: ruleIssues[0] });
+  }
   const list = [...db.courses];
   list[idx] = updated;
   db.courses = list;
@@ -1069,38 +1097,45 @@ apiRouter.get('/admin/enrollments', requireAdmin, (req, res) => {
 });
 
 apiRouter.post('/admin/enrollments', requireAdmin, writeLimiter, (req: any, res) => {
-  const { userMobile, courseId, courseName, status } = req.body;
-  if (!userMobile || !courseId || !courseName || !status) {
-    return res.status(400).json({ success: false, message: 'اطلاعات ارسالی ناقص است.' });
-  }
-  if (!/^09[0-9]{9}$/.test(userMobile)) {
-    return res.status(400).json({ success: false, message: 'شماره موبایل نامعتبر است.' });
+  const { courseId, status } = req.body || {};
+  const userMobile = normalizeMobile(req.body?.userMobile);
+  if (!userMobile || !courseId || !status) {
+    return res.status(400).json({ success: false, message: 'شماره موبایل معتبر، دوره و وضعیت الزامی است.' });
   }
   if (status !== 'ACTIVE' && status !== 'REVOKED') {
     return res.status(400).json({ success: false, message: 'وضعیت نامعتبر است.' });
   }
+  // The course name is taken from the database, never from the request body.
+  const course = db.courses.find(c => c.id === courseId);
+  if (!course) {
+    return res.status(404).json({ success: false, message: 'دوره یافت نشد.' });
+  }
+  const courseName = course.name;
+  const nowIso = new Date().toISOString();
 
-  // Check if there is an existing override for this user + course
+  // One override per (user, course): changing it again updates the same record.
   const existingIdx = db.manualEnrollments.findIndex((e: any) => e.userMobile === userMobile && e.courseId === courseId);
-  
+
   if (existingIdx !== -1) {
     const list = [...db.manualEnrollments];
     list[existingIdx] = {
       ...list[existingIdx],
       status,
-      grantedAt: new Date().toISOString()
+      grantedAt: nowIso,
+      ...(status === 'REVOKED' ? { revokedAt: nowIso } : {})
     };
     db.manualEnrollments = list;
     logAdminAction(req.user.name, 'تغییر دسترسی دستی دوره', `تغییر دسترسی کاربر ${userMobile} به دوره ${courseName} به ${status === 'ACTIVE' ? 'فعال' : 'لغو شده'}`);
     return res.json({ success: true, data: list[existingIdx] });
   }
 
-  const newEnrollment = {
+  const newEnrollment: any = {
     id: newId('enrollment'),
     userMobile,
     courseId,
     courseName,
-    grantedAt: new Date().toISOString(),
+    grantedAt: nowIso,
+    ...(status === 'REVOKED' ? { revokedAt: nowIso } : {}),
     status
   };
 

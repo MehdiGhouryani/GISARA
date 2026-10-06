@@ -8,6 +8,7 @@
 
 import React, { useState } from 'react';
 import { Course, Instructor } from '../types/domain';
+import { getAllLessons } from '../utils/course';
 import { Breadcrumb } from '../components/common/Breadcrumb';
 import { EditorialImage } from '../components/common/EditorialImage';
 import { Play, Lock, CheckCircle2, Clock, BookOpen, GraduationCap, ShieldCheck, ChevronDown, ChevronUp } from 'lucide-react';
@@ -20,7 +21,11 @@ interface CourseDetailPageProps {
   onNavigateHome: () => void;
   onNavigateCourses: () => void;
   onEnroll: (course: Course) => void;
-  onStartLearning: (course: Course, lessonId: string) => void;
+  /** `lessonId` omitted = resume where the learner stopped (decided by the app). */
+  onStartLearning: (course: Course, lessonId?: string) => void;
+  /** loading = access not known yet (do not offer "buy" to someone who may already own the course). */
+  enrollmentStatus?: 'loading' | 'ready' | 'error';
+  onRetryEnrollment?: () => void;
   currentUserName?: string;
   onToast?: (type: 'success' | 'info' | 'error', title: string, message?: string) => void;
 }
@@ -33,6 +38,8 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
   onNavigateCourses,
   onEnroll,
   onStartLearning,
+  enrollmentStatus = 'ready',
+  onRetryEnrollment,
   currentUserName,
   onToast,
 }) => {
@@ -44,7 +51,8 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
     setOpenModules((prev) => ({ ...prev, [modId]: !prev[modId] }));
   };
 
-  const totalLessons = course.modules.reduce((acc: number, m) => acc + m.lessons.length, 0);
+  const totalLessons = getAllLessons(course).length;
+  const hasLessons = totalLessons > 0;
 
   return (
     <div className="max-w-[1240px] mx-auto px-4 sm:px-6 py-6 sm:py-10 space-y-12 sm:space-y-16">
@@ -133,25 +141,43 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
             </div>
           </div>
 
-          {isEnrolled ? (
-            <button
-              type="button"
-              onClick={() => onStartLearning(course, course.modules[0].lessons[0].id)}
-              className="w-full py-3.5 px-4 bg-[#167C55] hover:bg-[#23523e] text-white text-xs sm:text-sm font-bold rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md"
-            >
-              <Play className="w-4 h-4 fill-current" />
-              <span>ادامه یادگیری (ورود به پنل آموزش)</span>
-            </button>
+          {enrollmentStatus === 'loading' ? (
+            <div className="w-full min-h-12 rounded-xl bg-[#EEE8DF] animate-pulse" role="status" aria-label="در حال بررسی وضعیت دسترسی شما" />
+          ) : enrollmentStatus === 'error' ? (
+            <div role="alert" className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900 space-y-2">
+              <p>وضعیت دسترسی شما به دوره بررسی نشد.</p>
+              {onRetryEnrollment && (
+                <button type="button" onClick={onRetryEnrollment} className="min-h-10 px-4 bg-amber-900 text-white rounded-lg font-semibold cursor-pointer">
+                  تلاش مجدد
+                </button>
+              )}
+            </div>
+          ) : isEnrolled ? (
+            hasLessons ? (
+              <button
+                type="button"
+                onClick={() => onStartLearning(course)}
+                className="w-full min-h-12 py-3.5 px-4 bg-[#167C55] hover:bg-[#23523e] text-white text-sm font-bold rounded-xl flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-md"
+              >
+                <Play className="w-4 h-4 fill-current" aria-hidden="true" />
+                <span>ادامه یادگیری</span>
+              </button>
+            ) : (
+              <div className="p-3 bg-[#EEE8DF] rounded-xl text-xs text-[#171614] leading-6">
+                دسترسی شما فعال است؛ درس‌های این دوره به‌زودی منتشر می‌شوند.
+              </div>
+            )
           ) : (
             <button
               type="button"
               onClick={() => onEnroll(course)}
-              className="w-full py-3.5 px-4 bg-[#171614] hover:bg-[#87553B] text-white text-xs sm:text-sm font-bold rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md"
+              className="w-full min-h-12 py-3.5 px-4 bg-[#171614] hover:bg-[#87553B] text-white text-sm font-bold rounded-xl flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-md"
             >
-              <BookOpen className="w-4 h-4" />
-              <span>ثبت‌نام و خرید این دوره آنلاین</span>
+              <BookOpen className="w-4 h-4" aria-hidden="true" />
+              <span>افزودن دوره به سبد خرید</span>
             </button>
           )}
+
 
           <div className="space-y-2 pt-2 text-xs text-[#59524A] border-t border-[#EAE2D5]/70">
             <div className="flex items-center gap-2">
@@ -220,7 +246,7 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
                           {lesson.isPreview || isEnrolled ? (
                             <Play className="w-4 h-4 text-[#87553B] shrink-0" />
                           ) : (
-                            <Lock className="w-4 h-4 text-stone-400 shrink-0" />
+                            <Lock className="w-4 h-4 text-stone-500 shrink-0" aria-label="قفل؛ پس از خرید دوره" />
                           )}
                           <span className="font-medium text-[#171614] truncate">
                             {lesson.title}
@@ -248,9 +274,7 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
                             >
                               پخش درس
                             </button>
-                          ) : (
-                            <span className="text-stone-400">قفل</span>
-                          )}
+                          ) : null}
                         </div>
                       </div>
                     ))}

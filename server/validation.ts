@@ -10,8 +10,8 @@ const money = z.number().finite().min(0).max(1_000_000_000);
 const percent = z.number().finite().min(0).max(100);
 const nonNegInt = z.number().int().min(0).max(1_000_000);
 const httpsOrInternalUrl = z.string().trim().refine(
-  (v) => /^https:\/\//.test(v) || v.startsWith('/uploads/'),
-  { message: 'آدرس باید https باشد یا مسیر داخلی /uploads/ باشد.' }
+  (v) => /^https:\/\//.test(v) || v.startsWith('/uploads/') || v.startsWith('/assets/'),
+  { message: 'آدرس باید https باشد یا مسیر داخلی سایت (/uploads/ یا /assets/) باشد.' }
 );
 
 
@@ -84,7 +84,7 @@ const moduleSchema = z.object({
   lessons: z.array(lessonSchema).max(100)
 });
 
-export const courseCreateSchema = z.object({
+const courseShape = {
   name: text(1, 200),
   slug: text(1, 200).optional(),
   kind: z.enum(['WORKSHOP', 'ONLINE']).optional(),
@@ -96,9 +96,39 @@ export const courseCreateSchema = z.object({
   level: z.enum(['مبتدی', 'متوسط', 'پیشرفته', 'جامع و حرفه‌ای']).optional(),
   durationMinutes: z.number().int().min(0).max(100_000).optional(),
   status: z.enum(['PUBLISHED', 'DRAFT', 'ARCHIVED']).optional(),
+  heroImage: httpsOrInternalUrl.optional(),
+  previewVideoUrl: httpsOrInternalUrl.optional(),
+  prerequisites: z.array(text(1, 200)).max(30).optional(),
+  targetAudience: z.array(text(1, 200)).max(30).optional(),
   modules: z.array(moduleSchema).max(100).default([])
-});
-export const courseUpdateSchema = courseCreateSchema.partial();
+};
+
+/** Cross-field rules shared by create and update. */
+export function courseRuleIssues(data: { status?: string; modules?: Array<{ lessons: Array<{ id?: string }> }> }): string[] {
+  const issues: string[] = [];
+  if (!data.modules) return issues;
+  const lessons = data.modules.flatMap((m) => m.lessons || []);
+  if (data.status === 'PUBLISHED' && lessons.length === 0) {
+    issues.push('دوره منتشرشده باید حداقل یک درس داشته باشد؛ ابتدا درس اضافه کنید یا وضعیت را «پیش‌نویس» بگذارید.');
+  }
+  const seen = new Set<string>();
+  for (const l of lessons) {
+    if (!l.id) continue;
+    if (seen.has(l.id)) {
+      issues.push(`شناسه درس «${l.id}» تکراری است؛ هر درس باید شناسه یکتا داشته باشد.`);
+      break;
+    }
+    seen.add(l.id);
+  }
+  return issues;
+}
+
+const applyCourseRules = (data: any, ctx: z.RefinementCtx) => {
+  for (const message of courseRuleIssues(data)) ctx.addIssue({ code: z.ZodIssueCode.custom, message });
+};
+
+export const courseCreateSchema = z.object(courseShape).superRefine(applyCourseRules);
+export const courseUpdateSchema = z.object(courseShape).partial().superRefine(applyCourseRules);
 
 export const couponCreateSchema = z.object({
   code: z.string().trim().min(3).max(30).regex(/^[A-Za-z0-9-]+$/, 'کد فقط می‌تواند شامل حروف انگلیسی، عدد و خط تیره باشد.'),

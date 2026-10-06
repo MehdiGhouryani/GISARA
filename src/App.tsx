@@ -128,6 +128,8 @@ const AdminDashboardPage = React.lazy(() =>
 // Security & Resilient Storage Utilities
 import { safeGetJSON, safeRemoveKeys, safeSetJSON } from './utils/safeStorage';
 import { normalizeCode } from './shared/digits';
+import { getAllLessons } from './utils/course';
+import { getCourseResume } from './utils/courseProgress';
 import type { PaymentResult } from './pages/AccountPage';
 import { isUserAdminAuthenticated, clearAdminAuthentication } from './utils/security';
 import { ApiClient } from './services/apiClient';
@@ -223,9 +225,15 @@ export default function App() {
   const [selectedTechnique, setSelectedTechnique] = useState<Technique | null>(null);
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  // Catalogue comes from the server (so admin edits and real prices show up); the bundled list only paints the
+  // first frame and covers offline use.
+  const [courses, setCourses] = useState<Course[]>(mockCourses);
+  // Admin-only: ALL courses (drafts/archived too, with lesson video URLs). Never shown to storefront visitors.
+  const [adminCourses, setAdminCourses] = useState<Course[]>([]);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [selectedCity, setSelectedCity] = useState<City | null>(null);
   const [selectedInstructor, setSelectedInstructor] = useState<Instructor | null>(null);
+  // '' = not chosen yet: the learner resumes where they stopped (see the 'learn' route).
   const [activeLessonId, setActiveLessonId] = useState<string>('');
 
   // Dynamic SEO & Title Management
@@ -394,6 +402,17 @@ export default function App() {
   // Course entitlement is owned by the server (derived from PAID orders). It is never
   // read from or written to browser storage - editing storage cannot grant access.
   const [enrolledCourseIds, setEnrolledCourseIds] = useState<string[]>([]);
+  // loading = unknown yet; the UI must not show "buy" or "locked" to someone who may already own the course.
+  const [enrollmentStatus, setEnrollmentStatus] = useState<'loading' | 'ready' | 'error'>('loading');
+  const refreshEnrollments = async () => {
+    setEnrollmentStatus('loading');
+    try {
+      setEnrolledCourseIds(await ApiClient.getEnrollments());
+      setEnrollmentStatus('ready');
+    } catch {
+      setEnrollmentStatus('error');
+    }
+  };
   const [manualEnrollments, setManualEnrollments] = useState<any[]>([]);
 
   const [auditLogs, setAuditLogs] = useState<AuditRecord[]>(() => {
@@ -451,7 +470,7 @@ export default function App() {
         setSelectedTechnique(found);
       }
     } else if (activeRoute === 'course-detail' && slug) {
-      const found = mockCourses.find((c) => c.slug === slug);
+      const found = courses.find((c) => c.slug === slug);
       if (found && (!selectedCourse || selectedCourse.id !== found.id)) {
         setSelectedCourse(found);
       }
@@ -485,9 +504,13 @@ export default function App() {
   };
 
   useEffect(() => {
+    setSelectedCourse((cur) => (cur ? courses.find((c) => c.id === cur.id) || cur : cur));
+  }, [courses]);
+
+  useEffect(() => {
     resolveEntitiesFromUrl();
     scheduleIdleRoutePrefetch(['styles', 'techniques', 'shop', 'courses', 'mag', 'cart', 'search']);
-  }, [styles, techniques, products, articles]);
+  }, [styles, techniques, products, articles, courses]);
 
   // Startup Fullstack Session & Live Data Sync
   useEffect(() => {
@@ -497,7 +520,7 @@ export default function App() {
         const meRes = await ApiClient.getCurrentUser();
         if (meRes && meRes.success && meRes.user) {
           ApiClient.markSession(true);
-          ApiClient.getEnrollments().then(setEnrolledCourseIds).catch(() => {});
+          refreshEnrollments();
           setIsLoggedIn(true);
           setUserMobile(meRes.user.mobile || '');
           setUserName(meRes.user.name || '');
@@ -515,12 +538,18 @@ export default function App() {
       setIsLoggedIn(false);
       setUserMobile('');
       setUserName('');
+      setEnrollmentStatus('ready'); // a guest owns nothing - that is a definite answer, not "unknown"
     }
 
     async function loadData() {
       try {
         const liveStyles = await ApiClient.getStyles(styles);
         setStyles(liveStyles);
+      } catch (e) {}
+
+      try {
+        const liveCourses = await ApiClient.getCourses(courses);
+        if (Array.isArray(liveCourses) && liveCourses.length > 0) setCourses(liveCourses);
       } catch (e) {}
 
       try {
@@ -627,6 +656,8 @@ export default function App() {
   // Fetch Admin Data whenever Admin Mode is explicitly activated
   useEffect(() => {
     if (isAdminMode) {
+      ApiClient.getAdminCourses().then((list) => { if (Array.isArray(list)) setAdminCourses(list); }).catch(() => {});
+
       ApiClient.getWorkshopRequests([]).then((liveRequests) => {
         if (liveRequests && liveRequests.length > 0) setUserRequests(liveRequests);
       }).catch(() => {});
@@ -1205,7 +1236,7 @@ export default function App() {
     // Access is never granted locally: re-read the server's entitlement list, which is
     // derived from the now-PAID order.
     if (newOrder.items.some((i) => i.type === 'ONLINE_COURSE')) {
-      ApiClient.getEnrollments().then(setEnrolledCourseIds).catch(() => {});
+      refreshEnrollments();
     }
 
     setCartItems([]);
@@ -1304,7 +1335,7 @@ export default function App() {
       });
       // Force refresh user enrollments if the current logged-in user is affected
       if (isLoggedIn && userMobile === userMobile) {
-        ApiClient.getEnrollments().then(setEnrolledCourseIds).catch(() => {});
+        refreshEnrollments();
       }
       logAudit('UPDATE_MANUAL_ENROLLMENT', 'ManualEnrollment', updated.id || 'N/A', `تغییر دسترسی دستی کاربر ${userMobile} به دوره ${courseName} به ${status === 'ACTIVE' ? 'فعال' : 'لغو شده'}`);
       addToast('success', 'وضعیت دسترسی دستی به‌روزرسانی شد', `دسترسی به دوره ${courseName} به ${status === 'ACTIVE' ? 'فعال' : 'لغو شده'} تغییر یافت.`);
@@ -1407,7 +1438,7 @@ export default function App() {
     setUserMobile(userData.mobile);
     setUserName(userData.name);
     setIsLoggedIn(true);
-    ApiClient.getEnrollments().then(setEnrolledCourseIds).catch(() => {});
+    refreshEnrollments();
 
     // Merge the guest cart with the cart saved on the server for this account (union, never overwrite);
     // the debounced sync effect then persists the merged result.
@@ -1420,6 +1451,39 @@ export default function App() {
     }
 
     addToast('success', 'ورود موفقیت‌آمیز بود', `خوش آمدید ${userData.name}`);
+  };
+
+  // Admin: create / update / delete academy courses, then refresh both the admin list and the public catalogue.
+  const refreshCourseLists = async () => {
+    try {
+      const [adminList, publicList] = await Promise.all([ApiClient.getAdminCourses(), ApiClient.getCourses(courses)]);
+      if (Array.isArray(adminList)) setAdminCourses(adminList);
+      if (Array.isArray(publicList)) setCourses(publicList);
+    } catch { /* the saved change is already on the server; lists refresh on next load */ }
+  };
+
+  const handleSaveCourse = async (payload: any, existingId?: string): Promise<{ success: boolean; message?: string }> => {
+    try {
+      if (existingId) await ApiClient.updateCourse(existingId, payload);
+      else await ApiClient.createCourse(payload);
+      await refreshCourseLists();
+      logAudit(existingId ? 'COURSE_UPDATED' : 'COURSE_CREATED', 'Course', existingId || payload.name, `${existingId ? 'ویرایش' : 'ایجاد'} دوره «${payload.name}»`);
+      addToast('success', existingId ? 'دوره ذخیره شد' : 'دوره جدید ساخته شد', payload.status === 'PUBLISHED' ? 'دوره هم‌اکنون در سایت نمایش داده می‌شود.' : 'دوره به‌صورت پیش‌نویس ذخیره شد.');
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, message: err?.message || 'ذخیره دوره انجام نشد.' };
+    }
+  };
+
+  const handleDeleteCourse = async (id: string): Promise<{ success: boolean; message?: string }> => {
+    try {
+      await ApiClient.deleteCourse(id);
+      await refreshCourseLists();
+      addToast('success', 'دوره حذف شد');
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, message: err?.message || 'حذف دوره انجام نشد.' };
+    }
   };
 
   // Re-open the bank session for an unpaid order ("پرداخت مجدد" in the account page).
@@ -1439,6 +1503,7 @@ export default function App() {
   const handleLogout = () => {
     ApiClient.logout();
     setEnrolledCourseIds([]);
+    setEnrollmentStatus('ready');
     setIsLoggedIn(false);
     setUserMobile('');
     setUserName('');
@@ -1463,7 +1528,7 @@ export default function App() {
           requests={userRequests}
           products={products}
           sessions={sessions}
-          courses={mockCourses}
+          courses={adminCourses.length > 0 ? adminCourses : courses}
           styles={styles}
           articles={articles}
           techniques={techniques}
@@ -1499,6 +1564,9 @@ export default function App() {
           onUpdateOrderStatus={handleUpdateOrderStatus}
           manualEnrollments={manualEnrollments}
           onUpdateManualEnrollment={handleUpdateManualEnrollment}
+          instructors={mockInstructors}
+          onSaveCourse={handleSaveCourse}
+          onDeleteCourse={handleDeleteCourse}
         />
         <ToastContainer toasts={toasts} onDismiss={removeToast} />
       </React.Suspense>
@@ -1584,7 +1652,7 @@ export default function App() {
             techniques={techniques}
             articles={articles}
             products={products}
-            courses={mockCourses}
+            courses={courses}
             onNavigate={handleNavigate}
             onSelectStyle={(s) => {
               setSelectedStyle(s);
@@ -1631,7 +1699,7 @@ export default function App() {
             styleItem={selectedStyle}
             allTechniques={techniques}
             allProducts={products}
-            allCourses={mockCourses}
+            allCourses={courses}
             allArticles={articles}
             onNavigateHome={() => handleNavigate('home')}
             onNavigateStyles={() => handleNavigate('styles')}
@@ -1675,7 +1743,7 @@ export default function App() {
             technique={selectedTechnique}
             allProducts={products}
             allStyles={styles}
-            allCourses={mockCourses}
+            allCourses={courses}
             onNavigateHome={() => handleNavigate('home')}
             onNavigateTechniques={() => handleNavigate('techniques')}
             onSelectStyle={(s) => {
@@ -1697,7 +1765,7 @@ export default function App() {
             selectedArticle={selectedArticle}
             allStyles={styles}
             allProducts={products}
-            allCourses={mockCourses}
+            allCourses={courses}
             onSelectArticle={(a) => setSelectedArticle(a)}
             onClearArticleSelection={() => setSelectedArticle(null)}
             onNavigateHome={() => handleNavigate('home')}
@@ -1750,7 +1818,7 @@ export default function App() {
         {/* 08/09. Courses Hub */}
         {currentRoute === 'courses' && (
           <CoursesPage
-            courses={mockCourses}
+            courses={courses}
             sessions={sessions}
             cities={mockCities}
             instructors={mockInstructors}
@@ -1774,12 +1842,14 @@ export default function App() {
             course={selectedCourse}
             instructor={mockInstructors.find((i) => i.id === selectedCourse.instructorId)}
             isEnrolled={enrolledCourseIds.includes(selectedCourse.id)}
+            enrollmentStatus={isLoggedIn || !authReady ? enrollmentStatus : 'ready'}
+            onRetryEnrollment={refreshEnrollments}
             onNavigateHome={() => handleNavigate('home')}
             onNavigateCourses={() => handleNavigate('courses')}
             onEnroll={handleEnrollCourse}
             onStartLearning={(c, lessonId) => {
               setSelectedCourse(c);
-              setActiveLessonId(lessonId);
+              setActiveLessonId(lessonId || '');
               handleNavigate('learn');
             }}
             currentUserName={userName}
@@ -1789,24 +1859,49 @@ export default function App() {
 
         {/* 09. Video Player & Progress */}
         {currentRoute === 'learn' && selectedCourse && (() => {
-          const lessonId = activeLessonId || selectedCourse.modules[0].lessons[0].id;
-          const lesson = selectedCourse.modules.flatMap((m) => m.lessons).find((l) => l.id === lessonId);
-          const canWatch = enrolledCourseIds.includes(selectedCourse.id) || !!lesson?.isPreview;
+          const lessons = getAllLessons(selectedCourse);
+          // No lesson chosen -> resume where this account stopped (or the first lesson).
+          const lessonId = activeLessonId || getCourseResume(userMobile, selectedCourse.id, lessons).resumeLessonId || '';
+          const lesson = lessons.find((l) => l.id === lessonId);
+          const owns = enrolledCourseIds.includes(selectedCourse.id);
+          const isPreview = !!lesson?.isPreview;
           // UX guard only - the server independently refuses paid lessons (GET /courses/:id/lessons/:id).
-          if (!canWatch) {
+          if (!owns && !isPreview && lessons.length > 0) {
+            if (isLoggedIn && enrollmentStatus === 'loading') {
+              return (
+                <div className="max-w-md mx-auto px-4 py-24 text-center space-y-3 text-xs text-[#5E5A54]" role="status">
+                  <div className="w-8 h-8 mx-auto rounded-full border-2 border-[#7A5E4D] border-t-transparent animate-spin" aria-hidden="true" />
+                  در حال بررسی دسترسی شما به دوره…
+                </div>
+              );
+            }
+            if (isLoggedIn && enrollmentStatus === 'error') {
+              return (
+                <div className="max-w-md mx-auto px-4 py-20 text-center space-y-4" role="alert">
+                  <h1 className="text-lg font-bold text-[#171614]">بررسی دسترسی انجام نشد</h1>
+                  <p className="text-sm text-[#5E5A54]">اتصال به سرور برقرار نشد. اگر این دوره را خریده‌اید، دوباره تلاش کنید.</p>
+                  <button type="button" onClick={refreshEnrollments} className="min-h-11 px-6 bg-[#171614] hover:bg-[#7A5E4D] text-white text-sm font-bold rounded-xl cursor-pointer transition-colors">تلاش مجدد</button>
+                </div>
+              );
+            }
             return (
               <div className="max-w-md mx-auto px-4 py-20 text-center space-y-4">
-                <h1 className="text-lg font-bold text-[#171614]">دسترسی به این درس فعال نیست</h1>
-                <p className="text-xs text-[#5E5A54]">
-                  برای مشاهدهٔ این درس باید دوره را خریداری کنید. پس از تأیید پرداخت، دسترسی به‌طور خودکار فعال می‌شود.
+                <h1 className="text-lg font-bold text-[#171614]">{isLoggedIn ? 'دسترسی به این درس فعال نیست' : 'برای دیدن این درس وارد شوید'}</h1>
+                <p className="text-sm text-[#5E5A54] leading-7">
+                  {isLoggedIn
+                    ? 'برای مشاهده این درس باید دوره را خریداری کنید. پس از تأیید پرداخت، دسترسی به‌طور خودکار فعال می‌شود.'
+                    : 'اگر این دوره را قبلاً خریده‌اید، با شماره موبایل خود وارد شوید تا دسترسی‌تان فعال شود.'}
                 </p>
-                <button
-                  type="button"
-                  onClick={() => handleNavigate('course-detail')}
-                  className="px-5 py-2.5 bg-[#171614] text-white text-xs font-bold rounded-xl cursor-pointer"
-                >
-                  بازگشت به صفحهٔ دوره
-                </button>
+                <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                  {!isLoggedIn && (
+                    <button type="button" onClick={() => setIsAuthModalOpen(true)} className="min-h-11 px-6 bg-[#171614] hover:bg-[#7A5E4D] text-white text-sm font-bold rounded-xl cursor-pointer transition-colors">
+                      ورود با شماره موبایل
+                    </button>
+                  )}
+                  <button type="button" onClick={() => handleNavigate('course-detail')} className="min-h-11 px-6 bg-[#EEE8DF] hover:bg-[#DED7CD] text-[#171614] text-sm font-bold rounded-xl cursor-pointer transition-colors">
+                    بازگشت به صفحه دوره
+                  </button>
+                </div>
               </div>
             );
           }
@@ -1814,11 +1909,12 @@ export default function App() {
             <LearnPlayerPage
               course={selectedCourse}
               activeLessonId={lessonId}
+              userMobile={userMobile}
               onNavigateHome={() => handleNavigate('home')}
               onNavigateCourse={() => handleNavigate('course-detail')}
               onSelectLesson={(lesId) => {
-                const target = selectedCourse.modules.flatMap((m) => m.lessons).find((l) => l.id === lesId);
-                if (target && !target.isPreview && !enrolledCourseIds.includes(selectedCourse.id)) {
+                const target = lessons.find((l) => l.id === lesId);
+                if (target && !target.isPreview && !owns) {
                   addToast('info', 'این درس پس از خرید دوره در دسترس است');
                   return;
                 }
@@ -1864,7 +1960,7 @@ export default function App() {
         {currentRoute === 'instructor-detail' && selectedInstructor && (
           <InstructorDetailPage
             instructor={selectedInstructor}
-            instructorCourses={mockCourses.filter((c) => c.instructorId === selectedInstructor.id)}
+            instructorCourses={courses.filter((c) => c.instructorId === selectedInstructor.id)}
             instructorSessions={sessions.filter((s) => s.instructorId === selectedInstructor.id)}
             onNavigateHome={() => handleNavigate('home')}
             onNavigateCourses={() => handleNavigate('courses')}
@@ -1963,13 +2059,13 @@ export default function App() {
             userAvatar={userAvatar}
             onUpdateProfile={handleUpdateProfile}
             orders={userOrders}
-            enrolledCourses={mockCourses.filter((c) => enrolledCourseIds.includes(c.id))}
+            enrolledCourses={courses.filter((c) => enrolledCourseIds.includes(c.id))}
             requests={userRequests}
             certificates={certificates}
             onNavigateHome={() => handleNavigate('home')}
             onStartCourse={(c, lessonId) => {
               setSelectedCourse(c);
-              setActiveLessonId(lessonId || c.modules[0].lessons[0].id);
+              setActiveLessonId(lessonId || '');
               handleNavigate('learn');
             }}
             onAcceptProposal={handleAcceptProposal}
@@ -2035,7 +2131,7 @@ export default function App() {
             allTechniques={techniques}
             allArticles={articles}
             allProducts={products}
-            allCourses={mockCourses}
+            allCourses={courses}
             onNavigateHome={() => handleNavigate('home')}
             onSelectStyle={(s) => {
               setSelectedStyle(s);
@@ -2119,7 +2215,7 @@ export default function App() {
             styles={styles}
             products={products}
             techniques={techniques}
-            courses={mockCourses}
+            courses={courses}
             onSelectStyle={(s) => {
               setSelectedStyle(s);
               handleNavigate('style-detail');

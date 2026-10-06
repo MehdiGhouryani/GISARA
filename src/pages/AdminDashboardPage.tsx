@@ -17,6 +17,7 @@ import {
   WorkshopSession,
   UserOrder,
   Course,
+  Instructor,
   StyleModel,
   Article,
   Technique,
@@ -31,6 +32,7 @@ import { ExporterService } from '../utils/exporter';
 import { AnalyticsConsole } from '../components/admin/AnalyticsConsole';
 import { ContentCmsManager } from '../components/admin/ContentCmsManager';
 import { StoreManager } from '../components/admin/StoreManager';
+import { CoursesManager } from '../components/admin/CoursesManager';
 import { OrdersManager } from '../components/admin/OrdersManager';
 import { BackendDiagnosticTool } from '../components/admin/BackendDiagnosticTool';
 import { SystemSettingsManager } from '../components/admin/SystemSettingsManager';
@@ -65,6 +67,7 @@ import {
   AlertTriangle,
   Settings,
   CreditCard,
+  GraduationCap,
 } from 'lucide-react';
 
 export interface AuditRecord {
@@ -132,9 +135,12 @@ interface AdminDashboardPageProps {
   onToggleSessionStatus: (sessionId: string) => void;
   manualEnrollments?: any[];
   onUpdateManualEnrollment?: (userMobile: string, courseId: string, courseName: string, status: 'ACTIVE' | 'REVOKED') => Promise<void>;
+  instructors?: Instructor[];
+  onSaveCourse?: (course: any, existingId?: string) => Promise<{ success: boolean; message?: string }>;
+  onDeleteCourse?: (id: string) => Promise<{ success: boolean; message?: string }>;
 }
 
-export type AdminSection = 'OVERVIEW' | 'CONTENT' | 'STORE' | 'ORDERS' | 'ANALYTICS' | 'AUDIT' | 'DIAGNOSTICS' | 'SETTINGS';
+export type AdminSection = 'OVERVIEW' | 'CONTENT' | 'STORE' | 'COURSES' | 'ORDERS' | 'ANALYTICS' | 'AUDIT' | 'DIAGNOSTICS' | 'SETTINGS';
 
 export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
   orders,
@@ -177,6 +183,9 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
   onToggleSessionStatus,
   manualEnrollments = [],
   onUpdateManualEnrollment,
+  instructors = [],
+  onSaveCourse,
+  onDeleteCourse,
 }) => {
   // Main Section Navigation
   const [activeSection, setActiveSection] = useState<AdminSection>('OVERVIEW');
@@ -324,6 +333,19 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
 
           <button
             type="button"
+            onClick={() => setActiveSection('COURSES')}
+            className={`px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap cursor-pointer min-h-[40px] ${
+              activeSection === 'COURSES'
+                ? 'bg-amber-600 text-white shadow-xs'
+                : 'text-stone-300 bg-stone-900/60 hover:bg-stone-800'
+            }`}
+          >
+            <GraduationCap className="w-3.5 h-3.5 text-amber-400" />
+            <span>دوره‌ها</span>
+          </button>
+
+          <button
+            type="button"
             onClick={() => {
               setActiveSection('ORDERS');
               setOrdersSubTab('ORDERS');
@@ -430,6 +452,21 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
 
             <button
               type="button"
+              onClick={() => setActiveSection('COURSES')}
+              className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-bold transition-all text-right cursor-pointer ${
+                activeSection === 'COURSES'
+                  ? 'bg-amber-600 text-white shadow-md shadow-amber-600/10'
+                  : 'text-stone-300 hover:bg-stone-800/60 hover:text-white'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <GraduationCap className="w-4.5 h-4.5 text-amber-500" />
+                <span>۳. آکادمی و دوره‌ها</span>
+              </div>
+            </button>
+
+            <button
+              type="button"
               onClick={() => {
                 setActiveSection('ORDERS');
                 setOrdersSubTab('ORDERS');
@@ -442,7 +479,7 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
             >
               <div className="flex items-center gap-3">
                 <PackageCheck className="w-4.5 h-4.5 text-amber-500" />
-                <span>۳. سفارشات و کارگاه‌ها</span>
+                <span>۴. سفارشات و کارگاه‌ها</span>
               </div>
               {openRequestsCount > 0 && (
                 <span className="w-5 h-5 rounded-full bg-rose-600 text-white text-[10px] font-bold flex items-center justify-center tabular-nums">
@@ -465,7 +502,7 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
             >
               <div className="flex items-center gap-3">
                 <Settings className="w-4.5 h-4.5 text-amber-500" />
-                <span>۴. تنظیمات و ابزار سیستم</span>
+                <span>۵. تنظیمات و ابزار سیستم</span>
               </div>
             </button>
           </div>
@@ -794,6 +831,11 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
                 onSubTabChange={(tab) => setStoreSubTab(tab)}
               />
             </div>
+          )}
+
+          {/* SECTION: ACADEMY COURSES (آکادمی و دوره‌ها) */}
+          {activeSection === 'COURSES' && onSaveCourse && onDeleteCourse && (
+            <CoursesManager courses={courses} instructors={instructors} onSaveCourse={onSaveCourse} onDeleteCourse={onDeleteCourse} />
           )}
 
           {/* SECTION 4: ORDER MANAGEMENT (مدیریت سفارش‌ها) */}

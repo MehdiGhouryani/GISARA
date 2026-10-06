@@ -1,476 +1,385 @@
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
- * 
- * LearnPlayerPage - Enhanced Interactive LMS Video Environment
- * Video playback controls, speed selector, personal notes with persistence & lesson resources
+ *
+ * LearnPlayerPage - lesson player.
+ * The lesson (incl. its media URL) is fetched from the server, which refuses paid lessons to anyone who has not
+ * bought the course. Lessons without a recorded video show an honest "not uploaded yet" state - there is no
+ * simulated playback. Progress/notes are stored per account and per course (see utils/courseProgress.ts).
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Course } from '../types/domain';
 import { Breadcrumb } from '../components/common/Breadcrumb';
-import {
-  Play,
-  Pause,
-  CheckCircle2,
-  ChevronRight,
-  ChevronLeft,
-  ArrowRight,
-  BookOpen,
-  Volume2,
-  Maximize2,
-  Settings,
-  Edit3,
-  Save,
-  Wrench,
-  RotateCcw,
-  Sparkles,
-} from 'lucide-react';
+import { CheckCircle2, ChevronRight, ChevronLeft, ArrowRight, Play, Video, Loader2, Lock, RotateCcw, Check } from 'lucide-react';
+import { ApiClient } from '../services/apiClient';
+import { getAllLessons } from '../utils/course';
+import { CourseProgress, loadNotes, loadProgress, progressPercent, saveNotes, saveProgress } from '../utils/courseProgress';
 
 interface LearnPlayerPageProps {
   course: Course;
   activeLessonId: string;
+  /** Account mobile: scopes saved progress and notes to this user. */
+  userMobile: string;
   onNavigateHome: () => void;
   onNavigateCourse: () => void;
   onSelectLesson: (lessonId: string) => void;
 }
 
+type LessonState =
+  | { status: 'loading' }
+  | { status: 'ready'; videoUrl?: string }
+  | { status: 'error'; kind: 'auth' | 'forbidden' | 'notfound' | 'network'; message: string };
+
+const AUTO_COMPLETE_RATIO = 0.9;
+const SAVE_POSITION_EVERY_SEC = 5;
+
 export const LearnPlayerPage: React.FC<LearnPlayerPageProps> = ({
   course,
   activeLessonId,
+  userMobile,
   onNavigateHome,
   onNavigateCourse,
   onSelectLesson,
 }) => {
-  const [completedLessons, setCompletedLessons] = useState<Record<string, boolean>>(() => {
-    const saved = localStorage.getItem(`course_progress_${course.id}`);
-    return saved ? JSON.parse(saved) : {};
-  });
-
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [playbackSpeed, setPlaybackSpeed] = useState<number>(1);
-  const [currentTimeSec, setCurrentTimeSec] = useState(0);
-  const [activeTab, setActiveTab] = useState<'CURRICULUM' | 'NOTES' | 'RESOURCES'>('CURRICULUM');
-  const [lessonNotes, setLessonNotes] = useState<Record<string, string>>(() => {
-    const saved = localStorage.getItem(`course_notes_${course.id}`);
-    return saved ? JSON.parse(saved) : {};
-  });
-  const [currentNote, setCurrentNote] = useState('');
-  const [isNoteSaved, setIsNoteSaved] = useState(false);
-
-  const allLessons = course.modules.flatMap((m) => m.lessons);
-  const currentLessonIndex = allLessons.findIndex((l) => l.id === activeLessonId);
-  const currentLesson = allLessons[currentLessonIndex] || allLessons[0];
-
+  const allLessons = useMemo(() => getAllLessons(course), [course]);
+  const currentLessonIndex = Math.max(0, allLessons.findIndex((l) => l.id === activeLessonId));
+  const currentLesson = allLessons[currentLessonIndex];
   const prevLesson = currentLessonIndex > 0 ? allLessons[currentLessonIndex - 1] : null;
   const nextLesson = currentLessonIndex < allLessons.length - 1 ? allLessons[currentLessonIndex + 1] : null;
 
-  const totalDurationSec = (currentLesson?.durationMinutes || 15) * 60;
+  const [progress, setProgress] = useState<CourseProgress>(() => loadProgress(userMobile, course.id, allLessons));
+  const [notes, setNotes] = useState<Record<string, string>>(() => loadNotes(userMobile, course.id));
+  const [noteDraft, setNoteDraft] = useState('');
+  const [noteStatus, setNoteStatus] = useState<'idle' | 'saved'>('idle');
+  const [activeTab, setActiveTab] = useState<'CURRICULUM' | 'NOTES'>('CURRICULUM');
+  const [lessonState, setLessonState] = useState<LessonState>({ status: 'loading' });
+  const [reloadToken, setReloadToken] = useState(0);
 
-  // Sync progress
-  useEffect(() => {
-    localStorage.setItem(`course_progress_${course.id}`, JSON.stringify(completedLessons));
-  }, [completedLessons, course.id]);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const lastSavedSecRef = useRef(0);
 
-  // Sync notes
-  useEffect(() => {
-    setCurrentNote(lessonNotes[activeLessonId] || '');
-  }, [activeLessonId, lessonNotes]);
+  const percent = progressPercent(progress, allLessons);
+  const completedCount = allLessons.filter((l) => progress.completed[l.id]).length;
 
-  // Video timer simulation
+  // Persist progress whenever it changes.
   useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (isPlaying) {
-      interval = setInterval(() => {
-        setCurrentTimeSec((prev) => {
-          if (prev >= totalDurationSec) {
-            setIsPlaying(false);
-            return totalDurationSec;
-          }
-          return prev + playbackSpeed;
-        });
-      }, 1000);
+    saveProgress(userMobile, course.id, progress);
+  }, [progress, userMobile, course.id]);
+
+  // Remember the lesson being watched so "continue" resumes there.
+  useEffect(() => {
+    if (currentLesson && progress.lastLessonId !== currentLesson.id) {
+      setProgress((p) => ({ ...p, lastLessonId: currentLesson.id }));
     }
-    return () => clearInterval(interval);
-  }, [isPlaying, playbackSpeed, totalDurationSec]);
+  }, [currentLesson?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const toggleCompleted = (lessonId: string) => {
-    setCompletedLessons((prev) => {
-      const next = { ...prev, [lessonId]: !prev[lessonId] };
-      return next;
+  // Fetch the lesson from the server (authoritative access check + media URL).
+  useEffect(() => {
+    if (!currentLesson) return;
+    let cancelled = false;
+    setLessonState({ status: 'loading' });
+    lastSavedSecRef.current = 0;
+    ApiClient.getLesson(course.id, currentLesson.id)
+      .then((res: any) => {
+        if (cancelled) return;
+        setLessonState({ status: 'ready', videoUrl: res?.lesson?.videoUrl || undefined });
+      })
+      .catch((err: any) => {
+        if (cancelled) return;
+        const status = err?.status;
+        if (status === 401) setLessonState({ status: 'error', kind: 'auth', message: 'برای دیدن این درس ابتدا وارد حساب کاربری خود شوید.' });
+        else if (status === 403) setLessonState({ status: 'error', kind: 'forbidden', message: 'برای دیدن این درس باید دوره را خریداری کنید.' });
+        else if (status === 404) setLessonState({ status: 'error', kind: 'notfound', message: 'این درس دیگر در دسترس نیست.' });
+        else setLessonState({ status: 'error', kind: 'network', message: 'دریافت درس با مشکل روبه‌رو شد. اتصال اینترنت را بررسی و دوباره تلاش کنید.' });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [course.id, currentLesson?.id, reloadToken]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Notes: draft follows the lesson; saved automatically shortly after typing stops.
+  useEffect(() => {
+    setNoteDraft(notes[activeLessonId] || '');
+    setNoteStatus('idle');
+  }, [activeLessonId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!currentLesson) return;
+    if ((notes[currentLesson.id] || '') === noteDraft) return;
+    const t = window.setTimeout(() => {
+      const next = { ...notes, [currentLesson.id]: noteDraft };
+      if (!noteDraft.trim()) delete next[currentLesson.id];
+      setNotes(next);
+      saveNotes(userMobile, course.id, next);
+      setNoteStatus('saved');
+    }, 800);
+    return () => window.clearTimeout(t);
+  }, [noteDraft]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const markCompleted = useCallback((lessonId: string, done: boolean) => {
+    setProgress((p) => {
+      const completed = { ...p.completed };
+      if (done) completed[lessonId] = true;
+      else delete completed[lessonId];
+      return { ...p, completed };
     });
+  }, []);
+
+  // Resume where the viewer stopped.
+  const handleLoadedMetadata = () => {
+    const v = videoRef.current;
+    const saved = currentLesson ? progress.positions[currentLesson.id] : 0;
+    if (v && saved && saved > 3 && saved < v.duration - 3) v.currentTime = saved;
   };
 
-  const handleSaveNote = () => {
-    setLessonNotes((prev) => {
-      const updated = { ...prev, [activeLessonId]: currentNote };
-      localStorage.setItem(`course_notes_${course.id}`, JSON.stringify(updated));
-      return updated;
-    });
-    setIsNoteSaved(true);
-    setTimeout(() => setIsNoteSaved(false), 2000);
+  const handleTimeUpdate = () => {
+    const v = videoRef.current;
+    if (!v || !currentLesson || !v.duration || !Number.isFinite(v.duration)) return;
+    if (Math.abs(v.currentTime - lastSavedSecRef.current) >= SAVE_POSITION_EVERY_SEC) {
+      lastSavedSecRef.current = v.currentTime;
+      setProgress((p) => ({ ...p, positions: { ...p.positions, [currentLesson.id]: Math.floor(v.currentTime) } }));
+    }
+    if (v.currentTime / v.duration >= AUTO_COMPLETE_RATIO && !progress.completed[currentLesson.id]) {
+      markCompleted(currentLesson.id, true);
+    }
   };
 
-  const completedCount = Object.values(completedLessons).filter(Boolean).length;
-  const progressPercent = Math.round((completedCount / (allLessons.length || 1)) * 100);
-
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  const goTo = (lessonId: string) => {
+    onSelectLesson(lessonId);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  const handleTabKeys = (e: React.KeyboardEvent) => {
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+      e.preventDefault();
+      const next = activeTab === 'CURRICULUM' ? 'NOTES' : 'CURRICULUM';
+      setActiveTab(next);
+      document.getElementById(`learn-tab-${next}`)?.focus();
+    }
+  };
+
+  // COURSE WITHOUT LESSONS ----------------------------------------------------
+  if (!currentLesson) {
+    return (
+      <div className="max-w-md mx-auto px-4 py-20 text-center space-y-4">
+        <h1 className="text-lg font-bold text-[#171614]">محتوای این دوره هنوز آماده نشده است</h1>
+        <p className="text-sm text-[#5E5A54]">درس‌ها به‌زودی اضافه می‌شوند. پس از انتشار، دسترسی شما همین‌جا فعال خواهد بود.</p>
+        <button type="button" onClick={onNavigateCourse} className="min-h-11 px-6 py-2.5 bg-[#171614] hover:bg-[#7A5E4D] text-white text-sm font-bold rounded-xl cursor-pointer transition-colors">
+          بازگشت به معرفی دوره
+        </button>
+      </div>
+    );
+  }
+
+  const isDone = !!progress.completed[currentLesson.id];
+  const hasVideo = lessonState.status === 'ready' && !!lessonState.videoUrl;
 
   return (
     <div className="max-w-[1240px] mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
-      {/* Top Bar with Back Link */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <Breadcrumb
           items={[
             { label: 'صفحه اصلی', onClick: onNavigateHome },
             { label: course.name, onClick: onNavigateCourse },
-            { label: currentLesson?.title || 'پخش درس', isCurrent: true },
+            { label: currentLesson.title, isCurrent: true },
           ]}
         />
 
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 text-xs text-[#5E5A54]">
-            <span>پیشرفت دوره:</span>
-            <span className="font-bold text-[#2F6B51] tabular-nums">{progressPercent}٪</span>
-            <div className="w-24 h-2 bg-[#EEE8DF] rounded-full overflow-hidden">
-              <div
-                className="h-full bg-[#2F6B51] rounded-full transition-all duration-300"
-                style={{ width: `${progressPercent}%` }}
-              />
-            </div>
+        <div className="flex items-center gap-2 text-xs text-[#5E5A54]" aria-label="پیشرفت دوره">
+          <span>پیشرفت دوره:</span>
+          <span className="font-bold text-[#2F6B51] tabular-nums">{percent.toLocaleString('fa-IR')}٪</span>
+          <div className="w-24 h-2 bg-[#EEE8DF] rounded-full overflow-hidden" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={percent}>
+            <div className="h-full bg-[#2F6B51] rounded-full transition-all duration-300" style={{ width: `${percent}%` }} />
           </div>
-
-          <button
-            type="button"
-            onClick={onNavigateCourse}
-            className="text-xs font-semibold text-[#7A5E4D] hover:underline flex items-center gap-1 cursor-pointer"
-          >
-            <ArrowRight className="w-3.5 h-3.5" />
-            <span>معرفی دوره</span>
-          </button>
+          <span className="tabular-nums">({completedCount.toLocaleString('fa-IR')} از {allLessons.length.toLocaleString('fa-IR')} درس)</span>
         </div>
       </div>
 
-      {/* Main Player & Sidebar Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Left (Player 8 cols in RTL) */}
         <div className="lg:col-span-8 space-y-4">
-          {/* Interactive Simulated Video Player */}
-          <div className="relative aspect-[16/9] bg-black rounded-2xl overflow-hidden shadow-2xl border border-stone-800 flex flex-col justify-between group select-none">
-            {/* Ambient Dark Poster & Header */}
-            <div className="absolute inset-0 bg-radial from-stone-900/80 via-black to-black opacity-95" />
-
-            {/* Top Bar overlay in video */}
-            <div className="relative z-10 p-4 sm:p-5 flex items-center justify-between text-white/90 bg-gradient-to-b from-black/80 to-transparent">
-              <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="text-xs font-medium truncate max-w-sm">{currentLesson?.title}</span>
+          {/* Player area */}
+          <div className="relative aspect-video bg-black rounded-2xl overflow-hidden shadow-xl border border-stone-800">
+            {lessonState.status === 'loading' && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-stone-300 text-xs" role="status">
+                <Loader2 className="w-7 h-7 animate-spin" aria-hidden="true" />
+                در حال آماده‌سازی درس…
               </div>
-              <span className="text-[11px] text-[#A98570] font-semibold bg-white/10 px-2 py-0.5 rounded-sm">
-                کیفیت 1080p Full HD
-              </span>
-            </div>
+            )}
 
-            {/* Center Play Button Overlay */}
-            <div className="relative z-10 flex flex-col items-center justify-center my-auto text-center p-4">
-              <button
-                type="button"
-                onClick={() => setIsPlaying(!isPlaying)}
-                className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-[#7A5E4D] hover:bg-[#946F59] text-white flex items-center justify-center mx-auto transition-transform hover:scale-105 shadow-2xl cursor-pointer"
-                aria-label={isPlaying ? 'توقف' : 'پخش'}
-              >
-                {isPlaying ? (
-                  <Pause className="w-7 h-7 sm:w-8 sm:h-8 fill-current" />
-                ) : (
-                  <Play className="w-7 h-7 sm:w-8 sm:h-8 fill-current ml-1" />
+            {lessonState.status === 'error' && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-center p-6 text-stone-200" role="alert">
+                <Lock className="w-8 h-8 text-[#A98570]" aria-hidden="true" />
+                <p className="text-sm max-w-sm leading-7">{lessonState.message}</p>
+                {lessonState.kind === 'network' && (
+                  <button type="button" onClick={() => setReloadToken((n) => n + 1)} className="min-h-10 px-4 bg-white/10 hover:bg-white/20 rounded-lg text-xs font-semibold inline-flex items-center gap-2 cursor-pointer">
+                    <RotateCcw className="w-4 h-4" aria-hidden="true" />
+                    تلاش مجدد
+                  </button>
                 )}
-              </button>
-              <div className="mt-3 text-xs text-stone-300 font-medium">
-                {isPlaying ? 'در حال پخش ویدیو آموزشی' : 'برای شروع پخش کلیک کنید'}
+                {lessonState.kind === 'forbidden' && (
+                  <button type="button" onClick={onNavigateCourse} className="min-h-10 px-4 bg-[#7A5E4D] hover:bg-[#946F59] rounded-lg text-xs font-bold cursor-pointer">
+                    مشاهده و خرید دوره
+                  </button>
+                )}
               </div>
-            </div>
+            )}
 
-            {/* Bottom Controls Bar */}
-            <div className="relative z-10 bg-gradient-to-t from-black via-black/90 to-transparent p-4 sm:p-5 space-y-2.5">
-              {/* Scrubbing timeline bar */}
-              <div
-                className="w-full h-1.5 hover:h-2.5 bg-stone-700/80 rounded-full overflow-hidden cursor-pointer transition-all"
-                onClick={(e) => {
-                  const rect = e.currentTarget.getBoundingClientRect();
-                  const pos = (e.clientX - rect.left) / rect.width;
-                  // In RTL: adjust pos
-                  const normalizedPos = 1 - pos;
-                  setCurrentTimeSec(normalizedPos * totalDurationSec);
-                }}
+            {lessonState.status === 'ready' && hasVideo && (
+              <video
+                key={currentLesson.id}
+                ref={videoRef}
+                className="absolute inset-0 w-full h-full bg-black"
+                src={lessonState.videoUrl}
+                poster={course.heroImage}
+                controls
+                playsInline
+                preload="metadata"
+                controlsList="nodownload"
+                onLoadedMetadata={handleLoadedMetadata}
+                onTimeUpdate={handleTimeUpdate}
+                onEnded={() => markCompleted(currentLesson.id, true)}
               >
-                <div
-                  className="h-full bg-[#7A5E4D] rounded-full"
-                  style={{ width: `${(currentTimeSec / totalDurationSec) * 100}%` }}
-                />
+                مرورگر شما پخش ویدیو را پشتیبانی نمی‌کند.
+              </video>
+            )}
+
+            {lessonState.status === 'ready' && !hasVideo && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-center p-6 text-stone-200">
+                <Video className="w-9 h-9 text-[#A98570]" aria-hidden="true" />
+                <p className="text-sm font-semibold">ویدیوی این درس هنوز بارگذاری نشده است</p>
+                <p className="text-xs text-stone-400 max-w-sm leading-6">به‌محض انتشار، همین‌جا قابل مشاهده می‌شود و نیازی به خرید دوباره نیست.</p>
               </div>
-
-              <div className="flex items-center justify-between text-xs text-white">
-                <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setIsPlaying(!isPlaying)}
-                    className="p-1 hover:text-[#A98570] transition-colors cursor-pointer"
-                  >
-                    {isPlaying ? <Pause className="w-4 h-4 fill-current" /> : <Play className="w-4 h-4 fill-current" />}
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setCurrentTimeSec(0)}
-                    className="p-1 hover:text-[#A98570] transition-colors cursor-pointer"
-                    title="پخش مجدد از ابتدا"
-                  >
-                    <RotateCcw className="w-3.5 h-3.5" />
-                  </button>
-
-                  <div className="flex items-center gap-1.5 tabular-nums text-stone-300">
-                    <span>{formatTime(currentTimeSec)}</span>
-                    <span>/</span>
-                    <span>{formatTime(totalDurationSec)}</span>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  {/* Speed Selector */}
-                  <div className="flex items-center gap-1 bg-stone-800/80 px-2 py-0.5 rounded-md text-[11px]">
-                    <span className="text-stone-400">سرعت:</span>
-                    {[1, 1.25, 1.5].map((spd) => (
-                      <button
-                        key={spd}
-                        type="button"
-                        onClick={() => setPlaybackSpeed(spd)}
-                        className={`px-1.5 rounded-sm transition-colors cursor-pointer ${
-                          playbackSpeed === spd ? 'bg-[#7A5E4D] text-white font-bold' : 'text-stone-300 hover:text-white'
-                        }`}
-                      >
-                        {spd}x
-                      </button>
-                    ))}
-                  </div>
-
-                  <Volume2 className="w-4 h-4 text-stone-300 cursor-pointer hover:text-white" />
-                  <Maximize2 className="w-4 h-4 text-stone-300 cursor-pointer hover:text-white" />
-                </div>
-              </div>
-            </div>
+            )}
           </div>
 
-          {/* Action Row & Navigation */}
-          <div className="p-4 sm:p-5 bg-[#FFFCF8] rounded-xl border border-[#DED7CD] flex flex-wrap items-center justify-between gap-4">
+          {/* Lesson header + navigation */}
+          <div className="p-4 sm:p-5 bg-[#FFFCF8] rounded-xl border border-[#DED7CD] space-y-4">
             <div>
-              <h1 className="text-base sm:text-lg font-bold text-[#171614]">{currentLesson?.title}</h1>
-              <div className="text-xs text-[#5E5A54] mt-0.5 tabular-nums">
-                مدت درس: {currentLesson?.durationMinutes} دقیقه · فرمت HD
-              </div>
+              <h1 className="text-base sm:text-lg font-bold text-[#171614]">{currentLesson.title}</h1>
+              <div className="text-xs text-[#5E5A54] mt-0.5 tabular-nums">مدت درس: {currentLesson.durationMinutes.toLocaleString('fa-IR')} دقیقه</div>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
+              {/* Manual toggle: the only way to complete a lesson that has no video, and a correction for the rest */}
               <button
                 type="button"
-                onClick={() => toggleCompleted(currentLesson.id)}
-                className={`px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 transition-colors cursor-pointer ${
-                  completedLessons[currentLesson.id]
-                    ? 'bg-[#2F6B51] text-white'
-                    : 'bg-[#EEE8DF] text-[#171614] hover:bg-[#DED7CD]'
+                onClick={() => markCompleted(currentLesson.id, !isDone)}
+                aria-pressed={isDone}
+                className={`min-h-11 px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 transition-colors cursor-pointer ${
+                  isDone ? 'bg-[#2F6B51] text-white' : 'bg-[#EEE8DF] text-[#171614] hover:bg-[#DED7CD]'
                 }`}
               >
-                <CheckCircle2 className="w-4 h-4" />
-                <span>
-                  {completedLessons[currentLesson.id] ? 'این درس تکمیل شد' : 'علامت‌گذاری به عنوان مشاهده‌شده'}
-                </span>
+                <CheckCircle2 className="w-4 h-4" aria-hidden="true" />
+                <span>{isDone ? 'دیده‌شده (برای لغو بزنید)' : 'این درس را دیدم'}</span>
               </button>
 
-              {prevLesson && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setCurrentTimeSec(0);
-                    onSelectLesson(prevLesson.id);
-                  }}
-                  className="px-3 py-2 bg-[#FFFCF8] border border-[#DED7CD] hover:bg-[#EEE8DF] text-xs font-semibold rounded-xl flex items-center gap-1 cursor-pointer"
-                >
-                  <ChevronRight className="w-4 h-4" />
-                  <span>درس قبل</span>
-                </button>
-              )}
-
-              {nextLesson && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setCurrentTimeSec(0);
-                    onSelectLesson(nextLesson.id);
-                  }}
-                  className="px-3.5 py-2 bg-[#171614] hover:bg-[#7A5E4D] text-white text-xs font-semibold rounded-xl flex items-center gap-1 cursor-pointer transition-colors"
-                >
-                  <span>درس بعدی</span>
-                  <ChevronLeft className="w-4 h-4" />
-                </button>
-              )}
+              <div className="flex items-center gap-2 ms-auto">
+                {prevLesson && (
+                  <button type="button" onClick={() => goTo(prevLesson.id)} className="min-h-11 px-3.5 bg-[#FFFCF8] border border-[#DED7CD] hover:bg-[#EEE8DF] text-xs font-semibold rounded-xl flex items-center gap-1 cursor-pointer">
+                    <ChevronRight className="w-4 h-4" aria-hidden="true" />
+                    <span>درس قبل</span>
+                  </button>
+                )}
+                {nextLesson && (
+                  <button type="button" onClick={() => goTo(nextLesson.id)} className="min-h-11 px-4 bg-[#171614] hover:bg-[#7A5E4D] text-white text-xs font-semibold rounded-xl flex items-center gap-1 cursor-pointer transition-colors">
+                    <span>درس بعدی</span>
+                    <ChevronLeft className="w-4 h-4" aria-hidden="true" />
+                  </button>
+                )}
+              </div>
             </div>
           </div>
+
+          <button type="button" onClick={onNavigateCourse} className="text-xs font-semibold text-[#7A5E4D] hover:underline inline-flex items-center gap-1 cursor-pointer min-h-9">
+            <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+            <span>بازگشت به معرفی دوره</span>
+          </button>
         </div>
 
-        {/* Sidebar (4 cols) with Curriculum / Personal Notes / Resources */}
-        <aside className="lg:col-span-4 bg-[#FFFCF8] rounded-2xl border border-[#DED7CD] shadow-xs overflow-hidden flex flex-col min-h-[500px]">
-          {/* Tabs */}
-          <div className="flex border-b border-[#DED7CD] bg-[#EEE8DF]/40 text-xs">
-            <button
-              type="button"
-              onClick={() => setActiveTab('CURRICULUM')}
-              className={`flex-1 py-3 px-2 font-bold transition-colors text-center cursor-pointer ${
-                activeTab === 'CURRICULUM'
-                  ? 'bg-[#FFFCF8] text-[#171614] border-b-2 border-[#7A5E4D]'
-                  : 'text-[#5E5A54] hover:text-[#171614]'
-              }`}
-            >
-              سرفصل‌ها
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('NOTES')}
-              className={`flex-1 py-3 px-2 font-bold transition-colors text-center cursor-pointer ${
-                activeTab === 'NOTES'
-                  ? 'bg-[#FFFCF8] text-[#171614] border-b-2 border-[#7A5E4D]'
-                  : 'text-[#5E5A54] hover:text-[#171614]'
-              }`}
-            >
-              یادداشت‌های من
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('RESOURCES')}
-              className={`flex-1 py-3 px-2 font-bold transition-colors text-center cursor-pointer ${
-                activeTab === 'RESOURCES'
-                  ? 'bg-[#FFFCF8] text-[#171614] border-b-2 border-[#7A5E4D]'
-                  : 'text-[#5E5A54] hover:text-[#171614]'
-              }`}
-            >
-              ابزار و منابع
-            </button>
+        {/* Sidebar */}
+        <aside className="lg:col-span-4 bg-[#FFFCF8] rounded-2xl border border-[#DED7CD] shadow-xs overflow-hidden flex flex-col lg:min-h-[480px]">
+          <div role="tablist" aria-label="بخش‌های درس" onKeyDown={handleTabKeys} className="flex border-b border-[#DED7CD] bg-[#EEE8DF]/40 text-xs">
+            {([['CURRICULUM', 'سرفصل‌ها'], ['NOTES', 'یادداشت‌های من']] as const).map(([id, label]) => (
+              <button
+                key={id}
+                id={`learn-tab-${id}`}
+                type="button"
+                role="tab"
+                aria-selected={activeTab === id}
+                aria-controls={`learn-panel-${id}`}
+                tabIndex={activeTab === id ? 0 : -1}
+                onClick={() => setActiveTab(id)}
+                className={`flex-1 min-h-12 px-2 font-bold transition-colors text-center cursor-pointer ${
+                  activeTab === id ? 'bg-[#FFFCF8] text-[#171614] border-b-2 border-[#7A5E4D]' : 'text-[#5E5A54] hover:text-[#171614]'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
           </div>
 
-          {/* TAB 1: CURRICULUM */}
           {activeTab === 'CURRICULUM' && (
-            <div className="p-4 space-y-4 overflow-y-auto max-h-[550px]">
+            <div id="learn-panel-CURRICULUM" role="tabpanel" aria-labelledby="learn-tab-CURRICULUM" className="p-4 space-y-4 overflow-y-auto max-h-[560px]">
               {course.modules.map((m, mIdx) => (
                 <div key={m.id} className="space-y-2">
                   <div className="text-xs font-bold text-[#7A5E4D]">
-                    فصل {mIdx + 1}: {m.title}
+                    فصل {(mIdx + 1).toLocaleString('fa-IR')}: {m.title}
                   </div>
-
-                  <div className="space-y-1">
+                  <ul className="space-y-1 list-none p-0 m-0">
                     {m.lessons.map((les) => {
-                      const isCurrent = les.id === activeLessonId;
-                      const isDone = completedLessons[les.id];
-
+                      const isCurrent = les.id === currentLesson.id;
+                      const done = !!progress.completed[les.id];
                       return (
-                        <button
-                          key={les.id}
-                          type="button"
-                          onClick={() => {
-                            setCurrentTimeSec(0);
-                            onSelectLesson(les.id);
-                          }}
-                          className={`w-full p-2.5 rounded-xl text-xs text-right flex items-center justify-between gap-2 transition-colors cursor-pointer ${
-                            isCurrent
-                              ? 'bg-[#171614] text-white font-bold shadow-xs'
-                              : 'hover:bg-[#EEE8DF]/60 text-[#171614]'
-                          }`}
-                        >
-                          <div className="flex items-center gap-2 truncate">
-                            {isDone ? (
-                              <CheckCircle2
-                                className={`w-3.5 h-3.5 shrink-0 ${
-                                  isCurrent ? 'text-emerald-400' : 'text-[#2F6B51]'
-                                }`}
-                              />
-                            ) : (
-                              <Play
-                                className={`w-3.5 h-3.5 shrink-0 ${
-                                  isCurrent ? 'text-[#A98570]' : 'text-stone-400'
-                                }`}
-                              />
-                            )}
-                            <span className="truncate">{les.title}</span>
-                          </div>
-                          <span
-                            className={`text-[11px] tabular-nums shrink-0 ${
-                              isCurrent ? 'text-stone-300' : 'text-[#5E5A54]'
+                        <li key={les.id}>
+                          <button
+                            type="button"
+                            onClick={() => goTo(les.id)}
+                            aria-current={isCurrent ? 'true' : undefined}
+                            className={`w-full min-h-11 p-2.5 rounded-xl text-xs text-start flex items-center justify-between gap-2 transition-colors cursor-pointer ${
+                              isCurrent ? 'bg-[#171614] text-white font-bold shadow-xs' : 'hover:bg-[#EEE8DF]/60 text-[#171614]'
                             }`}
                           >
-                            {les.durationMinutes} د
-                          </span>
-                        </button>
+                            <span className="flex items-center gap-2 min-w-0">
+                              {done ? (
+                                <CheckCircle2 className={`w-4 h-4 shrink-0 ${isCurrent ? 'text-emerald-400' : 'text-[#2F6B51]'}`} aria-label="دیده‌شده" />
+                              ) : (
+                                <Play className={`w-4 h-4 shrink-0 ${isCurrent ? 'text-[#A98570]' : 'text-stone-500'}`} aria-hidden="true" />
+                              )}
+                              <span className="truncate">{les.title}</span>
+                            </span>
+                            <span className={`text-xs tabular-nums shrink-0 ${isCurrent ? 'text-stone-300' : 'text-[#5E5A54]'}`}>{les.durationMinutes.toLocaleString('fa-IR')} دقیقه</span>
+                          </button>
+                        </li>
                       );
                     })}
-                  </div>
+                  </ul>
                 </div>
               ))}
             </div>
           )}
 
-          {/* TAB 2: PERSONAL LESSON NOTES */}
           {activeTab === 'NOTES' && (
-            <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-xs text-[#5E5A54]">
-                  <span className="font-semibold text-[#171614]">یادداشت‌های اختصاصی شما برای این درس:</span>
-                  <Edit3 className="w-3.5 h-3.5 text-[#7A5E4D]" />
-                </div>
-                <textarea
-                  rows={8}
-                  value={currentNote}
-                  onChange={(e) => setCurrentNote(e.target.value)}
-                  placeholder="نکات کلیدی زاویه دست، میزان تافت، شماره شانه یا سوالات برای تمرین عملی..."
-                  className="w-full p-3 bg-white border border-[#DED7CD] rounded-xl text-xs text-[#171614] focus:outline-none focus:border-[#7A5E4D] leading-relaxed"
-                />
+            <div id="learn-panel-NOTES" role="tabpanel" aria-labelledby="learn-tab-NOTES" className="p-4 space-y-3">
+              <label htmlFor="lesson-note" className="block text-xs font-bold text-[#171614]">
+                یادداشت شما برای «{currentLesson.title}»
+              </label>
+              <textarea
+                id="lesson-note"
+                rows={9}
+                maxLength={2000}
+                value={noteDraft}
+                onChange={(e) => { setNoteDraft(e.target.value); setNoteStatus('idle'); }}
+                placeholder="نکته‌ها، زمان‌بندی‌ها یا سؤال‌هایتان را اینجا بنویسید…"
+                className="w-full p-3 bg-white border border-[#DED7CD] rounded-xl text-sm leading-7 text-[#171614] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7A5E4D]/40"
+              />
+              <div className="flex items-center justify-between text-xs text-[#5E5A54]" aria-live="polite">
+                <span className="tabular-nums">{noteDraft.length.toLocaleString('fa-IR')} / ۲٬۰۰۰</span>
+                <span className="inline-flex items-center gap-1 text-[#2F6B51] min-h-5">
+                  {noteStatus === 'saved' && (<><Check className="w-3.5 h-3.5" aria-hidden="true" />ذخیره شد</>)}
+                </span>
               </div>
-
-              <button
-                type="button"
-                onClick={handleSaveNote}
-                className="w-full py-2.5 px-4 bg-[#171614] hover:bg-[#7A5E4D] text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-xs"
-              >
-                <Save className="w-3.5 h-3.5" />
-                <span>{isNoteSaved ? 'یادداشت با موفقیت ذخیره شد!' : 'ذخیره یادداشت درس'}</span>
-              </button>
-            </div>
-          )}
-
-          {/* TAB 3: LESSON RESOURCES */}
-          {activeTab === 'RESOURCES' && (
-            <div className="p-4 space-y-4 text-xs">
-              <div className="space-y-1">
-                <div className="font-bold text-[#171614]">ابزارها و وسایل موردنیاز تمرین این بخش:</div>
-                <p className="text-[#5E5A54]">
-                  برای دستیابی به نتیجه مشابه مدرس در این درس، همراه داشتن اقلام زیر توصیه می‌شود:
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <div className="p-3 bg-[#EEE8DF]/40 rounded-xl border border-[#DED7CD]/60 flex items-center gap-2.5">
-                  <Wrench className="w-4 h-4 text-[#7A5E4D]" />
-                  <span>اسپری تثبیت‌کننده قوی (بدون ایجاد شوره)</span>
-                </div>
-                <div className="p-3 bg-[#EEE8DF]/40 rounded-xl border border-[#DED7CD]/60 flex items-center gap-2.5">
-                  <Wrench className="w-4 h-4 text-[#7A5E4D]" />
-                  <span>شانه دم‌باریک فلزی مخصوص خط‌اندازی</span>
-                </div>
-                <div className="p-3 bg-[#EEE8DF]/40 rounded-xl border border-[#DED7CD]/60 flex items-center gap-2.5">
-                  <Wrench className="w-4 h-4 text-[#7A5E4D]" />
-                  <span>گیره تقسیم‌بندی کروکودیلی (حداقل ۴ عدد)</span>
-                </div>
-              </div>
+              <p className="text-[11px] text-[#5E5A54] leading-5">یادداشت‌ها فقط روی همین دستگاه و برای حساب شما نگه‌داری می‌شوند.</p>
             </div>
           )}
         </aside>

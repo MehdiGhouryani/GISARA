@@ -84,6 +84,8 @@ export interface DBStructure {
     courseId: string;
     courseName: string;
     grantedAt: string;
+    /** Set when status is REVOKED: the moment access was withdrawn (compared with later purchases). */
+    revokedAt?: string;
     status: 'ACTIVE' | 'REVOKED';
   }>;
 }

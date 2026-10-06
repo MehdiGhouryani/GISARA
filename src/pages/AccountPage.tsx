@@ -30,6 +30,8 @@ import {
   Check,
 } from 'lucide-react';
 import { EditorialImage } from '../components/common/EditorialImage';
+import { getAllLessons } from '../utils/course';
+import { getCourseResume } from '../utils/courseProgress';
 
 /** Outcome of a bank-gateway round trip, shown as a persistent banner on the orders tab. */
 export interface PaymentResult {
@@ -495,34 +497,43 @@ export const AccountPage: React.FC<AccountPageProps> = ({
 
                     <div>
                       <div className="text-xs font-bold text-[#7A5E4D] mb-1">
-                        دسترسی فعال مادام‌العمر
+                        دسترسی فعال
                       </div>
                       <h3 className="text-base font-bold text-[#171614] leading-snug">
                         {course.name}
                       </h3>
                     </div>
 
-                    {/* Progress bar */}
-                    <div>
-                      <div className="flex justify-between text-xs text-[#5E5A54] mb-1.5">
-                        <span>وضعیت دسترسی:</span>
-                        <span className="font-bold text-[#2F6B51]">فعال و نامحدود</span>
-                      </div>
-                      <div className="w-full h-2 bg-[#EEE8DF] rounded-full overflow-hidden">
-                        <div className="w-full h-full bg-[#2F6B51] rounded-full" />
-                      </div>
-                    </div>
+                    {(() => {
+                      const lessons = getAllLessons(course);
+                      const resume = getCourseResume(userMobile, course.id, lessons);
+                      return (
+                        <div>
+                          <div className="flex justify-between text-xs text-[#5E5A54] mb-1.5">
+                            <span>پیشرفت شما</span>
+                            <span className="font-bold text-[#2F6B51] tabular-nums">{resume.percent.toLocaleString('fa-IR')}٪</span>
+                          </div>
+                          <div className="w-full h-2 bg-[#EEE8DF] rounded-full overflow-hidden" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={resume.percent} aria-label={`پیشرفت در ${course.name}`}>
+                            <div className="h-full bg-[#2F6B51] rounded-full transition-all" style={{ width: `${resume.percent}%` }} />
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </div>
 
                   <div className="p-5 pt-0">
-                    <button
-                      type="button"
-                      onClick={() => onStartCourse(course, course.modules[0].lessons[0].id)}
-                      className="w-full py-2.5 px-4 bg-[#171614] hover:bg-[#7A5E4D] text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2 cursor-pointer transition-colors shadow-xs"
-                    >
-                      <Play className="w-4 h-4 fill-current" />
-                      <span>ورود به محیط مشاهده و پخش ویدیوها</span>
-                    </button>
+                    {getAllLessons(course).length > 0 ? (
+                      <button
+                        type="button"
+                        onClick={() => onStartCourse(course)}
+                        className="w-full min-h-11 py-2.5 px-4 bg-[#171614] hover:bg-[#7A5E4D] text-white text-sm font-bold rounded-xl flex items-center justify-center gap-2 cursor-pointer transition-colors shadow-xs"
+                      >
+                        <Play className="w-4 h-4 fill-current" aria-hidden="true" />
+                        <span>{getCourseResume(userMobile, course.id, getAllLessons(course)).started ? 'ادامه یادگیری' : 'شروع یادگیری'}</span>
+                      </button>
+                    ) : (
+                      <p className="text-xs text-[#5E5A54] text-center py-2">درس‌های این دوره به‌زودی منتشر می‌شوند.</p>
+                    )}
                   </div>
                 </div>
               ))}
