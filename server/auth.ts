@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import { db } from './db';
+import { getOrCreateUser } from './users';
 
 const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 
@@ -95,7 +95,9 @@ export function verifyToken(token: string): any | null {
     hmac.update(`${header}.${body}`);
     const expectedSignature = hmac.digest('base64url');
     
-    if (signature !== expectedSignature) return null;
+    const given = Buffer.from(signature);
+    const wanted = Buffer.from(expectedSignature);
+    if (given.length !== wanted.length || !crypto.timingSafeEqual(given, wanted)) return null;
     
     const payload = JSON.parse(Buffer.from(body, 'base64url').toString('utf8'));
     if (Date.now() > payload.exp) {
@@ -125,14 +127,19 @@ export function parseCookies(req: any): Record<string, string> {
   return list;
 }
 
+// Customers and administrators use SEPARATE cookies so that signing in as a customer in the same browser
+// never destroys an admin session (and vice-versa).
+export const USER_COOKIE = 'gisara_token';
+export const ADMIN_COOKIE = 'gisara_admin';
+
 /**
  * Sets a secure HttpOnly cookie for the authenticated token
  */
-export function setAuthCookie(res: any, token: string, expiryMs = 24 * 60 * 60 * 1000): void {
+export function setAuthCookie(res: any, token: string, expiryMs = 24 * 60 * 60 * 1000, cookieName: string = USER_COOKIE): void {
   const maxAgeSec = Math.floor(expiryMs / 1000);
   const isSecure = process.env.NODE_ENV === 'production' || process.env.HTTPS === 'true';
   const cookieOptions = [
-    `gisara_token=${encodeURIComponent(token)}`,
+    `${cookieName}=${encodeURIComponent(token)}`,
     'Path=/',
     'HttpOnly',
     'SameSite=Lax',
@@ -145,31 +152,39 @@ export function setAuthCookie(res: any, token: string, expiryMs = 24 * 60 * 60 *
 }
 
 /**
- * Clears the HttpOnly authentication cookie
+ * Clears an HttpOnly authentication cookie
  */
-export function clearAuthCookie(res: any): void {
-  res.setHeader('Set-Cookie', 'gisara_token=; Path=/; HttpOnly; SameSite=Lax; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Max-Age=0');
+export function clearAuthCookie(res: any, cookieName: string = USER_COOKIE): void {
+  res.setHeader('Set-Cookie', `${cookieName}=; Path=/; HttpOnly; SameSite=Lax; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Max-Age=0`);
 }
 
 /**
- * Express Authentication middleware to populate req.user from JWT Bearer token or HttpOnly Cookie
+ * Express Authentication middleware. Populates:
+ *   req.admin - a valid administrator session (admin cookie), or null
+ *   req.user  - the acting identity: the signed-in customer, or the administrator when there is no customer
+ *               session or the admin console explicitly asks for it (X-Admin-Context: 1).
+ * Bearer headers are intentionally NOT accepted: credentials live only in HttpOnly cookies.
  */
 export function authMiddleware(req: any, res: any, next: any) {
-  // Cookie-only sessions: the credential lives in an HttpOnly cookie that page
-  // scripts cannot read. Bearer headers are intentionally NOT accepted, so a token
-  // that leaks (logs, storage, XSS) cannot be replayed from another context.
-  let token: string | null = null;
   const cookies = parseCookies(req);
-  if (cookies.gisara_token) {
-    token = cookies.gisara_token;
+
+  const adminPayload = cookies[ADMIN_COOKIE] ? verifyToken(cookies[ADMIN_COOKIE]) : null;
+  req.admin = adminPayload && adminPayload.role === 'ADMIN' ? adminPayload : null;
+
+  const userPayload = cookies[USER_COOKIE] ? verifyToken(cookies[USER_COOKIE]) : null;
+  let user: any = null;
+  if (userPayload && userPayload.role === 'USER' && typeof userPayload.mobile === 'string') {
+    // Identity is read from the user store on every request, so a renamed account shows its new name at once.
+    const record = getOrCreateUser(userPayload.mobile);
+    user = { role: 'USER', mobile: record.mobile, name: record.name, userCode: record.userCode, avatar: record.avatar };
   }
 
-  if (token) {
-    req.user = verifyToken(token);
-  } else {
-    req.user = null;
+  const wantsAdmin = req.headers?.['x-admin-context'] === '1';
+  if (req.admin && (!user || wantsAdmin)) {
+    user = { role: 'ADMIN', name: req.admin.name, mobile: req.admin.mobile };
   }
 
+  req.user = user;
   next();
 }
 
@@ -187,26 +202,64 @@ export function requireAuth(req: any, res: any, next: any) {
  * Strict route guard for Administrator actions
  */
 export function requireAdmin(req: any, res: any, next: any) {
-  if (!req.user || req.user.role !== 'ADMIN') {
+  if (!req.admin) {
     return res.status(403).json({ success: false, message: 'خطای عدم دسترسی: این عملیات نیاز به سطح دسترسی مدیریت دارد.' });
   }
+  // Admin routes always act as the administrator, even when a customer session exists in the same browser.
+  req.user = { role: 'ADMIN', name: req.admin.name, mobile: req.admin.mobile };
   next();
 }
 
+// --- One-time passcodes -----------------------------------------------------
+// Held in MEMORY only (never written to db.json / backups) and stored as an HMAC, so neither a leaked
+// database file nor a backup export can reveal a valid code.
+const OTP_TTL_MS = 2 * 60 * 1000;
+const OTP_COOLDOWN_MS = 60 * 1000;
+const OTP_MAX_ATTEMPTS = 5;
+const OTP_HOURLY_CAP = 6;
+const OTP_SECRET = crypto.createHmac('sha256', JWT_SECRET).update('otp-v1').digest();
+
+interface OtpEntry { hash: Buffer; expiresAt: number; attempts: number }
+const otpStore = new Map<string, OtpEntry>();
+const otpSendLog = new Map<string, number[]>();
+
+const hashCode = (mobile: string, code: string) => crypto.createHmac('sha256', OTP_SECRET).update(`${mobile}:${code}`).digest();
+
+function pruneOtps(now: number) {
+  for (const [m, e] of otpStore) if (now > e.expiresAt + OTP_TTL_MS) otpStore.delete(m);
+  for (const [m, list] of otpSendLog) {
+    const recent = list.filter((t) => now - t < 60 * 60 * 1000);
+    if (recent.length === 0) otpSendLog.delete(m);
+    else otpSendLog.set(m, recent);
+  }
+}
+
+/** Per-number throttle (the per-IP limiter alone does not stop someone flooding ONE phone with SMS). */
+export function checkOtpRequestAllowed(mobile: string): { ok: true } | { ok: false; retryAfterSec: number; reason: 'cooldown' | 'hourly' } {
+  const now = Date.now();
+  pruneOtps(now);
+  const sent = otpSendLog.get(mobile) || [];
+  const last = sent[sent.length - 1];
+  if (last && now - last < OTP_COOLDOWN_MS) {
+    return { ok: false, reason: 'cooldown', retryAfterSec: Math.ceil((OTP_COOLDOWN_MS - (now - last)) / 1000) };
+  }
+  if (sent.length >= OTP_HOURLY_CAP) {
+    return { ok: false, reason: 'hourly', retryAfterSec: Math.ceil((60 * 60 * 1000 - (now - sent[0])) / 1000) };
+  }
+  return { ok: true };
+}
+
+export const OTP_COOLDOWN_SEC = OTP_COOLDOWN_MS / 1000;
+export const OTP_TTL_SEC = OTP_TTL_MS / 1000;
+
 /**
- * Generates and saves a 6-digit OTP code for a given mobile number.
- * Uses a CSPRNG (crypto.randomInt), never Math.random.
+ * Generates a 6-digit code (CSPRNG) for a mobile number and remembers only its HMAC.
  */
 export function generateOTP(mobile: string): string {
   const code = crypto.randomInt(100000, 1000000).toString();
-  const expiresAt = Date.now() + 2 * 60 * 1000; // 2 minutes validation
-
-  // Clean old/existing OTPs for this mobile
-  db.otps = db.otps.filter(o => o.mobile !== mobile && Date.now() < o.expiresAt);
-
-  // Add new OTP
-  const updatedOtps = [...db.otps, { mobile, code, expiresAt, attempts: 0 }];
-  db.otps = updatedOtps;
+  const now = Date.now();
+  otpStore.set(mobile, { hash: hashCode(mobile, code), expiresAt: now + OTP_TTL_MS, attempts: 0 });
+  otpSendLog.set(mobile, [...(otpSendLog.get(mobile) || []), now]);
 
   // Never log the raw code in production — only in local dev for debugging.
   if (!IS_PRODUCTION) {
@@ -215,29 +268,48 @@ export function generateOTP(mobile: string): string {
   return code;
 }
 
+/** Forget a code whose SMS could not be delivered, and do not count that attempt against the person. */
+export function discardOTP(mobile: string): void {
+  otpStore.delete(mobile);
+  const log = otpSendLog.get(mobile) || [];
+  otpSendLog.set(mobile, log.slice(0, -1));
+}
+
+export type OtpVerifyResult =
+  | { ok: true }
+  | { ok: false; reason: 'expired' | 'invalid' | 'locked'; attemptsLeft?: number };
+
 /**
- * Verifies an OTP code for a mobile number. Returns boolean indicating success.
+ * Verifies a code. Constant-time comparison; the code is single-use and locks after too many wrong tries.
  */
-export function verifyOTP(mobile: string, code: string): boolean {
+export function verifyOTP(mobile: string, code: string): OtpVerifyResult {
   const now = Date.now();
-  const entry = db.otps.find(o => o.mobile === mobile && now < o.expiresAt);
-  
-  if (!entry) return false;
-  
-  if (entry.attempts >= 3) {
-    db.otps = db.otps.filter(o => o.mobile !== mobile); // Locked out / deleted
-    return false;
+  const entry = otpStore.get(mobile);
+  if (!entry || now > entry.expiresAt) {
+    otpStore.delete(mobile);
+    return { ok: false, reason: 'expired' };
   }
-  
-  if (entry.code !== code) {
+  if (entry.attempts >= OTP_MAX_ATTEMPTS) {
+    otpStore.delete(mobile);
+    return { ok: false, reason: 'locked' };
+  }
+  const candidate = hashCode(mobile, code);
+  if (candidate.length !== entry.hash.length || !crypto.timingSafeEqual(candidate, entry.hash)) {
     entry.attempts++;
-    db.otps = [...db.otps]; // Trigger write to persistence
-    return false;
+    if (entry.attempts >= OTP_MAX_ATTEMPTS) {
+      otpStore.delete(mobile);
+      return { ok: false, reason: 'locked' };
+    }
+    return { ok: false, reason: 'invalid', attemptsLeft: OTP_MAX_ATTEMPTS - entry.attempts };
   }
-  
-  // Verification success, clean OTP
-  db.otps = db.otps.filter(o => o.mobile !== mobile);
-  return true;
+  otpStore.delete(mobile);
+  return { ok: true };
+}
+
+/** Test hook: wipes in-memory OTP state. */
+export function __resetOtpStateForTests() {
+  otpStore.clear();
+  otpSendLog.clear();
 }
 
 /**

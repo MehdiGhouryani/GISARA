@@ -25,6 +25,8 @@ export type CircuitState = 'CLOSED' | 'OPEN' | 'HALF_OPEN';
 
 export class ApiClient {
   private static sessionActive = false;
+  /** True while the admin console is open: tells the server to act as the administrator for shared routes. */
+  private static adminContext = false;
   private static cacheMap = new Map<string, CacheEntry>();
   private static activeControllers = new Map<string, AbortController>();
   private static DEFAULT_TTL_MS = 15000; // 15 seconds SWR cache
@@ -97,6 +99,12 @@ export class ApiClient {
     if (!active) this.clearCache();
   }
 
+  static setAdminContext(active: boolean): void {
+    if (this.adminContext === active) return;
+    this.adminContext = active;
+    this.clearCache(); // cached answers belong to ONE identity
+  }
+
   /** Ends the session: asks the server to expire the cookie, then resets local state. */
   static async clearSession(): Promise<void> {
     this.markSession(false);
@@ -157,6 +165,7 @@ export class ApiClient {
 
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
+      ...(this.adminContext ? { 'X-Admin-Context': '1' } : {}),
       ...(options?.headers || {}),
     };
 
@@ -201,7 +210,7 @@ export class ApiClient {
           if (fallbackData !== undefined) {
             return fallbackData;
           }
-          throw Object.assign(new Error(resData?.message || (statusCode === 404 ? `آدرس مورد نظر یافت نشد (404)` : `خطای کلاینت (${statusCode})`)), { status: statusCode });
+          throw Object.assign(new Error(resData?.message || (statusCode === 404 ? `آدرس مورد نظر یافت نشد (404)` : `خطای کلاینت (${statusCode})`)), { status: statusCode, data: resData });
         }
 
         const contentType = response.headers.get('content-type') || '';
@@ -232,7 +241,7 @@ export class ApiClient {
             this.recordFailure();
             return fallbackData;
           }
-          throw Object.assign(new Error(resData?.message || `خطای سرور (${response.status})`), { status: response.status });
+          throw Object.assign(new Error(resData?.message || `خطای سرور (${response.status})`), { status: response.status, data: resData });
         }
 
         this.recordSuccess();
@@ -280,7 +289,8 @@ export class ApiClient {
   // ---------------------------------------------------------------------------
   // Authentication services
   // ---------------------------------------------------------------------------
-  static async requestOTP(mobile: string): Promise<{ success: boolean; code?: string }> {
+  /** On 429 the thrown error's `data.retryAfterSec` says how long until a new code may be requested. */
+  static async requestOTP(mobile: string): Promise<{ success: boolean; cooldownSec?: number; expiresInSec?: number; message?: string }> {
     return this.request('/auth/otp/request', 'POST', { mobile });
   }
 
@@ -296,8 +306,32 @@ export class ApiClient {
     return res;
   }
 
-  static async getCurrentUser(): Promise<{ success: boolean; user: any }> {
-    return this.request('/auth/me', 'GET', undefined, { success: false, user: null });
+  static async getCurrentUser(): Promise<{ success: boolean; user: any; isAdmin?: boolean }> {
+    return this.request('/auth/me', 'GET', undefined, { success: false, user: null }, { skipCache: true });
+  }
+
+  /** Saves the customer's display name (and avatar when supplied). */
+  static async updateProfile(patch: { name?: string; avatar?: string | null }): Promise<{ success: boolean; user: any }> {
+    return this.request('/me/profile', 'PUT', patch);
+  }
+
+  static async adminLogout(): Promise<void> {
+    this.setAdminContext(false);
+    try {
+      await fetch(`${API_BASE_URL}/auth/admin/logout`, { method: 'POST', credentials: 'include' });
+    } catch {
+      // The admin cookie expires by itself.
+    }
+  }
+
+  /** Admin: search customers by user code, mobile or name. */
+  static async searchUsers(query: string): Promise<{ success: boolean; total: number; data: any[] }> {
+    return this.request<{ success: boolean; total: number; data: any[] }>(`/admin/users?q=${encodeURIComponent(query)}`, 'GET', undefined, undefined, { skipCache: true });
+  }
+
+  /** Admin: one customer's full status (orders, courses, requests, certificates). */
+  static async getUserDetail(userCode: string): Promise<{ success: boolean; data: any }> {
+    return this.request<{ success: boolean; data: any }>(`/admin/users/${encodeURIComponent(userCode)}`, 'GET', undefined, undefined, { skipCache: true });
   }
 
   /** Course ids the signed-in user is entitled to. Server-derived from PAID orders. */

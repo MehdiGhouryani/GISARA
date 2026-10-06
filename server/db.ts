@@ -59,11 +59,15 @@ export interface DBStructure {
     user: string;
     details: string;
   }>;
-  otps: Array<{
+  /** Registered customers. `userCode` is the public, searchable identifier the admin panel uses. */
+  users: Array<{
+    id: string;
+    userCode: string;
     mobile: string;
-    code: string;
-    expiresAt: number;
-    attempts: number;
+    name: string;
+    avatar?: string;
+    createdAt: string;
+    lastLoginAt: string;
   }>;
   paymentIntents: Array<{
     id: string;
@@ -119,7 +123,7 @@ let store: DBStructure = {
   certificates: [...mockCertificates],
   settings: defaultSettings,
   auditLogs: [],
-  otps: [],
+  users: [],
   paymentIntents: [],
   manualEnrollments: []
 };
@@ -151,7 +155,7 @@ export function initDb() {
         certificates: parsed.certificates || [...mockCertificates],
         settings: parsed.settings || defaultSettings,
         auditLogs: parsed.auditLogs || [],
-        otps: parsed.otps || [],
+        users: parsed.users || [],
         paymentIntents: parsed.paymentIntents || [],
         manualEnrollments: parsed.manualEnrollments || []
       };
@@ -311,8 +315,8 @@ export const db = {
   get auditLogs() { return store.auditLogs; },
   set auditLogs(val) { store.auditLogs = val; saveDb(); },
 
-  get otps() { return store.otps; },
-  set otps(val) { store.otps = val; saveDb(); },
+  get users() { return store.users; },
+  set users(val) { store.users = val; saveDb(); },
 
   get paymentIntents() { return store.paymentIntents; },
   set paymentIntents(val) { store.paymentIntents = val; saveDb(); },

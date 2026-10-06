@@ -524,9 +524,14 @@ export default function App() {
           setIsLoggedIn(true);
           setUserMobile(meRes.user.mobile || '');
           setUserName(meRes.user.name || '');
-          if (meRes.user.role === 'ADMIN') {
-            setIsAdminMode(true);
-          }
+          setUserCode(meRes.user.userCode || '');
+          return;
+        }
+        // Administrator session without any customer session: reopen the admin console (as before).
+        if (meRes && meRes.success && meRes.isAdmin) {
+          ApiClient.markSession(true);
+          setEnrollmentStatus('ready');
+          setIsAdminMode(true);
           return;
         }
       } catch {
@@ -1040,6 +1045,8 @@ export default function App() {
   const [authReady, setAuthReady] = useState(false);
   const [userMobile, setUserMobile] = useState('');
   const [userName, setUserName] = useState('');
+  // Public, searchable account identifier (support / admin lookup). Assigned by the server on first login.
+  const [userCode, setUserCode] = useState('');
 
   // Server-side cart copy exists only for signed-in users; debounced so rapid +/- clicks send one request.
   useEffect(() => {
@@ -1048,15 +1055,21 @@ export default function App() {
     return () => window.clearTimeout(t);
   }, [cartItems, isLoggedIn, authReady]);
 
-  const [userAvatar, setUserAvatar] = useState<string>(() => {
-    return localStorage.getItem('shanyoon_user_avatar') || 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=150&q=80';
-  });
+  // The admin console acts as the administrator on shared routes; the storefront always acts as the customer.
+  useEffect(() => {
+    ApiClient.setAdminContext(isAdminMode);
+  }, [isAdminMode]);
 
-  const handleUpdateProfile = (newName: string, newAvatar: string) => {
-    setUserName(newName);
-    setUserAvatar(newAvatar);
-    localStorage.setItem('shanyoon_user_avatar', newAvatar);
-    addToast('success', 'پروفایل بروزرسانی شد', `نام شما به «${newName}» تغییر یافت.`);
+  // Saves the display name on the SERVER (it used to live only in React state and vanished on reload).
+  const handleUpdateProfile = async (newName: string): Promise<{ success: boolean; message?: string }> => {
+    try {
+      const res = await ApiClient.updateProfile({ name: newName });
+      if (res?.user) setUserName(res.user.name);
+      addToast('success', 'پروفایل به‌روزرسانی شد', `نام شما به «${res?.user?.name || newName}» تغییر یافت.`);
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, message: err?.message || 'ذخیره پروفایل انجام نشد. دوباره تلاش کنید.' };
+    }
   };
 
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -1434,9 +1447,10 @@ export default function App() {
   };
 
   // Auth Handlers
-  const handleAuthSuccess = async (userData: { mobile: string; name: string }) => {
+  const handleAuthSuccess = async (userData: { mobile: string; name: string; userCode?: string }) => {
     setUserMobile(userData.mobile);
     setUserName(userData.name);
+    setUserCode(userData.userCode || '');
     setIsLoggedIn(true);
     refreshEnrollments();
 
@@ -1512,7 +1526,8 @@ export default function App() {
     setUserOrders([]);
     setAppliedCoupon(null);
     setPaymentResult(null);
-    safeRemoveKeys([STORAGE_KEYS.CART, STORAGE_KEYS.ORDERS, 'shanyoon_user_avatar']);
+    setUserCode('');
+    safeRemoveKeys([STORAGE_KEYS.CART, STORAGE_KEYS.ORDERS, 'shanyoon_user_avatar']); // avatar key: leftover of older builds
     handleNavigate('home');
     addToast('info', 'از حساب کاربری خارج شدید');
   };
@@ -2056,7 +2071,7 @@ export default function App() {
           <AccountPage
             userMobile={userMobile}
             userName={userName}
-            userAvatar={userAvatar}
+            userCode={userCode}
             onUpdateProfile={handleUpdateProfile}
             orders={userOrders}
             enrolledCourses={courses.filter((c) => enrolledCourseIds.includes(c.id))}

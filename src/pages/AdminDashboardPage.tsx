@@ -33,6 +33,7 @@ import { AnalyticsConsole } from '../components/admin/AnalyticsConsole';
 import { ContentCmsManager } from '../components/admin/ContentCmsManager';
 import { StoreManager } from '../components/admin/StoreManager';
 import { CoursesManager } from '../components/admin/CoursesManager';
+import { UsersManager } from '../components/admin/UsersManager';
 import { OrdersManager } from '../components/admin/OrdersManager';
 import { BackendDiagnosticTool } from '../components/admin/BackendDiagnosticTool';
 import { SystemSettingsManager } from '../components/admin/SystemSettingsManager';
@@ -68,6 +69,7 @@ import {
   Settings,
   CreditCard,
   GraduationCap,
+  Users as UsersIcon,
 } from 'lucide-react';
 
 export interface AuditRecord {
@@ -140,7 +142,7 @@ interface AdminDashboardPageProps {
   onDeleteCourse?: (id: string) => Promise<{ success: boolean; message?: string }>;
 }
 
-export type AdminSection = 'OVERVIEW' | 'CONTENT' | 'STORE' | 'COURSES' | 'ORDERS' | 'ANALYTICS' | 'AUDIT' | 'DIAGNOSTICS' | 'SETTINGS';
+export type AdminSection = 'OVERVIEW' | 'CONTENT' | 'STORE' | 'COURSES' | 'USERS' | 'ORDERS' | 'ANALYTICS' | 'AUDIT' | 'DIAGNOSTICS' | 'SETTINGS';
 
 export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
   orders,
@@ -346,6 +348,19 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
 
           <button
             type="button"
+            onClick={() => setActiveSection('USERS')}
+            className={`px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap cursor-pointer min-h-[40px] ${
+              activeSection === 'USERS'
+                ? 'bg-amber-600 text-white shadow-xs'
+                : 'text-stone-300 bg-stone-900/60 hover:bg-stone-800'
+            }`}
+          >
+            <UsersIcon className="w-3.5 h-3.5 text-amber-400" />
+            <span>کاربران</span>
+          </button>
+
+          <button
+            type="button"
             onClick={() => {
               setActiveSection('ORDERS');
               setOrdersSubTab('ORDERS');
@@ -467,6 +482,21 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
 
             <button
               type="button"
+              onClick={() => setActiveSection('USERS')}
+              className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-bold transition-all text-right cursor-pointer ${
+                activeSection === 'USERS'
+                  ? 'bg-amber-600 text-white shadow-md shadow-amber-600/10'
+                  : 'text-stone-300 hover:bg-stone-800/60 hover:text-white'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <UsersIcon className="w-4.5 h-4.5 text-amber-500" />
+                <span>۴. کاربران</span>
+              </div>
+            </button>
+
+            <button
+              type="button"
               onClick={() => {
                 setActiveSection('ORDERS');
                 setOrdersSubTab('ORDERS');
@@ -479,7 +509,7 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
             >
               <div className="flex items-center gap-3">
                 <PackageCheck className="w-4.5 h-4.5 text-amber-500" />
-                <span>۴. سفارشات و کارگاه‌ها</span>
+                <span>۵. سفارشات و کارگاه‌ها</span>
               </div>
               {openRequestsCount > 0 && (
                 <span className="w-5 h-5 rounded-full bg-rose-600 text-white text-[10px] font-bold flex items-center justify-center tabular-nums">
@@ -502,7 +532,7 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
             >
               <div className="flex items-center gap-3">
                 <Settings className="w-4.5 h-4.5 text-amber-500" />
-                <span>۵. تنظیمات و ابزار سیستم</span>
+                <span>۶. تنظیمات و ابزار سیستم</span>
               </div>
             </button>
           </div>
@@ -837,6 +867,9 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
           {activeSection === 'COURSES' && onSaveCourse && onDeleteCourse && (
             <CoursesManager courses={courses} instructors={instructors} onSaveCourse={onSaveCourse} onDeleteCourse={onDeleteCourse} />
           )}
+
+          {/* SECTION: CUSTOMERS (کاربران) - search by user ID / mobile / name */}
+          {activeSection === 'USERS' && <UsersManager />}
 
           {/* SECTION 4: ORDER MANAGEMENT (مدیریت سفارش‌ها) */}
           {activeSection === 'ORDERS' && (

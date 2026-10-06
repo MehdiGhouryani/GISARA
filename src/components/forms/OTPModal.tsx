@@ -1,213 +1,283 @@
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
- * 
- * OTPModal - Mobile + OTP Authentication Modal
- * Conforming strictly to Master Invariant: No password field in P0
+ *
+ * OTPModal - mobile + one-time-code sign-in (no passwords).
+ * The resend cooldown, code lifetime and attempt limits are dictated by the SERVER; this component only
+ * mirrors them so the person always knows what happens next.
  */
 
-import React, { useState, useEffect } from 'react';
-import { X, Smartphone, KeyRound, ArrowLeft, CheckCircle2, Info } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { X, Smartphone, KeyRound, ArrowLeft, CheckCircle2, Loader2 } from 'lucide-react';
 import { ApiClient } from '../../services/apiClient';
+import { useDialogA11y } from '../../hooks/useDialogA11y';
+import { digitsOnly, normalizeMobile, toLatinDigits } from '../../shared/digits';
 
 interface OTPModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: (userData: { mobile: string; name: string }) => void;
+  onSuccess: (userData: { mobile: string; name: string; userCode?: string }) => void;
 }
+
+const CODE_LENGTH = 6;
+const DEFAULT_COOLDOWN_SEC = 60;
+const DEFAULT_EXPIRY_SEC = 120;
+
+const fmt = (sec: number) => `${Math.floor(sec / 60).toLocaleString('fa-IR')}:${(sec % 60).toString().padStart(2, '0').replace(/\d/g, (d) => Number(d).toLocaleString('fa-IR'))}`;
 
 export const OTPModal: React.FC<OTPModalProps> = ({ isOpen, onClose, onSuccess }) => {
   const [step, setStep] = useState<'MOBILE' | 'OTP'>('MOBILE');
-  const [mobile, setMobile] = useState('');
+  const [mobileInput, setMobileInput] = useState('');
+  const [mobile, setMobile] = useState(''); // normalised, the one the code was sent to
   const [otpCode, setOtpCode] = useState('');
-  const [countdown, setCountdown] = useState(120);
+  const [resendIn, setResendIn] = useState(0);
+  const [expiresIn, setExpiresIn] = useState(0);
   const [error, setError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [demoCode, setDemoCode] = useState<string | null>(null);
+  const [devHint, setDevHint] = useState<string | null>(null);
+  const [isSending, setIsSending] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
 
-  useEffect(() => {
-    let timer: NodeJS.Timeout;
-    if (step === 'OTP' && countdown > 0) {
-      timer = setInterval(() => setCountdown((c) => c - 1), 1000);
-    }
-    return () => clearInterval(timer);
-  }, [step, countdown]);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const otpInputRef = useRef<HTMLInputElement>(null);
+  useDialogA11y(isOpen, onClose, panelRef);
 
+  // Nothing of a previous attempt may survive closing the dialog.
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onClose]);
+    if (isOpen) return;
+    setStep('MOBILE');
+    setMobileInput('');
+    setMobile('');
+    setOtpCode('');
+    setResendIn(0);
+    setExpiresIn(0);
+    setError(null);
+    setDevHint(null);
+    setIsSending(false);
+    setIsVerifying(false);
+  }, [isOpen]);
+
+  // One ticking clock for both countdowns.
+  useEffect(() => {
+    if (step !== 'OTP' || (resendIn <= 0 && expiresIn <= 0)) return;
+    const timer = window.setInterval(() => {
+      setResendIn((s) => Math.max(0, s - 1));
+      setExpiresIn((s) => Math.max(0, s - 1));
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [step, resendIn > 0, expiresIn > 0]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!isOpen) return null;
 
-  const handleRequestOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const sendCode = async (target: string, isResend: boolean) => {
     setError(null);
-
-    const cleanMobile = mobile.trim();
-    if (!/^09[0-9]{9}$/.test(cleanMobile)) {
-      setError('لطفاً شماره موبایل معتبر ۱۱ رقمی (مانند ۰۹۱۲۱۲۳۴۵۶۷) وارد کنید.');
-      return;
-    }
-
-    setIsSubmitting(true);
+    setIsSending(true);
     try {
-      const res = await ApiClient.requestOTP(cleanMobile);
-      setIsSubmitting(false);
+      const res = await ApiClient.requestOTP(target);
+      setMobile(target);
       setStep('OTP');
-      setCountdown(120);
-      if (res.code) {
-        setDemoCode(res.code); // Display on-screen for easy demoing
-      }
+      setOtpCode('');
+      setResendIn(res.cooldownSec ?? DEFAULT_COOLDOWN_SEC);
+      setExpiresIn(res.expiresInSec ?? DEFAULT_EXPIRY_SEC);
+      // Development only: the server echoes the code in its message so the flow can be tried without an SMS provider.
+      setDevHint(import.meta.env.DEV ? res.message || null : null);
+      if (isResend) setError(null);
+      requestAnimationFrame(() => otpInputRef.current?.focus());
     } catch (err: any) {
-      setIsSubmitting(false);
-      setError(err.message || 'خطا در برقراری ارتباط با سرور.');
+      const wait = err?.data?.retryAfterSec;
+      if (typeof wait === 'number') {
+        // The code we already sent is still valid: go to the code step and show the real remaining wait.
+        if (step === 'MOBILE') {
+          setMobile(target);
+          setStep('OTP');
+          requestAnimationFrame(() => otpInputRef.current?.focus());
+        }
+        setResendIn(wait);
+      }
+      setError(err?.message || 'ارسال کد انجام نشد. اتصال اینترنت را بررسی و دوباره تلاش کنید.');
+    } finally {
+      setIsSending(false);
     }
   };
 
-  const handleVerifyOtp = async (e: React.FormEvent) => {
+  const handleRequestOtp = (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
-
-    if (otpCode.length < 4) {
-      setError('کد تأیید معتبر نیست.');
+    if (isSending) return;
+    const normalized = normalizeMobile(mobileInput);
+    if (!normalized) {
+      setError('شماره موبایل معتبر نیست. شماره ۱۱ رقمی را با ۰۹ شروع کنید (مثال: ۰۹۱۲۱۲۳۴۵۶۷).');
       return;
     }
+    sendCode(normalized, false);
+  };
 
-    setIsSubmitting(true);
+  const verify = async (code: string) => {
+    if (isVerifying) return;
+    setError(null);
+    setIsVerifying(true);
     try {
-      const res = await ApiClient.verifyOTP(mobile, otpCode);
-      setIsSubmitting(false);
-      onSuccess({
-        mobile: res.user.mobile,
-        name: res.user.name,
-      });
+      const res = await ApiClient.verifyOTP(mobile, code);
+      onSuccess({ mobile: res.user.mobile, name: res.user.name, userCode: res.user.userCode });
       onClose();
     } catch (err: any) {
-      setIsSubmitting(false);
-      setError(err.message || 'کد وارد شده صحیح نیست.');
+      setIsVerifying(false);
+      const reason = err?.data?.reason;
+      setError(err?.message || 'کد وارد شده درست نیست.');
+      setOtpCode('');
+      if (reason === 'expired' || reason === 'locked') setExpiresIn(0);
+      requestAnimationFrame(() => otpInputRef.current?.focus());
     }
   };
+
+  const handleVerifyOtp = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (otpCode.length !== CODE_LENGTH) {
+      setError(`کد تأیید ${CODE_LENGTH.toLocaleString('fa-IR')} رقمی است.`);
+      return;
+    }
+    verify(otpCode);
+  };
+
+  const handleCodeChange = (value: string) => {
+    const digits = digitsOnly(value).slice(0, CODE_LENGTH);
+    setOtpCode(digits);
+    if (error) setError(null);
+    // Typing (or pasting / autofilling) the last digit submits by itself.
+    if (digits.length === CODE_LENGTH) verify(digits);
+  };
+
+  const codeDead = expiresIn <= 0 && step === 'OTP';
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="fixed inset-0 bg-black/50 backdrop-blur-xs" onClick={onClose} />
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-xs gisara-fade-in" onClick={onClose} aria-hidden="true" />
 
       <div
-        className="relative bg-[#FFFCF8] rounded-2xl max-w-[400px] w-full p-6 sm:p-8 shadow-2xl border border-[#EAE2D5] z-10"
+        ref={panelRef}
+        tabIndex={-1}
+        className="relative bg-[#FFFCF8] rounded-2xl max-w-[400px] w-full p-6 sm:p-8 shadow-2xl border border-[#EAE2D5] z-10 gisara-fade-in focus:outline-none"
         role="dialog"
         aria-modal="true"
-        aria-label="ورود یا ثبت‌نام"
+        aria-labelledby="otp-title"
       >
         <button
+          type="button"
           onClick={onClose}
-          className="absolute top-4 left-4 p-1.5 text-[#59524A] hover:text-[#171614] rounded-lg transition-colors cursor-pointer"
+          className="absolute top-3 start-3 w-11 h-11 flex items-center justify-center text-[#59524A] hover:text-[#171614] rounded-lg transition-colors cursor-pointer"
           aria-label="بستن"
         >
-          <X className="w-5 h-5" />
+          <X className="w-5 h-5" aria-hidden="true" />
         </button>
 
         <div className="text-center mb-6">
           <div className="w-12 h-12 mx-auto rounded-full bg-[#F4EFE7] flex items-center justify-center text-[#87553B] mb-3">
-            {step === 'MOBILE' ? <Smartphone className="w-6 h-6" /> : <KeyRound className="w-6 h-6" />}
+            {step === 'MOBILE' ? <Smartphone className="w-6 h-6" aria-hidden="true" /> : <KeyRound className="w-6 h-6" aria-hidden="true" />}
           </div>
-          <h3 className="text-lg font-bold text-[#171614]">
-            {step === 'MOBILE' ? 'ورود یا ثبت‌نام در شنیون مو' : 'تأیید شماره موبایل'}
-          </h3>
-          <p className="text-xs text-[#59524A] mt-1">
-            {step === 'MOBILE'
-              ? 'برای دسترسی به دوره‌ها، سفارش‌ها و ثبت‌نام کارگاه‌ها شماره خود را وارد کنید.'
-              : `کد یک‌بارمصرف ارسال‌شده به شماره ${mobile} را وارد کنید.`}
+          <h2 id="otp-title" className="text-lg font-bold text-[#171614]">
+            {step === 'MOBILE' ? 'ورود یا ثبت‌نام در گیس‌آرا' : 'کد تأیید را وارد کنید'}
+          </h2>
+          <p className="text-xs text-[#59524A] mt-1 leading-6">
+            {step === 'MOBILE' ? (
+              'برای دسترسی به دوره‌ها، سفارش‌ها و ثبت‌نام کارگاه‌ها، شماره موبایل خود را وارد کنید.'
+            ) : (
+              <>کد ۶ رقمی پیامک‌شده به شماره <bdi dir="ltr" className="font-semibold tabular-nums">{mobile}</bdi> را وارد کنید.</>
+            )}
           </p>
         </div>
 
         {error && (
-          <div className="mb-4 p-3 bg-[#C54636]/10 text-[#C54636] text-xs rounded-lg border border-[#C54636]/20">
+          <div role="alert" className="mb-4 p-3 bg-[#C54636]/10 text-[#9E3326] text-xs leading-6 rounded-lg border border-[#C54636]/20">
             {error}
           </div>
         )}
 
         {step === 'MOBILE' ? (
-          <form onSubmit={handleRequestOtp} className="space-y-4">
+          <form onSubmit={handleRequestOtp} className="space-y-4" noValidate>
             <div>
-              <label htmlFor="mobile" className="block text-xs font-semibold text-[#171614] mb-1.5">
-                شماره تلفن همراه
-              </label>
+              <label htmlFor="otp-mobile" className="block text-xs font-semibold text-[#171614] mb-1.5">شماره تلفن همراه</label>
               <input
-                id="mobile"
+                id="otp-mobile"
                 type="tel"
+                inputMode="numeric"
+                autoComplete="tel"
                 dir="ltr"
                 placeholder="09121234567"
-                value={mobile}
-                onChange={(e) => setMobile(e.target.value)}
-                className="w-full px-4 py-2.5 bg-white border border-[#EAE2D5] rounded-xl text-center text-sm font-semibold tracking-widest text-[#171614] focus:outline-none focus:border-[#87553B] focus:ring-1 focus:ring-[#87553B]"
-                required
+                value={mobileInput}
+                onChange={(e) => { setMobileInput(toLatinDigits(e.target.value)); if (error) setError(null); }}
+                aria-invalid={error && step === 'MOBILE' ? true : undefined}
+                className="w-full px-4 py-3 bg-white border border-[#EAE2D5] rounded-xl text-center text-base font-semibold tracking-widest text-[#171614] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#87553B]/40"
+                autoFocus
               />
             </div>
 
             <button
               type="submit"
-              disabled={isSubmitting}
-              className="w-full py-2.5 px-4 bg-[#171614] hover:bg-[#87553B] text-white text-xs sm:text-sm font-bold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2"
+              disabled={isSending}
+              aria-busy={isSending}
+              className="w-full min-h-12 px-4 bg-[#171614] hover:bg-[#87553B] disabled:opacity-60 text-white text-sm font-bold rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-2"
             >
-              <span>{isSubmitting ? 'در حال ارسال کد...' : 'دریافت کد تأیید (پیامک)'}</span>
-              <ArrowLeft className="w-4 h-4" />
+              {isSending ? <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> : null}
+              <span>{isSending ? 'در حال ارسال کد…' : 'دریافت کد تأیید'}</span>
+              {!isSending && <ArrowLeft className="w-4 h-4" aria-hidden="true" />}
             </button>
           </form>
         ) : (
-          <form onSubmit={handleVerifyOtp} className="space-y-4">
+          <form onSubmit={handleVerifyOtp} className="space-y-4" noValidate>
             <div>
-              <label htmlFor="otp" className="block text-xs font-semibold text-[#171614] mb-1.5">
-                کد تأیید پیامک‌شده {demoCode ? <span className="text-[#87553B] font-bold bg-[#87553B]/10 px-2.5 py-0.5 rounded-md">کد دریافت شده: {demoCode}</span> : '(کد نمونه: ۱۲۳۴)'}
-              </label>
+              <label htmlFor="otp-code" className="block text-xs font-semibold text-[#171614] mb-1.5">کد تأیید</label>
               <input
-                id="otp"
+                id="otp-code"
+                ref={otpInputRef}
                 type="text"
+                inputMode="numeric"
+                autoComplete="one-time-code"
                 dir="ltr"
-                placeholder="1 2 3 4"
-                maxLength={6}
+                placeholder="------"
+                maxLength={CODE_LENGTH}
                 value={otpCode}
-                onChange={(e) => setOtpCode(e.target.value)}
-                className="w-full px-4 py-2.5 bg-white border border-[#EAE2D5] rounded-xl text-center text-lg font-bold tracking-widest text-[#171614] focus:outline-none focus:border-[#87553B] focus:ring-1 focus:ring-[#87553B]"
-                required
-                autoFocus
+                onChange={(e) => handleCodeChange(e.target.value)}
+                disabled={isVerifying}
+                aria-invalid={error ? true : undefined}
+                className="w-full px-4 py-3 bg-white border border-[#EAE2D5] rounded-xl text-center text-xl font-bold tracking-[0.5em] text-[#171614] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#87553B]/40 disabled:opacity-60"
               />
+              {devHint && <p className="mt-2 text-[11px] text-[#59524A] bg-[#F4EFE7] rounded-md px-2 py-1" dir="auto">نسخه توسعه: {devHint}</p>}
             </div>
 
-            <div className="flex items-center justify-between text-xs text-[#59524A]">
-              {countdown > 0 ? (
-                <span className="tabular-nums">
-                  ارسال مجدد کد در {Math.floor(countdown / 60)}:{(countdown % 60).toString().padStart(2, '0')}
-                </span>
+            <div className="flex items-center justify-between gap-3 text-xs text-[#59524A]" aria-live="polite">
+              {resendIn > 0 ? (
+                <span className="tabular-nums">ارسال مجدد کد تا {fmt(resendIn)} دیگر</span>
               ) : (
                 <button
                   type="button"
-                  onClick={() => setCountdown(120)}
-                  className="text-[#87553B] font-bold hover:underline cursor-pointer"
+                  onClick={() => sendCode(mobile, true)}
+                  disabled={isSending}
+                  className="min-h-11 text-[#87553B] font-bold hover:underline cursor-pointer disabled:opacity-60 inline-flex items-center gap-1.5"
                 >
-                  ارسال مجدد کد پیامکی
+                  {isSending && <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />}
+                  ارسال مجدد کد
                 </button>
               )}
 
               <button
                 type="button"
-                onClick={() => setStep('MOBILE')}
-                className="text-stone-400 hover:text-stone-600 cursor-pointer"
+                onClick={() => { setStep('MOBILE'); setOtpCode(''); setError(null); setDevHint(null); }}
+                className="min-h-11 px-1 text-[#59524A] hover:text-[#171614] underline underline-offset-2 cursor-pointer"
               >
-                تغییر شماره
+                ویرایش شماره
               </button>
             </div>
 
+            {codeDead && !error && (
+              <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">مهلت این کد تمام شده است؛ کد جدید دریافت کنید.</p>
+            )}
+
             <button
               type="submit"
-              disabled={isSubmitting}
-              className="w-full py-2.5 px-4 bg-[#87553B] hover:bg-[#6E422C] text-white text-xs sm:text-sm font-bold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2 shadow-xs"
+              disabled={isVerifying || otpCode.length !== CODE_LENGTH}
+              aria-busy={isVerifying}
+              className="w-full min-h-12 px-4 bg-[#87553B] hover:bg-[#6E422C] disabled:opacity-60 text-white text-sm font-bold rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-2 shadow-xs"
             >
-              <CheckCircle2 className="w-4 h-4" />
-              <span>{isSubmitting ? 'در حال بررسی...' : 'تأیید و ورود'}</span>
+              {isVerifying ? <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> : <CheckCircle2 className="w-4 h-4" aria-hidden="true" />}
+              <span>{isVerifying ? 'در حال بررسی…' : 'تأیید و ورود'}</span>
             </button>
           </form>
         )}

@@ -264,3 +264,18 @@ export const sessionCreateSchema = z.object({
 });
 export const sessionUpdateSchema = sessionCreateSchema.partial();
 
+
+/** Customer profile: a display name and an optional avatar (an uploaded/internal image or https URL). */
+export const profileUpdateSchema = z.object({
+  name: z.string({ invalid_type_error: 'نام نامعتبر است.' }).trim()
+    .min(2, { message: 'نام باید حداقل ۲ حرف باشد.' })
+    .max(60, { message: 'نام نباید بیشتر از ۶۰ حرف باشد.' })
+    .transform(sanitizeInput)
+    .optional(),
+  avatar: z.union([
+    z.literal(''),
+    z.null(),
+    httpsOrInternalUrl
+  ]).optional()
+}).refine((v) => v.name !== undefined || v.avatar !== undefined, { message: 'چیزی برای ذخیره ارسال نشده است.' })
+  .transform((v) => ({ ...v, avatar: v.avatar === '' ? null : v.avatar }));

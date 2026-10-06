@@ -13,8 +13,14 @@ import {
   authenticateAdmin,
   generateToken,
   setAuthCookie,
-  clearAuthCookie
+  clearAuthCookie,
+  checkOtpRequestAllowed,
+  discardOTP,
+  ADMIN_COOKIE,
+  OTP_COOLDOWN_SEC,
+  OTP_TTL_SEC
 } from './auth';
+import { getOrCreateUser, updateUserProfile, findUserByCode, findUserByMobile, backfillUsersFromActivity } from './users';
 
 import { Product, UserOrder, WorkshopRequest, Article, StyleModel } from '../src/types/domain';
 import { sendSMS, sendOrderConfirmationSMS } from './sms';
@@ -22,11 +28,11 @@ import { requestPaymentGateway, verifyPaymentGateway } from './payment';
 import { checkOrderTransition } from './orderStateMachine';
 import { releaseReservedStock, releaseCouponUsage } from './orderLifecycle';
 import { validateImport, snapshotBeforeImport, IMPORTABLE_COLLECTIONS } from './dbImport';
-import { validateBody, shippingInfoSchema, courseRuleIssues, productCreateSchema, productUpdateSchema, styleCreateSchema, styleUpdateSchema, courseCreateSchema, courseUpdateSchema, couponCreateSchema, couponUpdateSchema, certificateCreateSchema, settingsUpdateSchema, workshopRequestSchema, aiConsultationSchema, articleCreateSchema, articleUpdateSchema, techniqueCreateSchema, techniqueUpdateSchema, sessionCreateSchema, sessionUpdateSchema } from './validation';
+import { validateBody, shippingInfoSchema, profileUpdateSchema, courseRuleIssues, productCreateSchema, productUpdateSchema, styleCreateSchema, styleUpdateSchema, courseCreateSchema, courseUpdateSchema, couponCreateSchema, couponUpdateSchema, certificateCreateSchema, settingsUpdateSchema, workshopRequestSchema, aiConsultationSchema, articleCreateSchema, articleUpdateSchema, techniqueCreateSchema, techniqueUpdateSchema, sessionCreateSchema, sessionUpdateSchema } from './validation';
 import { getEntitledCourseIds, hasCourseAccess, toPublicCourse, findLesson } from './courseAccess';
 import { isJalaliExpired } from './jalali';
 import { computeTotals } from '../src/shared/pricing';
-import { normalizeCode, normalizeMobile } from '../src/shared/digits';
+import { normalizeCode, normalizeMobile, digitsOnly } from '../src/shared/digits';
 import { newId, newOrderNumber } from './ids';
 import { generateExpertStylingAdvice } from './expertStylingEngine';
 
@@ -100,27 +106,41 @@ apiRouter.get('/health', (req, res) => {
 
 // Request OTP SMS
 apiRouter.post('/auth/otp/request', otpLimiter, async (req: any, res) => {
-  const { mobile } = req.body || {};
-  if (typeof mobile !== 'string' || !/^09[0-9]{9}$/.test(mobile.trim())) {
-    return res.status(400).json({ success: false, message: 'شماره موبایل معتبر نیست.' });
+  const mobile = normalizeMobile(req.body?.mobile);
+  if (!mobile) {
+    return res.status(400).json({ success: false, message: 'شماره موبایل معتبر نیست (مثال: ۰۹۱۲۱۲۳۴۵۶۷).' });
   }
 
-  const code = generateOTP(mobile.trim());
-  const smsResult = await sendSMS(mobile.trim(), code);
+  // Per-number throttle: protects a victim's phone from being flooded even by many different IPs.
+  const allowed = checkOtpRequestAllowed(mobile);
+  if (!allowed.ok) {
+    res.setHeader('Retry-After', String(allowed.retryAfterSec));
+    return res.status(429).json({
+      success: false,
+      retryAfterSec: allowed.retryAfterSec,
+      message: allowed.reason === 'cooldown'
+        ? `کد قبلی هنوز معتبر است. ${allowed.retryAfterSec} ثانیه دیگر می‌توانید کد جدید بگیرید.`
+        : 'تعداد درخواست‌های کد برای این شماره زیاد بود. حدود یک ساعت دیگر دوباره تلاش کنید.'
+    });
+  }
+
+  const code = generateOTP(mobile);
+  const smsResult = await sendSMS(mobile, code);
 
   if (!smsResult.success) {
-    // Delivery failed / SMS not configured: discard the code so it can never be used.
-    db.otps = db.otps.filter(o => o.mobile !== mobile.trim());
+    // Delivery failed / SMS not configured: discard the code so it can never be used, and do not
+    // count this attempt against the person's cooldown.
+    discardOTP(mobile);
     return res.status(503).json({ success: false, message: 'ارسال پیامک در حال حاضر ممکن نیست. لطفاً کمی بعد دوباره تلاش کنید.' });
   }
 
-  // The code must never be returned to the client — it only ever travels
-  // from the server to the SMS provider to the user's phone. In non-production
-  // "simulated_dev" mode, sendSMS() already echoes the code into its own
-  // `message` field so local testing still works without an SMS provider.
+  // The code must never be returned to the client — it only ever travels from the server to the SMS
+  // provider to the user's phone. In non-production "simulated_dev" mode, sendSMS() echoes the code
+  // into its own `message` field so local testing still works without an SMS provider.
   res.json({
     success: true,
-    // The provider message can contain the code in simulated (dev) mode - never in production.
+    cooldownSec: OTP_COOLDOWN_SEC,
+    expiresInSec: OTP_TTL_SEC,
     message: process.env.NODE_ENV === 'production' ? 'کد تایید پیامکی ارسال شد.' : (smsResult.message || 'کد تایید پیامکی صادر گردید.'),
     smsProvider: smsResult.provider
   });
@@ -128,34 +148,32 @@ apiRouter.post('/auth/otp/request', otpLimiter, async (req: any, res) => {
 
 // Verify OTP SMS
 apiRouter.post('/auth/otp/verify', otpVerifyLimiter, (req, res) => {
-  const { mobile, code } = req.body || {};
-  if (typeof mobile !== 'string' || typeof code !== 'string' || !mobile || !code) {
+  const mobile = normalizeMobile(req.body?.mobile);
+  const code = digitsOnly(req.body?.code);
+  if (!mobile || !code) {
     return res.status(400).json({ success: false, message: 'شماره موبایل و کد تایید الزامی هستند.' });
   }
 
-  const isValid = verifyOTP(mobile.trim(), code.trim());
-  if (!isValid) {
-    return res.status(400).json({ success: false, message: 'کد وارد شده معتبر نیست یا منقضی شده است.' });
+  const result = verifyOTP(mobile, code);
+  if (!result.ok) {
+    const message =
+      result.reason === 'expired'
+        ? 'کد منقضی شده است. کد جدید دریافت کنید.'
+        : result.reason === 'locked'
+        ? 'تعداد تلاش‌های مجاز تمام شد. کد جدید دریافت کنید.'
+        : `کد وارد شده درست نیست. ${result.attemptsLeft} فرصت باقی مانده است.`;
+    return res.status(400).json({ success: false, reason: result.reason, attemptsLeft: result.attemptsLeft, message });
   }
 
-  // Issue User Token
-  const token = generateToken({
-    role: 'USER',
-    mobile: mobile.trim(),
-    name: `کاربر ${mobile.trim().slice(-4)}`
-  });
-
-  // Set Secure HttpOnly Cookie
+  // Sign in (creating the account with its unique user code on first login).
+  const user = getOrCreateUser(mobile, true);
+  const token = generateToken({ role: 'USER', mobile: user.mobile, uid: user.userCode });
   setAuthCookie(res, token, 24 * 60 * 60 * 1000);
 
   res.json({
     success: true,
     message: 'ورود با موفقیت انجام شد.',
-    user: {
-      mobile: mobile.trim(),
-      name: `کاربر ${mobile.trim().slice(-4)}`,
-      role: 'USER'
-    }
+    user: { mobile: user.mobile, name: user.name, role: 'USER', userCode: user.userCode, avatar: user.avatar }
   });
 });
 
@@ -171,8 +189,8 @@ apiRouter.post('/auth/admin/login', loginLimiter, (req, res) => {
     return res.status(401).json({ success: false, message: 'کد عبور مدیریت نادرست است.' });
   }
 
-  // Set Secure HttpOnly Cookie
-  setAuthCookie(res, token, 12 * 60 * 60 * 1000);
+  // Admin cookie is separate from the customer cookie: a customer login can never end an admin session.
+  setAuthCookie(res, token, 12 * 60 * 60 * 1000, ADMIN_COOKIE);
 
   logAdminAction('مدیریت سیستم', 'ورود به سیستم', 'ورود موفقیت‌آمیز به پنل ادمین');
 
@@ -186,19 +204,42 @@ apiRouter.post('/auth/admin/login', loginLimiter, (req, res) => {
   });
 });
 
-// Current User Session Info (/auth/me)
+apiRouter.post('/auth/admin/logout', (req, res) => {
+  clearAuthCookie(res, ADMIN_COOKIE);
+  res.json({ success: true, message: 'از پنل مدیریت خارج شدید.' });
+});
+
+// Current session. 401 only when there is neither a customer nor an admin session.
 apiRouter.get('/auth/me', (req: any, res) => {
-  if (!req.user) {
+  res.setHeader('Cache-Control', 'no-store');
+  const isAdmin = !!req.admin;
+  const u = req.user && req.user.role === 'USER' ? req.user : null;
+  if (!u && !isAdmin) {
     return res.status(401).json({ success: false, message: 'کاربر احراز هویت نشده است.' });
   }
-
   res.json({
     success: true,
-    user: req.user
+    isAdmin,
+    // Only what the UI needs - no token internals (exp, uid, ...).
+    user: u ? { mobile: u.mobile, name: u.name, role: 'USER', userCode: u.userCode, avatar: u.avatar } : null
   });
 });
 
-// Logout and Clear Auth Cookie
+// Customer edits their own profile (display name and avatar). The user code and mobile never change.
+apiRouter.put('/me/profile', requireAuth, writeLimiter, (req: any, res) => {
+  if (req.user.role !== 'USER') {
+    return res.status(403).json({ success: false, message: 'این عملیات فقط برای حساب مشتری است.' });
+  }
+  const parsed = profileUpdateSchema.safeParse(req.body || {});
+  if (!parsed.success) {
+    return res.status(400).json({ success: false, message: parsed.error.issues[0]?.message || 'اطلاعات پروفایل نامعتبر است.' });
+  }
+  const user = updateUserProfile(req.user.mobile, parsed.data);
+  if (!user) return res.status(404).json({ success: false, message: 'حساب کاربری یافت نشد.' });
+  res.json({ success: true, user: { mobile: user.mobile, name: user.name, role: 'USER', userCode: user.userCode, avatar: user.avatar } });
+});
+
+// Logout (customer session only)
 apiRouter.post('/auth/logout', (req, res) => {
   clearAuthCookie(res);
   res.json({
@@ -571,6 +612,7 @@ apiRouter.post('/orders', requireAuth, writeLimiter, (req: any, res) => {
     paymentExpiresAt: new Date(Date.now() + PAYMENT_WINDOW_MS).toISOString(),
     userMobile: req.user.mobile,
     customerName: req.user.name,
+    userCode: req.user.userCode,
     couponApplied: coupon ? coupon.code : undefined,
     idempotencyKey: idempotencyKey || undefined,
     shippingAddress,
@@ -1087,6 +1129,87 @@ apiRouter.post('/certificates', requireAdmin, writeLimiter, validateBody(certifi
   logAdminAction(req.user.name, 'صدور گواهی‌نامه', `صدور مدرک برای: ${newCert.studentName}`);
   
   res.status(201).json({ success: true, data: newCert });
+});
+
+// -----------------------------------------------------------------------------
+// Admin: customer lookup by user code / mobile / name
+// -----------------------------------------------------------------------------
+const PAID_STATUSES = new Set(['PAID', 'COMPLETED']);
+
+function summarizeUser(u: any) {
+  const orders = (db.orders as any[]).filter(o => o.userMobile === u.mobile);
+  const paid = orders.filter(o => PAID_STATUSES.has(o.status));
+  return {
+    userCode: u.userCode,
+    name: u.name,
+    mobile: u.mobile,
+    createdAt: u.createdAt,
+    lastLoginAt: u.lastLoginAt,
+    ordersCount: orders.length,
+    paidOrdersCount: paid.length,
+    totalPaidToman: paid.reduce((sum, o) => sum + (o.payableToman || 0), 0),
+    coursesCount: getEntitledCourseIds(u.mobile).length
+  };
+}
+
+apiRouter.get('/admin/users', requireAdmin, (req: any, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  backfillUsersFromActivity();
+  const raw = String(req.query.q || '').trim();
+  let list = db.users as any[];
+  if (raw) {
+    const upper = raw.toUpperCase();
+    const mobile = normalizeMobile(raw);
+    const digits = digitsOnly(raw);
+    const lower = raw.toLowerCase();
+    list = list.filter(u =>
+      u.userCode === upper ||
+      u.userCode.startsWith(upper) ||
+      (mobile && u.mobile === mobile) ||
+      (digits.length >= 4 && u.mobile.includes(digits)) ||
+      String(u.name).toLowerCase().includes(lower)
+    );
+  }
+  const sorted = [...list].sort((a, b) => String(b.lastLoginAt).localeCompare(String(a.lastLoginAt)));
+  res.json({ success: true, total: sorted.length, data: sorted.slice(0, 50).map(summarizeUser) });
+});
+
+apiRouter.get('/admin/users/:code', requireAdmin, (req: any, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  backfillUsersFromActivity();
+  const user: any = findUserByCode(req.params.code);
+  if (!user) {
+    return res.status(404).json({ success: false, message: 'کاربری با این شناسه یافت نشد.' });
+  }
+  const orders = (db.orders as any[])
+    .filter(o => o.userMobile === user.mobile)
+    .map(o => ({
+      id: o.id,
+      orderNumber: o.orderNumber,
+      status: o.status,
+      payableToman: o.payableToman,
+      createdAt: o.createdAt,
+      paidAt: o.paidAt,
+      shipmentStatus: o.shipmentStatus,
+      trackingCode: o.trackingCode,
+      items: (o.items || []).map((i: any) => ({ type: i.type, title: i.title, quantity: i.quantity }))
+    }));
+  const courses = getEntitledCourseIds(user.mobile).map(id => {
+    const c = db.courses.find(x => x.id === id);
+    return { id, name: c?.name || id };
+  });
+  const manual = (db.manualEnrollments as any[]).filter(e => e.userMobile === user.mobile);
+  const requests = (db.requests as any[])
+    .filter(r => r.mobile === user.mobile)
+    .map(r => ({ id: r.id, kind: r.kind, status: r.status, courseId: r.courseId, submittedAt: r.submittedAt }));
+  const certificates = (db.certificates as any[])
+    .filter(c => c.studentMobile === user.mobile)
+    .map(c => ({ certificateCode: c.certificateCode, courseTitle: c.courseTitle, status: c.status }));
+
+  res.json({
+    success: true,
+    data: { ...summarizeUser(user), avatar: user.avatar, orders, courses, manualEnrollments: manual, requests, certificates }
+  });
 });
 
 // -----------------------------------------------------------------------------

@@ -44,8 +44,9 @@ export interface PaymentResult {
 interface AccountPageProps {
   userMobile: string;
   userName: string;
-  userAvatar?: string;
-  onUpdateProfile?: (name: string, avatar: string) => void;
+  /** Public account identifier (shown so support / admin can find this account quickly). */
+  userCode?: string;
+  onUpdateProfile?: (name: string) => Promise<{ success: boolean; message?: string }>;
   orders: UserOrder[];
   enrolledCourses: Course[];
   requests: WorkshopRequest[];
@@ -66,7 +67,7 @@ interface AccountPageProps {
 export const AccountPage: React.FC<AccountPageProps> = ({
   userMobile,
   userName,
-  userAvatar = '',
+  userCode = '',
   onUpdateProfile,
   orders,
   enrolledCourses,
@@ -105,40 +106,45 @@ export const AccountPage: React.FC<AccountPageProps> = ({
   const [selectedCertificate, setSelectedCertificate] = useState<Certificate | null>(null);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
-  // Profile Edit State
+  // Profile edit: only the display name is editable (saved on the server). Mobile and user ID are fixed.
   const [isEditing, setIsEditing] = useState(false);
   const [tempName, setTempName] = useState(userName);
-  const [tempAvatar, setTempAvatar] = useState(userAvatar);
-  const [customAvatarUrl, setCustomAvatarUrl] = useState('');
+  const [profileError, setProfileError] = useState<string | null>(null);
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
 
-  const defaultAvatars = [
-    'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=150&q=80',
-    'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80',
-    'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80',
-    'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80',
-  ];
-
-  const handleCopyCode = (code: string) => {
-    navigator.clipboard.writeText(code);
-    setCopiedCode(code);
-    setTimeout(() => setCopiedCode(null), 2000);
+  const handleCopyCode = async (code: string) => {
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopiedCode(code);
+      setTimeout(() => setCopiedCode(null), 2000);
+    } catch {
+      // Clipboard can be blocked (insecure context / permissions); the code stays visible and selectable.
+    }
   };
 
-  const handleSaveProfile = () => {
-    if (!tempName.trim()) return;
-    const finalAvatar = customAvatarUrl.trim() || tempAvatar;
-    if (onUpdateProfile) {
-      onUpdateProfile(tempName.trim(), finalAvatar);
+  const handleSaveProfile = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    const name = tempName.trim();
+    if (name.length < 2) {
+      setProfileError('نام باید حداقل ۲ حرف باشد.');
+      return;
     }
-    setIsEditing(false);
+    if (!onUpdateProfile || isSavingProfile) return;
+    setIsSavingProfile(true);
+    setProfileError(null);
+    const res = await onUpdateProfile(name);
+    setIsSavingProfile(false);
+    if (res.success) setIsEditing(false);
+    else setProfileError(res.message || 'ذخیره نام انجام نشد. دوباره تلاش کنید.');
   };
 
   const handleStartEdit = () => {
     setTempName(userName);
-    setTempAvatar(userAvatar);
-    setCustomAvatarUrl(userAvatar && !defaultAvatars.includes(userAvatar) ? userAvatar : '');
+    setProfileError(null);
     setIsEditing(true);
   };
+
+  const initial = (userName || '').trim().charAt(0) || '؟';
 
   return (
     <div className="max-w-[1240px] mx-auto px-4 sm:px-6 py-6 sm:py-10 space-y-8">
@@ -151,34 +157,41 @@ export const AccountPage: React.FC<AccountPageProps> = ({
       />
 
       {/* User Header Profile */}
-      <div className="bg-[#FFFCF8] rounded-2xl p-6 sm:p-8 border border-[#DED7CD] shadow-xs space-y-6">
+      <div className="bg-[#FFFCF8] rounded-2xl p-5 sm:p-8 border border-[#DED7CD] shadow-xs space-y-4">
         {!isEditing ? (
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
-            <div className="flex flex-col sm:flex-row items-center gap-4 text-center sm:text-right">
-              <div className="w-18 h-16 sm:w-16 sm:h-16 rounded-full overflow-hidden shrink-0 border border-[#DED7CD] bg-[#EEE8DF] flex items-center justify-center">
-                {userAvatar ? (
-                  <img
-                    src={userAvatar}
-                    alt={userName}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <User className="w-8 h-8 text-[#7A5E4D]" />
-                )}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-5">
+            <div className="flex flex-col sm:flex-row items-center gap-4 text-center sm:text-start min-w-0">
+              <div aria-hidden="true" className="w-16 h-16 rounded-full shrink-0 bg-[#7A5E4D] text-white flex items-center justify-center text-2xl font-bold">
+                {initial}
               </div>
-              <div>
-                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                  <h1 className="text-xl font-bold text-[#171614]">{userName}</h1>
-                  <button
-                    type="button"
-                    onClick={handleStartEdit}
-                    className="text-xs text-[#87553B] hover:underline font-semibold cursor-pointer"
-                  >
-                    (ویرایش پروفایل)
-                  </button>
+              <div className="min-w-0">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
+                  <h1 className="text-xl font-bold text-[#171614] break-words">{userName}</h1>
+                  {onUpdateProfile && (
+                    <button type="button" onClick={handleStartEdit} className="min-h-9 text-xs text-[#87553B] hover:underline font-semibold cursor-pointer">
+                      ویرایش نام
+                    </button>
+                  )}
                 </div>
-                <div className="text-xs text-[#5E5A54] mt-1 tabular-nums">
-                  شماره همراه: {userMobile} · هنرجوی تاییدشده آکادمی گیس‌آرا
+                <div className="text-xs text-[#5E5A54] mt-1 space-y-1">
+                  <div>
+                    شماره همراه: <bdi dir="ltr" className="tabular-nums">{userMobile}</bdi>
+                  </div>
+                  {userCode && (
+                    <div className="flex items-center justify-center sm:justify-start gap-2">
+                      <span>شناسه کاربری:</span>
+                      <bdi dir="ltr" className="font-mono font-bold text-[#171614] select-all">{userCode}</bdi>
+                      <button
+                        type="button"
+                        onClick={() => handleCopyCode(userCode)}
+                        className="min-h-9 px-2 inline-flex items-center gap-1 text-[#87553B] hover:underline cursor-pointer"
+                        aria-label="کپی شناسه کاربری"
+                      >
+                        {copiedCode === userCode ? <Check className="w-3.5 h-3.5" aria-hidden="true" /> : <Copy className="w-3.5 h-3.5" aria-hidden="true" />}
+                        <span>{copiedCode === userCode ? 'کپی شد' : 'کپی'}</span>
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -186,84 +199,40 @@ export const AccountPage: React.FC<AccountPageProps> = ({
             <button
               type="button"
               onClick={onLogout}
-              className="px-4 py-2 text-xs font-semibold text-[#A54843] hover:bg-rose-50 rounded-xl border border-rose-200 transition-colors cursor-pointer self-stretch sm:self-auto"
+              className="min-h-11 px-4 text-xs font-semibold text-[#A54843] hover:bg-rose-50 rounded-xl border border-rose-200 transition-colors cursor-pointer self-stretch sm:self-auto"
             >
               خروج از حساب کاربری
             </button>
           </div>
         ) : (
-          <div className="space-y-4 animate-in fade-in duration-200">
-            <h2 className="text-sm font-bold text-[#171614] border-b border-[#EEE8DF] pb-2">ویرایش اطلاعات حساب کاربری</h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-              {/* Form Input fields */}
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-xs font-bold text-stone-600 mb-1.5">نام و نام خانوادگی جدید</label>
-                  <input
-                    type="text"
-                    value={tempName}
-                    onChange={(e) => setTempName(e.target.value)}
-                    className="w-full h-10 px-3 bg-white border border-stone-200 rounded-xl text-xs text-[#171614] focus:outline-none focus:border-amber-600"
-                    placeholder="مثال: مریم حسینی"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-stone-600 mb-1.5">یا وارد کردن لینک مستقیم عکس دلخواه</label>
-                  <input
-                    type="text"
-                    value={customAvatarUrl}
-                    onChange={(e) => setCustomAvatarUrl(e.target.value)}
-                    className="w-full h-10 px-3 bg-white border border-stone-200 rounded-xl text-xs font-mono text-[#171614] focus:outline-none focus:border-amber-600 dir-ltr text-left"
-                    placeholder="https://example.com/avatar.jpg"
-                  />
-                </div>
-              </div>
-
-              {/* Avatar Chooser */}
-              <div className="space-y-2">
-                <span className="block text-xs font-bold text-stone-600">انتخاب عکس پروفایل از گالری گیس‌آرا</span>
-                <div className="flex flex-wrap gap-3 pt-1">
-                  {defaultAvatars.map((url, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => {
-                        setTempAvatar(url);
-                        setCustomAvatarUrl('');
-                      }}
-                      className={`w-14 h-14 rounded-full overflow-hidden border-2 transition-all cursor-pointer ${
-                        tempAvatar === url && !customAvatarUrl
-                          ? 'border-amber-600 scale-105 shadow-md shadow-amber-600/10'
-                          : 'border-stone-200 hover:border-amber-600/40'
-                      }`}
-                    >
-                      <img src={url} alt={`آواتار ${idx + 1}`} className="w-full h-full object-cover" />
-                    </button>
-                  ))}
-                </div>
-              </div>
+          <form onSubmit={handleSaveProfile} noValidate className="space-y-4 max-w-md">
+            <h2 className="text-sm font-bold text-[#171614] border-b border-[#EEE8DF] pb-2">ویرایش نام</h2>
+            <div>
+              <label htmlFor="profile-name" className="block text-xs font-bold text-stone-700 mb-1.5">نام و نام خانوادگی</label>
+              <input
+                id="profile-name"
+                type="text"
+                autoComplete="name"
+                maxLength={60}
+                value={tempName}
+                onChange={(e) => { setTempName(e.target.value); if (profileError) setProfileError(null); }}
+                aria-invalid={profileError ? true : undefined}
+                aria-describedby={profileError ? 'profile-name-err' : undefined}
+                className="w-full min-h-11 px-3 bg-white border border-stone-300 rounded-xl text-sm text-[#171614] focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-600/40"
+                placeholder="مثال: مریم حسینی"
+                autoFocus
+              />
+              {profileError && <p id="profile-name-err" role="alert" className="mt-1 text-xs text-rose-700">{profileError}</p>}
             </div>
-
-            {/* Action buttons */}
-            <div className="flex items-center gap-2 pt-4 border-t border-[#EEE8DF]">
-              <button
-                type="button"
-                onClick={handleSaveProfile}
-                className="px-5 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl transition-all cursor-pointer"
-              >
-                ذخیره تغییرات پروفایل
+            <div className="flex items-center gap-2">
+              <button type="submit" disabled={isSavingProfile} aria-busy={isSavingProfile} className="min-h-11 px-5 bg-amber-600 hover:bg-amber-700 disabled:opacity-60 text-white text-sm font-bold rounded-xl transition-colors cursor-pointer">
+                {isSavingProfile ? 'در حال ذخیره…' : 'ذخیره'}
               </button>
-              <button
-                type="button"
-                onClick={() => setIsEditing(false)}
-                className="px-4 py-2 bg-stone-100 hover:bg-stone-200 text-stone-600 text-xs font-semibold rounded-xl transition-all cursor-pointer"
-              >
+              <button type="button" onClick={() => setIsEditing(false)} className="min-h-11 px-4 bg-stone-100 hover:bg-stone-200 text-stone-700 text-sm font-semibold rounded-xl transition-colors cursor-pointer">
                 انصراف
               </button>
             </div>
-          </div>
+          </form>
         )}
       </div>
 
