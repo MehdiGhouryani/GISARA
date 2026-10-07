@@ -44,6 +44,7 @@ import {
 } from 'lucide-react';
 import { EditorialImage } from '../common/EditorialImage';
 import { ImageUploader } from '../common/ImageUploader';
+import { ConfirmDialog } from '../common/ConfirmDialog';
 
 interface ContentCmsManagerProps {
   styles: StyleModel[];
@@ -98,6 +99,8 @@ export const ContentCmsManager: React.FC<ContentCmsManagerProps> = ({
   onUpdateAboutContent,
   initialSubTab = 'STYLES',
 }) => {
+  // One accessible confirmation for every destructive action in this screen (replaces window.confirm).
+  const [pendingDelete, setPendingDelete] = useState<{ message: string; run: () => void } | null>(null);
   const [activeTab, setActiveTab] = useState<'STYLES' | 'ARTICLES' | 'TECHNIQUES' | 'COUPONS' | 'FAQS' | 'ABOUT'>(initialSubTab);
   
   // Real-time Search Query state
@@ -899,9 +902,7 @@ export const ContentCmsManager: React.FC<ContentCmsManagerProps> = ({
                       <button
                         type="button"
                         onClick={() => {
-                          if (window.confirm(`آیا از حذف مدل «${style.name}» اطمینان دارید؟`)) {
-                            onDeleteStyle(style.id);
-                          }
+                          setPendingDelete({ message: `آیا از حذف مدل «${style.name}» اطمینان دارید؟`, run: () => { onDeleteStyle(style.id); } });
                         }}
                         className="p-1.5 text-stone-500 hover:text-rose-500 hover:bg-rose-500/10 rounded-lg transition-colors cursor-pointer"
                         title="حذف این مدل"
@@ -997,9 +998,7 @@ export const ContentCmsManager: React.FC<ContentCmsManagerProps> = ({
                       <button
                         type="button"
                         onClick={() => {
-                          if (window.confirm(`آیا از حذف مقاله «${art.title}» اطمینان دارید؟`)) {
-                            onDeleteArticle(art.id);
-                          }
+                          setPendingDelete({ message: `آیا از حذف مقاله «${art.title}» اطمینان دارید؟`, run: () => { onDeleteArticle(art.id); } });
                         }}
                         className="p-1.5 text-stone-500 hover:text-rose-500 hover:bg-rose-500/10 rounded-lg transition-colors cursor-pointer"
                         title="حذف این مقاله"
@@ -1089,9 +1088,7 @@ export const ContentCmsManager: React.FC<ContentCmsManagerProps> = ({
                       <button
                         type="button"
                         onClick={() => {
-                          if (window.confirm(`آیا از حذف تکنیک «${tech.name}» اطمینان دارید؟`)) {
-                            onDeleteTechnique(tech.id);
-                          }
+                          setPendingDelete({ message: `آیا از حذف تکنیک «${tech.name}» اطمینان دارید؟`, run: () => { onDeleteTechnique(tech.id); } });
                         }}
                         className="p-1.5 text-stone-500 hover:text-rose-500 hover:bg-rose-500/10 rounded-lg transition-colors cursor-pointer"
                         title="حذف این تکنیک"
@@ -1197,9 +1194,7 @@ export const ContentCmsManager: React.FC<ContentCmsManagerProps> = ({
                     <button
                       type="button"
                       onClick={() => {
-                        if (window.confirm(`آیا از حذف کد تخفیف «${coupon.code}» مطمئن هستید؟`)) {
-                          onDeleteCoupon(coupon.id);
-                        }
+                        setPendingDelete({ message: `آیا از حذف کد تخفیف «${coupon.code}» مطمئن هستید؟`, run: () => { onDeleteCoupon(coupon.id); } });
                       }}
                       className="p-1.5 text-stone-500 hover:text-rose-500 hover:bg-rose-500/10 rounded-lg transition-colors cursor-pointer"
                       title="حذف کد تخفیف"
@@ -1301,9 +1296,7 @@ export const ContentCmsManager: React.FC<ContentCmsManagerProps> = ({
                       <button
                         type="button"
                         onClick={() => {
-                          if (window.confirm(`آیا از حذف این پرسش اطمینان دارید؟`)) {
-                            if (onDeleteFaq) onDeleteFaq(faq.id);
-                          }
+                          setPendingDelete({ message: `آیا از حذف این پرسش اطمینان دارید؟`, run: () => { if (onDeleteFaq) onDeleteFaq(faq.id); } });
                         }}
                         className="p-2 text-stone-500 hover:text-rose-500 hover:bg-rose-500/10 rounded-lg transition-colors cursor-pointer"
                         title="حذف این پرسش"
@@ -2884,6 +2877,15 @@ export const ContentCmsManager: React.FC<ContentCmsManagerProps> = ({
         </div>
       )}
 
+      <ConfirmDialog
+        isOpen={!!pendingDelete}
+        danger
+        title="تأیید حذف"
+        message={pendingDelete?.message}
+        confirmLabel="حذف"
+        onCancel={() => setPendingDelete(null)}
+        onConfirm={() => { pendingDelete?.run(); setPendingDelete(null); }}
+      />
     </div>
   );
 };

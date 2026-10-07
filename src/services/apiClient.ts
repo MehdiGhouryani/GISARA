@@ -456,8 +456,9 @@ export class ApiClient {
     return this.request('/orders', 'GET', undefined, fallback);
   }
 
-  static async updateOrderStatus(id: string, status: string, shipmentStatus?: string): Promise<any> {
-    return this.request(`/orders/${id}/status`, 'PUT', { status, shipmentStatus });
+  /** Only the fields that are provided are changed. `trackingCode: ''` clears the code. */
+  static async updateOrderStatus(id: string, patch: { status?: string; shipmentStatus?: string; trackingCode?: string }): Promise<any> {
+    return this.request(`/orders/${encodeURIComponent(id)}/status`, 'PUT', patch);
   }
 
   // ---------------------------------------------------------------------------
@@ -465,6 +466,16 @@ export class ApiClient {
   // ---------------------------------------------------------------------------
   static async getCourses(fallback: any[]): Promise<any[]> {
     return this.request('/courses', 'GET', undefined, fallback);
+  }
+
+  /** The signed-in customer's own workshop requests. */
+  static async getMyRequests(): Promise<any[]> {
+    return this.request<any[]>('/me/requests', 'GET', undefined, undefined, { skipCache: true });
+  }
+
+  /** The signed-in customer's own certificates. */
+  static async getMyCertificates(): Promise<any[]> {
+    return this.request<any[]>('/me/certificates', 'GET', undefined, undefined, { skipCache: true });
   }
 
   /** Admin: every course (all statuses, with lesson media URLs). */

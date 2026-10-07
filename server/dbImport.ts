@@ -7,7 +7,12 @@ const MAX_NODES = 400_000;
 const FORBIDDEN_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
 
 /** Collections the importer restores. Everything else in a backup file is reported as ignored. */
-export const IMPORTABLE_COLLECTIONS = ['styles', 'techniques', 'articles', 'products', 'courses', 'orders', 'requests'] as const;
+export const IMPORTABLE_COLLECTIONS = [
+  'styles', 'techniques', 'articles', 'products', 'courses', 'orders', 'requests',
+  // Everything below used to be silently skipped: restoring orders without their payment intents and manual course
+  // grants, or coupons/instructors/cities, left a half-restored shop.
+  'instructors', 'cities', 'sessions', 'coupons', 'certificates', 'manualEnrollments', 'paymentIntents', 'users',
+] as const;
 export type ImportableCollection = (typeof IMPORTABLE_COLLECTIONS)[number];
 
 const ORDER_STATUSES = new Set([
@@ -68,6 +73,20 @@ function validateItem(col: ImportableCollection, item: any, idx: number, errors:
         });
       });
     }
+  } else if (col === 'coupons') {
+    if (typeof item.code !== 'string' || !item.code.trim()) errors.push(`${at}: کد تخفیف نامعتبر است.`);
+    if (typeof item.discountPercent !== 'number' || item.discountPercent < 0 || item.discountPercent > 100) errors.push(`${at}: درصد تخفیف باید بین ۰ تا ۱۰۰ باشد.`);
+  } else if (col === 'users') {
+    if (typeof item.mobile !== 'string' || !/^09\d{9}$/.test(item.mobile)) errors.push(`${at}: شماره موبایل نامعتبر است.`);
+    if (typeof item.userCode !== 'string' || !/^U-[A-Z0-9]{8,10}$/.test(item.userCode)) errors.push(`${at}: شناسه کاربری نامعتبر است.`);
+  } else if (col === 'manualEnrollments') {
+    if (typeof item.userMobile !== 'string' || typeof item.courseId !== 'string') errors.push(`${at}: مشخصات دسترسی دستی ناقص است.`);
+    if (item.status !== 'ACTIVE' && item.status !== 'REVOKED') errors.push(`${at}: وضعیت دسترسی نامعتبر است.`);
+  } else if (col === 'paymentIntents') {
+    if (typeof item.orderId !== 'string' || typeof item.providerAuthority !== 'string') errors.push(`${at}: مشخصات تراکنش ناقص است.`);
+    if (!isMoney(item.amountToman)) errors.push(`${at}: مبلغ تراکنش نامعتبر است.`);
+  } else if (col === 'instructors' || col === 'cities') {
+    if (typeof item.name !== 'string' || !item.name) errors.push(`${at}: نام نامعتبر است.`);
   } else if (col === 'orders') {
     if (!ORDER_STATUSES.has(item.status)) errors.push(`${at}: وضعیت سفارش نامعتبر است.`);
     if (!isMoney(item.payableToman)) errors.push(`${at}: مبلغ قابل پرداخت نامعتبر است.`);

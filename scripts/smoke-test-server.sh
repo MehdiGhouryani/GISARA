@@ -9,7 +9,7 @@ PASS=0; FAIL=0
 check() { if [ "$2" -eq 0 ]; then echo "PASS  $1"; PASS=$((PASS+1)); else echo "FAIL  $1"; FAIL=$((FAIL+1)); fi; }
 js() { node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{const j=JSON.parse(d);console.log($1)})"; }
 code() { curl -s -o /dev/null -w "%{http_code}" -m 10 "$@"; }
-start() { rm -f server/data/db.json; (nohup npx tsx server.ts > /tmp/srv_server.log 2>&1 & echo $! > /tmp/srv_pid.txt); for i in $(seq 1 25); do curl -s -m 1 $BASE/health >/dev/null && return; sleep 1; done; }
+start() { rm -f server/data/db.json; (ALLOW_DEV_AUTH=1 nohup npx tsx server.ts > /tmp/srv_server.log 2>&1 & echo $! > /tmp/srv_pid.txt); for i in $(seq 1 25); do curl -s -m 1 $BASE/health >/dev/null && return; sleep 1; done; }
 
 start
 AJ=/tmp/srv_aj.txt; rm -f $AJ

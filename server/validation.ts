@@ -280,3 +280,13 @@ export const profileUpdateSchema = z.object({
   ]).optional()
 }).refine((v) => v.name !== undefined || v.avatar !== undefined, { message: 'چیزی برای ذخیره ارسال نشده است.' })
   .transform((v) => ({ ...v, avatar: v.avatar === '' ? null : v.avatar }));
+
+/** Admin order update: lifecycle status, shipment status and the carrier tracking code. */
+export const orderStatusUpdateSchema = z.object({
+  status: z.enum(['PENDING_PAYMENT', 'PAYMENT_FAILED', 'PAID', 'COMPLETED', 'CANCELLED', 'EXPIRED', 'REFUND_PENDING', 'REFUNDED']).optional(),
+  shipmentStatus: z.enum(['UNFULFILLED', 'PACKING', 'SHIPPED', 'DELIVERED', 'RETURN_REQUESTED', 'RETURNED']).optional(),
+  trackingCode: z.string().trim().max(40, { message: 'کد رهگیری حداکثر ۴۰ کاراکتر است.' })
+    .transform(toLatinDigits)
+    .refine((v) => v === '' || /^[A-Za-z0-9\-]{5,40}$/.test(v), { message: 'کد رهگیری فقط از حروف انگلیسی، عدد و خط تیره تشکیل می‌شود (حداقل ۵ نویسه).' })
+    .optional()
+}).refine((v) => v.status !== undefined || v.shipmentStatus !== undefined || v.trackingCode !== undefined, { message: 'تغییری ارسال نشده است.' });

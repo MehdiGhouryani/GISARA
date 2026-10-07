@@ -28,13 +28,14 @@ import { requestPaymentGateway, verifyPaymentGateway } from './payment';
 import { checkOrderTransition } from './orderStateMachine';
 import { releaseReservedStock, releaseCouponUsage } from './orderLifecycle';
 import { validateImport, snapshotBeforeImport, IMPORTABLE_COLLECTIONS } from './dbImport';
-import { validateBody, shippingInfoSchema, profileUpdateSchema, courseRuleIssues, productCreateSchema, productUpdateSchema, styleCreateSchema, styleUpdateSchema, courseCreateSchema, courseUpdateSchema, couponCreateSchema, couponUpdateSchema, certificateCreateSchema, settingsUpdateSchema, workshopRequestSchema, aiConsultationSchema, articleCreateSchema, articleUpdateSchema, techniqueCreateSchema, techniqueUpdateSchema, sessionCreateSchema, sessionUpdateSchema } from './validation';
+import { validateBody, shippingInfoSchema, profileUpdateSchema, orderStatusUpdateSchema, courseRuleIssues, productCreateSchema, productUpdateSchema, styleCreateSchema, styleUpdateSchema, courseCreateSchema, courseUpdateSchema, couponCreateSchema, couponUpdateSchema, certificateCreateSchema, settingsUpdateSchema, workshopRequestSchema, aiConsultationSchema, articleCreateSchema, articleUpdateSchema, techniqueCreateSchema, techniqueUpdateSchema, sessionCreateSchema, sessionUpdateSchema } from './validation';
 import { getEntitledCourseIds, hasCourseAccess, toPublicCourse, findLesson } from './courseAccess';
-import { isJalaliExpired } from './jalali';
+import { isJalaliExpired, getTodayJalaliString } from './jalali';
 import { computeTotals } from '../src/shared/pricing';
 import { normalizeCode, normalizeMobile, digitsOnly } from '../src/shared/digits';
 import { newId, newOrderNumber } from './ids';
 import { toEngineParams } from './consultationInput';
+import { computeKpis } from './kpis';
 import { generateExpertStylingAdvice } from './expertStylingEngine';
 
 export const apiRouter = Router();
@@ -79,6 +80,14 @@ const writeLimiter = createRateLimiter({
 });
 
 // Helper to log administrative actions
+// Any successful write may change a dashboard number: drop the cached admin aggregates (never serve stale KPIs).
+apiRouter.use((req, res, next) => {
+  if (req.method !== 'GET' && req.method !== 'HEAD') {
+    res.on('finish', () => { if (res.statusCode < 400) serverCache.invalidate('admin_'); });
+  }
+  next();
+});
+
 function logAdminAction(adminUser: string, action: string, details: string) {
   const newLog = {
     id: newId('audit'),
@@ -634,7 +643,7 @@ apiRouter.post('/orders', requireAuth, writeLimiter, (req: any, res) => {
   });
 });
 
-apiRouter.put('/orders/:id/status', requireAdmin, (req: any, res) => {
+apiRouter.put('/orders/:id/status', requireAdmin, writeLimiter, validateBody(orderStatusUpdateSchema), (req: any, res) => {
   const orderIndex = db.orders.findIndex(o => o.id === req.params.id);
   if (orderIndex === -1) {
     return res.status(404).json({ success: false, message: 'سفارش یافت نشد.' });
@@ -642,12 +651,28 @@ apiRouter.put('/orders/:id/status', requireAdmin, (req: any, res) => {
 
   const { status, shipmentStatus, trackingCode } = req.body;
   const currentOrder = db.orders[orderIndex] as any;
+  const logs: string[] = [];
+  const stamp = new Date().toISOString();
+
+  // Shipment data only makes sense for a paid order that contains physical goods.
+  const touchesShipment = shipmentStatus !== undefined || (trackingCode !== undefined && trackingCode !== '');
+  if (touchesShipment) {
+    const finalStatus = status || currentOrder.status;
+    const hasPhysical = (currentOrder.items || []).some((i: any) => i.type === 'PHYSICAL_PRODUCT');
+    if (!hasPhysical) {
+      return res.status(409).json({ success: false, message: 'این سفارش کالای فیزیکی ندارد؛ وضعیت ارسال و کد رهگیری برایش معنی ندارد.' });
+    }
+    if (finalStatus !== 'PAID' && finalStatus !== 'COMPLETED') {
+      return res.status(409).json({ success: false, message: 'وضعیت ارسال و کد رهگیری فقط برای سفارش پرداخت‌شده قابل ثبت است.' });
+    }
+  }
 
   if (status && status !== currentOrder.status) {
     const decision = checkOrderTransition(currentOrder.status, status, 'ADMIN');
     if (!decision.allowed) {
       return res.status(409).json({ success: false, message: decision.reason });
     }
+    logs.push(`وضعیت سفارش از ${currentOrder.status} به ${status} تغییر کرد.`);
     currentOrder.status = status;
     if (status === 'CANCELLED' || status === 'EXPIRED') {
       releaseReservedStock(currentOrder);
@@ -656,20 +681,24 @@ apiRouter.put('/orders/:id/status', requireAdmin, (req: any, res) => {
     }
   }
 
-  const VALID_SHIPMENT_STATUSES = ['UNFULFILLED', 'PACKING', 'SHIPPED', 'DELIVERED', 'RETURN_REQUESTED', 'RETURNED'];
-  if (shipmentStatus) {
-    if (!VALID_SHIPMENT_STATUSES.includes(shipmentStatus)) {
-      return res.status(400).json({ success: false, message: 'وضعیت مرسوله نامعتبر است.' });
-    }
+  if (shipmentStatus && shipmentStatus !== currentOrder.shipmentStatus) {
+    logs.push(`وضعیت ارسال به ${shipmentStatus} تغییر کرد.`);
     currentOrder.shipmentStatus = shipmentStatus;
   }
-  if (trackingCode) currentOrder.trackingCode = trackingCode;
-  
-  if (!currentOrder.systemLogs) currentOrder.systemLogs = [];
-  currentOrder.systemLogs.push(`تغییر وضعیت در تاریخ ${new Date().toLocaleTimeString('fa-IR')}: وضعیت سفارش به ${status || currentOrder.status} تغییر کرد.`);
+  if (trackingCode !== undefined && trackingCode !== (currentOrder.trackingCode || '')) {
+    if (trackingCode === '') delete currentOrder.trackingCode;
+    else currentOrder.trackingCode = trackingCode;
+    logs.push(trackingCode === '' ? 'کد رهگیری حذف شد.' : `کد رهگیری ${trackingCode} ثبت شد.`);
+  }
 
-  db.orders = [...db.orders];
-  logAdminAction(req.user.name, 'تغییر وضعیت سفارش', `به‌روزرسانی سفارش ${currentOrder.orderNumber}`);
+  if (logs.length > 0) {
+    if (!currentOrder.systemLogs) currentOrder.systemLogs = [];
+    // ISO timestamp: the client renders it in Asia/Tehran; the server's locale/timezone never leaks in.
+    for (const line of logs) currentOrder.systemLogs.push(`[${stamp}] ${line}`);
+    db.orders = [...db.orders];
+    serverCache.invalidate('admin_');
+    logAdminAction(req.user.name, 'به‌روزرسانی سفارش', `سفارش ${currentOrder.orderNumber}: ${logs.join(' ')}`);
+  }
 
   res.json({ success: true, data: currentOrder });
 });
@@ -684,7 +713,8 @@ const handleGetRequests = (req: any, res: any) => {
 const MAX_STORED_REQUESTS = 5000;
 
 const handlePostRequest = (req: any, res: any) => {
-  const body = req.body;
+  // A signed-in customer's request is always attached to THEIR verified mobile (no filing under someone else's number).
+  const body = req.user && req.user.role === 'USER' ? { ...req.body, mobile: req.user.mobile } : req.body;
 
   // Public, unauthenticated write: keep the DB from being filled by a script.
   if (db.requests.length >= MAX_STORED_REQUESTS) {
@@ -743,6 +773,19 @@ apiRouter.get('/courses', (req, res) => {
 });
 
 // Courses the signed-in user is entitled to (derived from PAID/COMPLETED orders).
+// A customer's own workshop requests and certificates (matched on the verified mobile number).
+apiRouter.get('/me/requests', requireAuth, (req: any, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  if (req.user.role !== 'USER') return res.json({ success: true, data: [] });
+  res.json({ success: true, data: (db.requests as any[]).filter(r => r.mobile === req.user.mobile) });
+});
+
+apiRouter.get('/me/certificates', requireAuth, (req: any, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  if (req.user.role !== 'USER') return res.json({ success: true, data: [] });
+  res.json({ success: true, data: (db.certificates as any[]).filter(c => c.studentMobile === req.user.mobile) });
+});
+
 apiRouter.get('/me/enrollments', requireAuth, (req: any, res) => {
   res.setHeader('Cache-Control', 'no-store');
   res.json({ success: true, courseIds: getEntitledCourseIds(req.user.mobile) });
@@ -1119,7 +1162,7 @@ apiRouter.post('/certificates', requireAdmin, writeLimiter, validateBody(certifi
     courseTitle: body.courseTitle,
     studentName: body.studentName,
     studentMobile: body.studentMobile,
-    issueDateJalali: 'امروز',
+    issueDateJalali: getTodayJalaliString(),
     instructorName: body.instructorName || 'استاد آکادمی',
     hoursCount: body.hoursCount ?? 16,
     grade: body.grade || 'عالی',
@@ -1362,7 +1405,11 @@ apiRouter.get('/admin/db/export', requireAdmin, (req: any, res) => {
     orders: db.orders,
     coupons: db.coupons,
     certificates: db.certificates,
+    manualEnrollments: db.manualEnrollments,
+    paymentIntents: db.paymentIntents,
+    users: db.users,
     auditLogs: db.auditLogs
+    // `settings` (payment / SMS keys) is deliberately NOT exported: a backup file must never contain live secrets.
   });
 });
 
@@ -1412,59 +1459,42 @@ apiRouter.get('/admin/audit-logs', requireAdmin, handleGetAuditLogs);
 apiRouter.get('/admin/logs', requireAdmin, handleGetAuditLogs);
 
 apiRouter.get('/admin/analytics', requireAdmin, (req: any, res) => {
-  // Aggregate calculations
-  const totalSales = db.orders.reduce((sum, o: any) => sum + (o.status === 'PAID' || o.status === 'COMPLETED' ? o.payableToman : 0), 0);
-  const paidOrdersCount = db.orders.filter(o => o.status === 'PAID' || o.status === 'COMPLETED').length;
-  const requestsCount = db.requests.length;
-  const productsCount = db.products.length;
-  
-  // Calculate top-viewed style
-  const topStyle = db.styles.reduce((max, s) => s.viewsCount > max.viewsCount ? s : max, db.styles[0] || { name: 'ندارد', viewsCount: 0 });
-  
+  const k = computeKpis();
+  const topStyle = db.styles.reduce((max, s) => (s.viewsCount > max.viewsCount ? s : max), db.styles[0] || { name: 'ندارد', viewsCount: 0 });
+
   res.json({
     success: true,
     data: {
-      totalSalesToman: totalSales,
-      ordersCount: paidOrdersCount,
-      workshopRequestsCount: requestsCount,
-      productsCount: productsCount,
-      topStyle: {
-        name: topStyle.name,
-        views: topStyle.viewsCount
-      },
+      totalSalesToman: k.netRevenueToman,
+      ordersCount: k.paidOrdersCount,
+      workshopRequestsCount: k.totalRequestsCount,
+      productsCount: k.productsCount,
+      pendingRefundToman: k.pendingRefundToman,
+      refundedToman: k.refundedToman,
+      topStyle: { name: topStyle.name, views: topStyle.viewsCount },
       recentLogs: db.auditLogs.slice(0, 5)
     }
   });
 });
-
-// -----------------------------------------------------------------------------
-// 11.5 Admin Metrics & Dashboard Aggregate Cache
-// -----------------------------------------------------------------------------
 apiRouter.get('/admin/metrics', requireAdmin, (req: any, res) => {
   try {
     const cached = serverCache.get('admin_dashboard_metrics');
     if (cached) return res.json({ success: true, data: cached, _cached: true });
 
-    const pendingOrdersCount = db.orders.filter((o) => o.status === 'PENDING_PAYMENT').length;
-    const paidOrdersCount = db.orders.filter((o) => o.status === 'PAID').length;
-    const openRequestsCount = db.requests.filter((r) => r.status === 'SUBMITTED' || r.status === 'UNDER_REVIEW').length;
-    const lowStockCount = db.products.filter((p) => p.stock <= 15).length;
-    const totalRevenue = db.orders
-      .filter((o) => o.status === 'PAID' || o.status === 'COMPLETED')
-      .reduce((sum, o) => sum + o.payableToman, 0);
-
+    const k = computeKpis();
     const metrics = {
-      pendingOrdersCount,
-      paidOrdersCount,
-      openRequestsCount,
-      lowStockCount,
-      totalRevenue,
-      activeStylesCount: db.styles.filter(s => s.status !== 'ARCHIVED').length,
-      totalArticlesCount: db.articles.length,
+      pendingOrdersCount: k.pendingOrdersCount,
+      paidOrdersCount: k.paidOrdersCount,
+      openRequestsCount: k.openRequestsCount,
+      lowStockCount: k.lowStockCount,
+      lowStockThreshold: k.lowStockThreshold,
+      totalRevenue: k.netRevenueToman,
+      activeStylesCount: k.activeStylesCount,
+      totalArticlesCount: k.totalArticlesCount,
       timestamp: new Date().toISOString()
     };
 
-    serverCache.set('admin_dashboard_metrics', metrics, 2 * 60 * 1000); // 2 minutes server-side TTL
+    serverCache.set('admin_dashboard_metrics', metrics, 2 * 60 * 1000);
     res.json({ success: true, data: metrics });
   } catch (err: any) {
     console.error('[Admin Metrics Exception]:', err.message);
@@ -1475,14 +1505,22 @@ apiRouter.get('/admin/metrics', requireAdmin, (req: any, res) => {
 // -----------------------------------------------------------------------------
 // 12. Admin System Settings & Payment Gateway Callbacks
 // -----------------------------------------------------------------------------
+// Secrets never leave the server in clear text: the browser only learns whether a key exists and its last 4 characters.
+const maskSecret = (v?: string) => (v ? `••••${v.slice(-4)}` : '');
+const publicSettings = () => {
+  const st: any = db.settings || {
+    payment: { provider: 'zarinpal', merchantId: '', sandbox: true },
+    sms: { provider: 'kavenegar', apiKey: '', patternCode: 'otp_verify' }
+  };
+  return {
+    payment: { provider: st.payment.provider, sandbox: st.payment.sandbox, merchantId: maskSecret(st.payment.merchantId), hasMerchantId: !!st.payment.merchantId },
+    sms: { provider: st.sms.provider, patternCode: st.sms.patternCode, apiKey: maskSecret(st.sms.apiKey), hasApiKey: !!st.sms.apiKey }
+  };
+};
+
 apiRouter.get('/admin/settings', requireAdmin, (req: any, res) => {
-  res.json({
-    success: true,
-    data: db.settings || {
-      payment: { provider: 'zarinpal', merchantId: '', sandbox: true },
-      sms: { provider: 'kavenegar', apiKey: '', patternCode: 'otp_verify' }
-    }
-  });
+  res.setHeader('Cache-Control', 'no-store');
+  res.json({ success: true, data: publicSettings() });
 });
 
 apiRouter.post('/admin/settings', requireAdmin, writeLimiter, validateBody(settingsUpdateSchema), (req: any, res) => {
@@ -1497,7 +1535,8 @@ apiRouter.post('/admin/settings', requireAdmin, writeLimiter, validateBody(setti
   if (payment) {
     db.settings.payment = {
       provider: payment.provider || 'zarinpal',
-      merchantId: payment.merchantId !== undefined ? payment.merchantId : db.settings.payment.merchantId,
+      // Blank or the masked placeholder = "keep the stored value"; only a genuinely new value replaces it.
+      merchantId: payment.merchantId && !String(payment.merchantId).startsWith('••••') ? payment.merchantId : db.settings.payment.merchantId,
       sandbox: payment.sandbox !== undefined ? Boolean(payment.sandbox) : true
     };
   }
@@ -1505,7 +1544,7 @@ apiRouter.post('/admin/settings', requireAdmin, writeLimiter, validateBody(setti
   if (sms) {
     db.settings.sms = {
       provider: sms.provider || 'kavenegar',
-      apiKey: sms.apiKey !== undefined ? sms.apiKey : db.settings.sms.apiKey,
+      apiKey: sms.apiKey && !String(sms.apiKey).startsWith('••••') ? sms.apiKey : db.settings.sms.apiKey,
       patternCode: sms.patternCode !== undefined ? sms.patternCode : db.settings.sms.patternCode
     };
   }
@@ -1516,7 +1555,7 @@ apiRouter.post('/admin/settings', requireAdmin, writeLimiter, validateBody(setti
   res.json({
     success: true,
     message: 'تنظیمات درگاه پرداخت و سامانه پیامک با موفقیت به روز شد.',
-    data: db.settings
+    data: publicSettings()
   });
 });
 

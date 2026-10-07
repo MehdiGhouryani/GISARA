@@ -293,10 +293,8 @@ export default function App() {
     return saved ? JSON.parse(saved) : mockCoupons;
   });
 
-  const [certificates, setCertificates] = useState<Certificate[]>(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.CERTIFICATES);
-    return saved ? JSON.parse(saved) : mockCertificates;
-  });
+  // Certificates belong to the signed-in customer and live on the server (GET /me/certificates).
+  const [certificates, setCertificates] = useState<Certificate[]>([]);
 
   const [faqs, setFaqs] = useState<any[]>(() => {
     const saved = localStorage.getItem('gisara_faqs_v1');
@@ -388,10 +386,9 @@ export default function App() {
   // The cart starts EMPTY for a new visitor and survives corrupted/tampered storage (no white screen).
   const [cartItems, setCartItems] = useState<CartItem[]>(() => sanitizeCart(safeGetJSON<unknown>(STORAGE_KEYS.CART, [])));
 
-  const [userRequests, setUserRequests] = useState<WorkshopRequest[]>(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.REQUESTS);
-    return saved ? JSON.parse(saved) : mockInitialRequests;
-  });
+  // Workshop requests contain names and phone numbers: held in memory only (a customer loads their own from
+  // GET /me/requests, the admin console loads all of them). Never written to browser storage.
+  const [userRequests, setUserRequests] = useState<WorkshopRequest[]>([]);
 
   const [paymentResult, setPaymentResult] = useState<PaymentResult | null>(null);
 
@@ -415,20 +412,14 @@ export default function App() {
   };
   const [manualEnrollments, setManualEnrollments] = useState<any[]>([]);
 
-  const [auditLogs, setAuditLogs] = useState<AuditRecord[]>(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.AUDIT);
-    return saved ? JSON.parse(saved) : [
-      {
-        id: 'aud-001',
-        actor: 'سیستم مرکزی',
-        action: 'INITIAL_BOOTSTRAP',
-        entityType: 'System',
-        entityId: 'SYS',
-        timestamp: new Date().toISOString(),
-        note: 'بارگذاری کاتالوگ و شالوده داده‌های اولیه شنیون مو',
-      },
-    ];
-  });
+  // A customer's own requests and certificates come from the server (never from browser storage).
+  const refreshMyData = async () => {
+    try { setUserRequests(await ApiClient.getMyRequests()); } catch { /* the tab shows an empty list */ }
+    try { setCertificates(await ApiClient.getMyCertificates()); } catch { /* same */ }
+  };
+
+  // The audit trail is kept on the server and fetched when the admin console opens; the browser stores none of it.
+  const [auditLogs, setAuditLogs] = useState<AuditRecord[]>([]);
 
   // Synchronize route and selected entities on load, popstate, and when database lists update
   const resolveEntitiesFromUrl = () => {
@@ -525,6 +516,7 @@ export default function App() {
           setUserMobile(meRes.user.mobile || '');
           setUserName(meRes.user.name || '');
           setUserCode(meRes.user.userCode || '');
+          refreshMyData();
           return;
         }
         // Administrator session without any customer session: reopen the admin console (as before).
@@ -721,13 +713,10 @@ export default function App() {
   }, [cartItems]);
 
 
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.REQUESTS, JSON.stringify(userRequests));
-  }, [userRequests]);
 
   useEffect(() => {
     // Older builds persisted every order (PII) in the browser; remove that leftover.
-    safeRemoveKeys([STORAGE_KEYS.ORDERS]);
+    safeRemoveKeys([STORAGE_KEYS.ORDERS, STORAGE_KEYS.REQUESTS, STORAGE_KEYS.CERTIFICATES, STORAGE_KEYS.AUDIT]);
   }, []);
 
   useEffect(() => {
@@ -759,17 +748,11 @@ export default function App() {
     localStorage.setItem(STORAGE_KEYS.COUPONS, JSON.stringify(coupons));
   }, [coupons]);
 
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.CERTIFICATES, JSON.stringify(certificates));
-  }, [certificates]);
 
   useEffect(() => {
     localStorage.setItem('gisara_faqs_v1', JSON.stringify(faqs));
   }, [faqs]);
 
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.AUDIT, JSON.stringify(auditLogs));
-  }, [auditLogs]);
 
   const logAudit = (action: string, entityType: string, entityId: string, note: string) => {
     const record: AuditRecord = {
@@ -1427,7 +1410,8 @@ export default function App() {
     shipmentStatus?: string
   ): Promise<{ success: boolean; message?: string }> => {
     try {
-      const updated = await ApiClient.updateOrderStatus(orderId, newStatus, shipmentStatus);
+      const res = await ApiClient.updateOrderStatus(orderId, { status: newStatus, shipmentStatus, trackingCode });
+      const updated = res?.data ?? res;
       setUserOrders((prev) =>
         prev.map((o) => (o.id === orderId ? { ...o, ...updated } : o))
       );
@@ -1451,6 +1435,7 @@ export default function App() {
     setUserMobile(userData.mobile);
     setUserName(userData.name);
     setUserCode(userData.userCode || '');
+    refreshMyData();
     setIsLoggedIn(true);
     refreshEnrollments();
 
@@ -1527,6 +1512,8 @@ export default function App() {
     setAppliedCoupon(null);
     setPaymentResult(null);
     setUserCode('');
+    setUserRequests([]);
+    setCertificates([]);
     safeRemoveKeys([STORAGE_KEYS.CART, STORAGE_KEYS.ORDERS, 'shanyoon_user_avatar']); // avatar key: leftover of older builds
     handleNavigate('home');
     addToast('info', 'از حساب کاربری خارج شدید');
@@ -2075,8 +2062,8 @@ export default function App() {
             onUpdateProfile={handleUpdateProfile}
             orders={userOrders}
             enrolledCourses={courses.filter((c) => enrolledCourseIds.includes(c.id))}
-            requests={userRequests}
-            certificates={certificates}
+            requests={userRequests.filter((r) => r.mobile === userMobile)}
+            certificates={certificates.filter((c) => c.studentMobile === userMobile)}
             onNavigateHome={() => handleNavigate('home')}
             onStartCourse={(c, lessonId) => {
               setSelectedCourse(c);

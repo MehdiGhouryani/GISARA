@@ -6,6 +6,7 @@
  * Part of Shanyoon Admin Console Segmented Architecture
  */
 
+import { ConfirmDialog } from '../common/ConfirmDialog';
 import React, { useState, useMemo } from 'react';
 import { Product, Coupon } from '../../types/domain';
 import { VisualAssetsManager } from './VisualAssetsManager';
@@ -58,6 +59,7 @@ export const StoreManager: React.FC<StoreManagerProps> = ({
   activeSubTab = 'INVENTORY',
   onSubTabChange,
 }) => {
+  const [couponToDelete, setCouponToDelete] = useState<{ id: string; code: string } | null>(null);
   const [currentTab, setCurrentTab] = useState<'INVENTORY' | 'COUPONS' | 'ASSETS'>(activeSubTab);
 
   React.useEffect(() => {
@@ -619,7 +621,7 @@ export const StoreManager: React.FC<StoreManagerProps> = ({
 
                     <button
                       type="button"
-                      onClick={() => onDeleteCoupon && onDeleteCoupon(coupon.id)}
+                      onClick={() => setCouponToDelete(coupon)}
                       className="text-rose-600 hover:text-rose-800 text-[11px] font-bold flex items-center gap-1 cursor-pointer"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -990,6 +992,15 @@ export const StoreManager: React.FC<StoreManagerProps> = ({
           </div>
         </div>
       )}
+      <ConfirmDialog
+        isOpen={!!couponToDelete}
+        danger
+        title="حذف کد تخفیف"
+        message={`کد «${couponToDelete?.code}» برای همیشه حذف می‌شود.`}
+        confirmLabel="حذف"
+        onCancel={() => setCouponToDelete(null)}
+        onConfirm={() => { if (couponToDelete && onDeleteCoupon) onDeleteCoupon(couponToDelete.id); setCouponToDelete(null); }}
+      />
     </div>
   );
 };

@@ -17,6 +17,8 @@ export const SystemSettingsManager: React.FC = () => {
 
   const [paymentProvider, setPaymentProvider] = useState<'zarinpal' | 'idpay' | 'nextpay' | 'mock'>('zarinpal');
   const [merchantId, setMerchantId] = useState('');
+  const [maskedMerchant, setMaskedMerchant] = useState(''); // e.g. ••••1234 - the real value never reaches the browser
+  const [maskedSmsKey, setMaskedSmsKey] = useState('');
   const [sandbox, setSandbox] = useState(true);
 
   const [smsProvider, setSmsProvider] = useState<'kavenegar' | 'farazsms' | 'ghasedak' | 'mock'>('kavenegar');
@@ -34,12 +36,14 @@ export const SystemSettingsManager: React.FC = () => {
       if (res) {
         if (res.payment) {
           setPaymentProvider(res.payment.provider || 'zarinpal');
-          setMerchantId(res.payment.merchantId || '');
+          setMerchantId('');
+          setMaskedMerchant(res.payment.merchantId || '');
           setSandbox(res.payment.sandbox !== undefined ? res.payment.sandbox : true);
         }
         if (res.sms) {
           setSmsProvider(res.sms.provider || 'kavenegar');
-          setSmsApiKey(res.sms.apiKey || '');
+          setSmsApiKey('');
+          setMaskedSmsKey(res.sms.apiKey || '');
           setSmsPatternCode(res.sms.patternCode || 'otp_verify');
         }
       }
@@ -71,6 +75,10 @@ export const SystemSettingsManager: React.FC = () => {
 
       const res = await ApiClient.updateAdminSettings(payload);
       if (res.success) {
+        if (merchantId.trim()) setMaskedMerchant(`••••${merchantId.trim().slice(-4)}`);
+        if (smsApiKey.trim()) setMaskedSmsKey(`••••${smsApiKey.trim().slice(-4)}`);
+        setMerchantId('');
+        setSmsApiKey('');
         setMessage({ type: 'success', text: 'تنظیمات با موفقیت ذخیره گردید.' });
       } else {
         setMessage({ type: 'error', text: res.message || 'خطا در ذخیره تنظیمات' });
@@ -141,12 +149,13 @@ export const SystemSettingsManager: React.FC = () => {
                   type="text"
                   value={merchantId}
                   onChange={(e) => setMerchantId(e.target.value)}
-                  placeholder="مثال: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                  placeholder={maskedMerchant ? `کلید فعلی: ${maskedMerchant} (برای تغییر، مقدار جدید را وارد کنید)` : 'مثال: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'}
+                  autoComplete="off"
                   className="w-full h-11 pr-10 pl-3 bg-stone-50 border border-stone-200 rounded-xl text-sm dir-ltr font-mono focus:ring-2 focus:ring-amber-500 outline-none"
                 />
                 <Key className="w-4 h-4 text-stone-400 absolute right-3 top-3.5" />
               </div>
-              <p className="text-[11px] text-stone-400 mt-1">کد ۳۶ کاراکتری دریافتی از پنل زرین‌پال خود را وارد کنید.</p>
+              <p className="text-xs text-stone-500 mt-1">{maskedMerchant ? 'کلید ذخیره شده است و از دید مرورگر پنهان می‌ماند؛ فیلد خالی = بدون تغییر.' : 'کد ۳۶ کاراکتری دریافتی از پنل زرین‌پال خود را وارد کنید.'}</p>
             </div>
           </div>
 
@@ -198,7 +207,8 @@ export const SystemSettingsManager: React.FC = () => {
                   type="password"
                   value={smsApiKey}
                   onChange={(e) => setSmsApiKey(e.target.value)}
-                  placeholder="کلید اختصاصی وب‌سرویس پیامک"
+                  placeholder={maskedSmsKey ? `کلید فعلی: ${maskedSmsKey} (برای تغییر، مقدار جدید را وارد کنید)` : 'کلید اختصاصی وب‌سرویس پیامک'}
+                  autoComplete="new-password"
                   className="w-full h-11 pr-10 pl-3 bg-stone-50 border border-stone-200 rounded-xl text-sm dir-ltr font-mono focus:ring-2 focus:ring-blue-500 outline-none"
                 />
                 <Key className="w-4 h-4 text-stone-400 absolute right-3 top-3.5" />

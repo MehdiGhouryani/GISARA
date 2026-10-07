@@ -11,7 +11,7 @@ PASS=0; FAIL=0
 check() { if [ "$2" -eq 0 ]; then echo "PASS  $1"; PASS=$((PASS+1)); else echo "FAIL  $1"; FAIL=$((FAIL+1)); fi; }
 js() { node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{const j=JSON.parse(d);console.log($1)})"; }
 H='Content-Type: application/json'
-(nohup npx tsx server.ts > /tmp/edge_server.log 2>&1 &)
+(ALLOW_DEV_AUTH=1 nohup npx tsx server.ts > /tmp/edge_server.log 2>&1 &)
 for i in $(seq 1 25); do curl -s -m 1 $BASE/health >/dev/null && break; sleep 1; done
 
 login() { R=$(curl -s -m 5 -X POST $BASE/auth/otp/request -H "$H" -d "{\"mobile\":\"$2\"}"); C=$(echo "$R" | grep -oE '[0-9]{6}' | head -1); curl -s -m 5 -c $1 -X POST $BASE/auth/otp/verify -H "$H" -d "{\"mobile\":\"$2\",\"code\":\"$C\"}" >/dev/null; }

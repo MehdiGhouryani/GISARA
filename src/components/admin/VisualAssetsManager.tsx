@@ -11,6 +11,7 @@
  * 5. Classic European Style Model (Photo 3: Sleek twisted chignon)
  */
 
+import { ConfirmDialog } from '../common/ConfirmDialog';
 import React, { useState, useEffect, useRef } from 'react';
 import { ImageUploader } from '../common/ImageUploader';
 import {
@@ -244,8 +245,10 @@ export const VisualAssetsManager: React.FC = () => {
     window.dispatchEvent(new Event('shanyoon_assets_updated'));
   };
 
-  const handleResetAll = () => {
-    if (window.confirm('آیا از بازنشانی تمامی ۵ تصویر ژورنالی به حالت پیش‌فرض اطمینان دارید؟')) {
+  const [confirmReset, setConfirmReset] = useState(false);
+
+  const performResetAll = () => {
+    {
       ASSET_SLOTS.forEach((slot) => {
         localStorage.removeItem(slot.key);
       });
@@ -261,6 +264,9 @@ export const VisualAssetsManager: React.FC = () => {
       window.dispatchEvent(new Event('shanyoon_assets_updated'));
     }
   };
+
+  const handleResetAll = () => setConfirmReset(true);
+
 
   const activeCount = Object.values(assetImages).filter(Boolean).length;
 
@@ -469,6 +475,15 @@ export const VisualAssetsManager: React.FC = () => {
           );
         })}
       </div>
+      <ConfirmDialog
+        isOpen={confirmReset}
+        danger
+        title="بازنشانی تصاویر ژورنال"
+        message="هر ۵ تصویر به حالت پیش‌فرض برمی‌گردد."
+        confirmLabel="بازنشانی"
+        onCancel={() => setConfirmReset(false)}
+        onConfirm={() => { performResetAll(); setConfirmReset(false); }}
+      />
     </div>
   );
 };

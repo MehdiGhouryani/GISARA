@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "tsx server.ts",
+    "dev": "cross-env ALLOW_DEV_AUTH=1 tsx server.ts",
     "build": "vite build",
     "start": "tsx server.ts",
     "preview": "vite preview",
@@ -17,7 +17,7 @@
     "test:payments": "rm -f server/data/db.json && bash scripts/smoke-test-payments.sh",
     "test:expiry": "rm -f server/data/db.json && tsx scripts/test-order-expiry.ts",
     "test:course-access": "rm -f server/data/db.json && tsx scripts/test-course-access.ts && bash scripts/smoke-test-course-access.sh",
-    "test": "npm run test:validation && npm run test:pricing && npm run test:course-timeline && npm run test:consultation && npm run test:security && npm run test:orders && npm run test:edge && npm run test:academy && npm run test:auth && npm run test:expiry && npm run test:course-access && npm run test:import && npm run test:crud && npm run test:server && npm run test:prod",
+    "test": "npm run test:validation && npm run test:pricing && npm run test:course-timeline && npm run test:consultation && npm run test:security && npm run test:orders && npm run test:edge && npm run test:academy && npm run test:auth && npm run test:admin && npm run test:expiry && npm run test:course-access && npm run test:import && npm run test:crud && npm run test:server && npm run test:prod",
     "test:import": "tsx scripts/test-db-import.ts",
     "test:prod": "NODE_ENV=production tsx scripts/test-prod-fail-closed.ts && bash scripts/smoke-test-hardening.sh",
     "test:validation": "tsx scripts/test-validation.ts",
@@ -28,7 +28,8 @@
     "test:course-timeline": "tsx scripts/test-course-access-timeline.ts",
     "test:academy": "rm -f server/data/db.json && bash scripts/smoke-test-academy.sh",
     "test:auth": "rm -f server/data/db.json && bash scripts/smoke-test-auth.sh",
-    "test:consultation": "tsx scripts/test-consultation.ts"
+    "test:consultation": "tsx scripts/test-consultation.ts",
+    "test:admin": "rm -f server/data/db.json && bash scripts/smoke-test-admin.sh"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
@@ -49,6 +50,7 @@
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "autoprefixer": "^10.4.21",
+    "cross-env": "^10.1.0",
     "tailwindcss": "^4.3.3",
     "tsx": "^4.21.0",
     "typescript": "^7.0.2"

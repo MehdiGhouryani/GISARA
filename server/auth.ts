@@ -37,6 +37,10 @@ const JWT_SECRET = resolveJwtSecret();
 // keeps working, but this path is hard-blocked in production.
 const ADMIN_PASSWORD_HASH = process.env.ADMIN_PASSWORD_HASH || '';
 const DEV_ONLY_FALLBACK_PASSCODE = 'gisara2026';
+const DEV_AUTH_ALLOWED = !IS_PRODUCTION && process.env.ALLOW_DEV_AUTH === '1';
+if (DEV_AUTH_ALLOWED && !ADMIN_PASSWORD_HASH) {
+  console.warn('[auth] ALLOW_DEV_AUTH=1: the well-known development admin passcode is ENABLED. Never use this setting on a public server.');
+}
 
 if (IS_PRODUCTION && !ADMIN_PASSWORD_HASH) {
   throw new Error(
@@ -62,7 +66,9 @@ function verifyAdminPasscode(passcode: string): boolean {
     if (a.length !== b.length) return false;
     return crypto.timingSafeEqual(a, b);
   }
-  // Dev-only fallback — never reached in production (fail-fast check above).
+  // Dev-only fallback: needs an EXPLICIT opt-in (ALLOW_DEV_AUTH=1, set by `npm run dev`) and is impossible in
+  // production. A staging server that merely forgot NODE_ENV therefore no longer accepts the well-known passcode.
+  if (!DEV_AUTH_ALLOWED) return false;
   return passcode === DEV_ONLY_FALLBACK_PASSCODE;
 }
 

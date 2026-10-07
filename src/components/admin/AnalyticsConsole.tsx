@@ -166,51 +166,37 @@ export const AnalyticsConsole: React.FC<AnalyticsConsoleProps> = ({
   const [timeRange, setTimeRange] = useState<TimeRange>('7d');
   const [metricFilter, setMetricFilter] = useState<MetricFilter>('REVENUE');
   const [chartStyleMode, setChartStyleMode] = useState<ChartStyleMode>('AREA');
-  const [activeUsers, setActiveUsers] = useState<number>(28);
   const [selectedDonutIndex, setSelectedDonutIndex] = useState<number | null>(null);
 
   const [hoveredPointIndex, setHoveredPointIndex] = useState<number | null>(null);
 
-  // Live real-time events feed state
-  const [liveEvents, setLiveEvents] = useState<LiveEvent[]>([
-    {
-      id: 'evt-1',
-      type: 'ORDER',
-      city: 'تهران',
-      detail: 'پرداخت موفق سفارش پکیج اسپری فیکساتور و گیره استیل',
-      amount: 870000,
-      timeAgo: '۱ دقیقه پیش',
-    },
-    {
-      id: 'evt-2',
-      type: 'VIEW',
-      city: 'اصفهان',
-      detail: 'مشاهده صفحه آموزش تکنیک شنیون خطی و کرلی',
-      timeAgo: '۳ دقیقه پیش',
-    },
-    {
-      id: 'evt-3',
-      type: 'REQUEST',
-      city: 'مشهد',
-      detail: 'ثبت درخواست کارگاه تخصصی فرمالیته عروس',
-      timeAgo: '۵ دقیقه پیش',
-    },
-    {
-      id: 'evt-4',
-      type: 'CART',
-      city: 'شیراز',
-      detail: 'افزودن دوره جامع استادی شنیون مو به سبد خرید',
-      timeAgo: '۸ دقیقه پیش',
-    },
-    {
-      id: 'evt-5',
-      type: 'ORDER',
-      city: 'تبریز',
-      detail: 'ثبت‌نام آنلاین در دوره تخصصی بافت و حجم‌دهی',
-      amount: 2400000,
-      timeAgo: '۱۲ دقیقه پیش',
-    },
-  ]);
+  // Recent activity: derived from REAL orders and workshop requests (newest first). Nothing is generated.
+  const recentActivity = useMemo<LiveEvent[]>(() => {
+    const ago = (iso: string) => {
+      const mins = Math.max(0, Math.round((Date.now() - Date.parse(iso)) / 60000));
+      if (mins < 1) return 'هم‌اکنون';
+      if (mins < 60) return `${mins.toLocaleString('fa-IR')} دقیقه پیش`;
+      if (mins < 60 * 24) return `${Math.floor(mins / 60).toLocaleString('fa-IR')} ساعت پیش`;
+      return `${Math.floor(mins / 1440).toLocaleString('fa-IR')} روز پیش`;
+    };
+    const items: Array<LiveEvent & { at: number }> = [];
+    for (const o of orders as any[]) {
+      const paid = o.status === 'PAID' || o.status === 'COMPLETED';
+      const at = Date.parse(paid && o.paidAt ? o.paidAt : o.createdAt);
+      if (!Number.isFinite(at)) continue;
+      items.push({
+        id: `o-${o.id}`, type: paid ? 'ORDER' : 'CART', city: o.orderNumber || '', at,
+        detail: paid ? 'پرداخت موفق سفارش' : o.status === 'PENDING_PAYMENT' ? 'سفارش ثبت شد و در انتظار پرداخت است' : 'تغییر وضعیت سفارش',
+        amount: paid ? o.payableToman : undefined, timeAgo: ago(paid && o.paidAt ? o.paidAt : o.createdAt),
+      });
+    }
+    for (const r of requests as any[]) {
+      const at = Date.parse(r.submittedAt);
+      if (!Number.isFinite(at)) continue;
+      items.push({ id: `r-${r.id}`, type: 'REQUEST', city: r.fullName || '', at, detail: 'ثبت درخواست کارگاه', timeAgo: ago(r.submittedAt) });
+    }
+    return items.sort((a, b) => b.at - a.at).slice(0, 8);
+  }, [orders, requests]);
 
   // Aggregate stats calculations based on domain models
   const totalPaidOrders = useMemo(
@@ -514,40 +500,6 @@ export const AnalyticsConsole: React.FC<AnalyticsConsoleProps> = ({
     document.body.removeChild(link);
   };
 
-  // Simulate new live ping
-  const handleSimulatePing = () => {
-    const cities = ['تهران', 'اصفهان', 'شیراز', 'مشهد', 'رشت', 'تبریز', 'اهواز', 'کرمانشاه'];
-    const randomCity = cities[Math.floor(Math.random() * cities.length)];
-    const types: ('ORDER' | 'VIEW' | 'REQUEST' | 'CART')[] = ['ORDER', 'VIEW', 'REQUEST', 'CART'];
-    const randomType = types[Math.floor(Math.random() * types.length)];
-
-    let detail = '';
-    let amount: number | undefined;
-
-    if (randomType === 'ORDER') {
-      amount = Math.floor(Math.random() * 20 + 3) * 100000;
-      detail = `خرید موفق اقلام شنیون و ابزار حرفه‌ای به مبلغ ${amount.toLocaleString('fa-IR')} تومان`;
-    } else if (randomType === 'VIEW') {
-      detail = 'مشاهده راهنمای جامع پکیج فرمالیته و شنیون باز';
-    } else if (randomType === 'REQUEST') {
-      detail = 'ارسال درخواست جدید برای ثبت‌نام در کارگاه خصوصی';
-    } else {
-      detail = 'افزودن اسپری اوسیس پلاس به سبد خرید';
-    }
-
-    const newEvt: LiveEvent = {
-      id: `evt-${Date.now()}`,
-      type: randomType,
-      city: randomCity,
-      detail,
-      amount,
-      timeAgo: 'چند لحظه پیش',
-    };
-
-    setLiveEvents((prev) => [newEvt, ...prev.slice(0, 6)]);
-    setActiveUsers((u) => Math.min(65, Math.max(12, u + (Math.random() > 0.4 ? 1 : -1))));
-  };
-
   // Donut chart calculations
   const donutCircumference = 2 * Math.PI * 38; // radius 38 -> ~238.76
   let accumulatedDonutPercent = 0;
@@ -566,21 +518,12 @@ export const AnalyticsConsole: React.FC<AnalyticsConsoleProps> = ({
             </h2>
           </div>
           <p className="text-xs sm:text-sm text-[#59524A] mt-1">
-            تصویرسازی بصری ترافیک زنده، فروش و درآمد، سهم کانال‌ها، قیف تبدیل و رفتار کاربران.
+            فروش، درآمد و سفارش‌ها از داده واقعی سیستم محاسبه می‌شوند. آمار بازدید، کانال‌ها و قیف تبدیل فعلاً نمونه (نمایشی) است چون هنوز ردیابی بازدید فعال نشده است.
           </p>
         </div>
 
         {/* Action Controls */}
         <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
-          {/* Real-time live traffic pulse indicator */}
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 border border-emerald-200 rounded-xl text-xs font-semibold text-emerald-800">
-            <span className="relative flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-            </span>
-            <span>{activeUsers} کاربر آنلاین هم‌اکنون</span>
-          </div>
-
           {/* Time range selector */}
           <div className="flex items-center p-1 bg-[#F4EFE7]/70 rounded-xl text-xs border border-[#EAE2D5]">
             {(
@@ -620,16 +563,6 @@ export const AnalyticsConsole: React.FC<AnalyticsConsoleProps> = ({
             <span>خروجی CSV</span>
           </button>
 
-          {/* Simulate Event Button */}
-          <button
-            type="button"
-            onClick={handleSimulatePing}
-            className="px-3 py-1.5 bg-[#87553B]/10 hover:bg-[#87553B]/20 text-[#87553B] border border-[#87553B]/30 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
-            title="شبیه‌سازی رویداد و ورودی کاربر جدید"
-          >
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>تست رویداد زنده</span>
-          </button>
         </div>
       </div>
 
@@ -1637,16 +1570,15 @@ export const AnalyticsConsole: React.FC<AnalyticsConsoleProps> = ({
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
               </span>
               <h3 className="text-sm sm:text-base font-bold text-[#171614]">
-                جریان زنده رویدادهای کاربر (Live Activity Stream)
+                آخرین فعالیت‌های واقعی
               </h3>
             </div>
-            <span className="text-[11px] bg-stone-100 text-stone-700 px-2 py-0.5 rounded-md font-mono">
-              Live Feed
-            </span>
+            <span className="text-xs bg-stone-100 text-stone-700 px-2 py-0.5 rounded-md">سفارش‌ها و درخواست‌ها</span>
           </div>
 
           <div className="divide-y divide-[#EAE2D5]/50 max-h-[350px] overflow-y-auto pr-1 space-y-0.5">
-            {liveEvents.map((evt) => (
+            {recentActivity.length === 0 && <p className="py-8 text-center text-xs text-[#59524A]">هنوز فعالیتی ثبت نشده است.</p>}
+            {recentActivity.map((evt) => (
               <div
                 key={evt.id}
                 className="py-3 flex items-start justify-between gap-3 text-xs hover:bg-[#F8F5EE] px-2 rounded-lg transition-colors"

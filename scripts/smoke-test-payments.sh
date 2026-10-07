@@ -12,7 +12,7 @@ js() { node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{const j=
 code() { curl -s -o /dev/null -w "%{http_code}" -m 8 "$@"; }
 loc() { curl -s -m 8 -D - -o /dev/null "$@" | grep -i '^location:' | tr -d '\r'; }
 
-(nohup npx tsx server.ts > /tmp/pay_server.log 2>&1 &)
+(ALLOW_DEV_AUTH=1 nohup npx tsx server.ts > /tmp/pay_server.log 2>&1 &)
 for i in $(seq 1 25); do curl -s -m 1 $BASE/health >/dev/null && break; sleep 1; done
 
 login() { R=$(curl -s -m 5 -X POST $BASE/auth/otp/request -H 'Content-Type: application/json' -d "{\"mobile\":\"$2\"}"); C=$(echo "$R" | grep -oE '[0-9]{6}' | head -1); curl -s -m 5 -c $1 -X POST $BASE/auth/otp/verify -H 'Content-Type: application/json' -d "{\"mobile\":\"$2\",\"code\":\"$C\"}" >/dev/null; }
@@ -74,7 +74,7 @@ loc "$BASE/payments/verify?Authority=$A3B&Status=OK&orderId=$O3" >/dev/null
 [ "$(code -b $U1 -X PUT $BASE/orders/$O2/status -H 'Content-Type: application/json' -d '{"status":"CANCELLED"}')" = "403" ]; check "non-admin cannot change order status (403)" $?
 [ "$(code -b $AD -X PUT $BASE/orders/$O1/status -H 'Content-Type: application/json' -d '{"status":"COMPLETED"}')" = "200" ]; check "admin PAID -> COMPLETED allowed" $?
 [ "$(code -b $AD -X PUT $BASE/orders/$O1/status -H 'Content-Type: application/json' -d '{"status":"PAID"}')" = "409" ]; check "terminal COMPLETED cannot go back to PAID (409)" $?
-[ "$(code -b $AD -X PUT $BASE/orders/$O2/status -H 'Content-Type: application/json' -d '{"status":"NOT_A_STATUS"}')" = "409" ]; check "unknown status value rejected" $?
+[ "$(code -b $AD -X PUT $BASE/orders/$O2/status -H 'Content-Type: application/json' -d '{"status":"NOT_A_STATUS"}')" = "400" ]; check "unknown status value rejected" $?
 
 # --- visibility
 curl -s -m 5 -b $U2 $BASE/orders | js "j.data.some(o=>o.id==='$O1')?'leak':'ok'" | grep -q ok; check "user cannot see another user's orders" $?

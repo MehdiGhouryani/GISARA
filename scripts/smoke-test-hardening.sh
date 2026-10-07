@@ -18,7 +18,7 @@ PART=${PART:-both}
 if [ "$PART" != "B" ]; then
 ########## Part A: DB import (dev mode, port 3000) ##########
 rm -f server/data/db.json; rm -f server/data/backups/pre_import_*.json
-(nohup npx tsx server.ts > /tmp/h_dev.log 2>&1 &)
+(ALLOW_DEV_AUTH=1 nohup npx tsx server.ts > /tmp/h_dev.log 2>&1 &)
 wait_up http://localhost:3000/api
 A=http://localhost:3000/api
 AJ=/tmp/h_admin.txt; UJ=/tmp/h_user.txt; rm -f $AJ $UJ
@@ -37,7 +37,7 @@ BAD='{"products":[{"id":"evil","name":"x","priceToman":-5,"stock":1}]}'
 
 # Round trip: a real export must be restorable, and unsupported collections must be reported
 curl -s -m 8 -b $AJ $A/admin/db/export -o /tmp/h_export.json
-grep -q '"otps"\|"paymentIntents"' /tmp/h_export.json; [ $? -ne 0 ]; check "export contains no OTPs / payment intents" $?
+grep -q '"otps"\|"apiKey"\|"merchantId"\|"settings"' /tmp/h_export.json; [ $? -ne 0 ]; check "export contains no OTPs / secrets / settings (payment intents ARE included so a restore is complete)" $?
 RES=$(curl -s -m 8 -b $AJ -X POST $A/admin/db/import -H 'Content-Type: application/json' --data-binary @/tmp/h_export.json)
 echo "$RES" | js "j.success" | grep -q true; check "real export round-trips through import" $?
 echo "$RES" | js "j.ignoredCollections.length>0" | grep -q true; check "import reports collections it does not restore" $?

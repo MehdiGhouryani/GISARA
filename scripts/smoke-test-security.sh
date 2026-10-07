@@ -15,7 +15,7 @@ check() { # name, condition-result(0=ok)
 }
 code() { curl -s -o /dev/null -w "%{http_code}" -m 5 "$@"; }
 
-(nohup npx tsx server.ts > /tmp/sec_server.log 2>&1 &)
+(ALLOW_DEV_AUTH=1 nohup npx tsx server.ts > /tmp/sec_server.log 2>&1 &)
 for i in $(seq 1 20); do curl -s -m 1 $BASE/health >/dev/null && break; sleep 1; done
 
 JAR=/tmp/sec_jar.txt; rm -f $JAR

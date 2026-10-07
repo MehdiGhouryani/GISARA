@@ -7,7 +7,7 @@ BASE=http://localhost:3000/api; PASS=0; FAIL=0
 check() { if [ "$2" -eq 0 ]; then echo "PASS  $1"; PASS=$((PASS+1)); else echo "FAIL  $1"; FAIL=$((FAIL+1)); fi; }
 js() { node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{const j=JSON.parse(d);console.log($1)})"; }
 H='Content-Type: application/json'
-(nohup npx tsx server.ts > /tmp/academy_server.log 2>&1 &)
+(ALLOW_DEV_AUTH=1 nohup npx tsx server.ts > /tmp/academy_server.log 2>&1 &)
 for i in $(seq 1 25); do curl -s -m 1 $BASE/health >/dev/null && break; sleep 1; done
 A=/tmp/ac_a.txt; rm -f $A
 curl -s -m 5 -c $A -X POST $BASE/auth/admin/login -H "$H" -d '{"passcode":"gisara2026"}' >/dev/null

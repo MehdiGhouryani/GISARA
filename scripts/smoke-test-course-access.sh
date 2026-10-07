@@ -14,7 +14,7 @@ check() { if [ "$2" -eq 0 ]; then echo "PASS  $1"; PASS=$((PASS+1)); else echo "
 js() { node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{const j=JSON.parse(d);console.log($1)})"; }
 code() { curl -s -o /dev/null -w "%{http_code}" -m 5 "$@"; }
 
-(nohup npx tsx server.ts > /tmp/ca_server.log 2>&1 &)
+(ALLOW_DEV_AUTH=1 nohup npx tsx server.ts > /tmp/ca_server.log 2>&1 &)
 for i in $(seq 1 20); do curl -s -m 1 $BASE/health >/dev/null && break; sleep 1; done
 JAR=/tmp/ca_jar.txt; AJAR=/tmp/ca_ajar.txt; rm -f $JAR $AJAR
 login() { # jar mobile

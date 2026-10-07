@@ -15,7 +15,7 @@ check() { if [ "$2" -eq 0 ]; then echo "PASS  $1"; PASS=$((PASS+1)); else echo "
 js() { node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{const j=JSON.parse(d);console.log($1)})"; }
 post() { curl -s -m 5 -b $JAR -X POST $BASE/orders -H 'Content-Type: application/json' -d "$1"; }
 
-(nohup npx tsx server.ts > /tmp/ord_server.log 2>&1 &)
+(ALLOW_DEV_AUTH=1 nohup npx tsx server.ts > /tmp/ord_server.log 2>&1 &)
 for i in $(seq 1 20); do curl -s -m 1 $BASE/health >/dev/null && break; sleep 1; done
 JAR=/tmp/ord_jar.txt; rm -f $JAR; AJAR=/tmp/ord_ajar.txt; rm -f $AJAR
 

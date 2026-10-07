@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import { ApiClient } from '../../services/apiClient';
 import { OfflineQueueService } from '../../utils/offlineQueue';
+import { ConfirmDialog } from '../common/ConfirmDialog';
 
 interface TestResult {
   endpoint: string;
@@ -80,20 +81,8 @@ const TEST_ENDPOINTS: Array<{ name: string; endpoint: string; method: 'GET' | 'P
     fallback: [{ id: 'course-1', title: 'دوره جامع شینیون عروس' }]
   },
   {
-    name: 'درخواست‌های ورکشاپ (/api/workshops/requests)',
-    endpoint: '/api/workshops/requests',
-    method: 'GET',
-    fallback: []
-  },
-  {
-    name: 'درخواست‌های ورکشاپ کوتاه (/api/requests)',
+    name: 'درخواست‌های ورکشاپ (/api/requests)',
     endpoint: '/api/requests',
-    method: 'GET',
-    fallback: []
-  },
-  {
-    name: 'لاگ‌های امنیتی (/api/admin/logs)',
-    endpoint: '/api/admin/logs',
     method: 'GET',
     fallback: []
   },
@@ -110,10 +99,16 @@ const TEST_ENDPOINTS: Array<{ name: string; endpoint: string; method: 'GET' | 'P
     fallback: { totalSales: 0, paidOrdersCount: 0 }
   },
   {
-    name: 'شهرهای فعال ورکشاپ (/api/cities)',
-    endpoint: '/api/cities',
+    name: 'ژورنال مقالات (/api/articles)',
+    endpoint: '/api/articles',
     method: 'GET',
-    fallback: [{ id: 'tehran', name: 'تهران' }]
+    fallback: []
+  },
+  {
+    name: 'تکنیک‌های آموزشی (/api/techniques)',
+    endpoint: '/api/techniques',
+    method: 'GET',
+    fallback: []
   }
 ];
 
@@ -122,6 +117,68 @@ export const BackendDiagnosticTool: React.FC = () => {
   const [testingEndpoint, setTestingEndpoint] = useState<string | null>(null);
   const [isTestingAll, setIsTestingAll] = useState(false);
   const [selectedEndpoint, setSelectedEndpoint] = useState<string>(TEST_ENDPOINTS[0].endpoint);
+
+  // Backup / restore
+  const [backupBusy, setBackupBusy] = useState(false);
+  const [backupNote, setBackupNote] = useState<{ ok: boolean; text: string } | null>(null);
+  const [pendingRestore, setPendingRestore] = useState<{ fileName: string; payload: any; counts: Array<[string, number]>; unknown: string[] } | null>(null);
+  const [restoreResult, setRestoreResult] = useState<{ restored: Record<string, number>; ignored: string[]; snapshot: string } | null>(null);
+
+  const COLLECTION_LABELS: Record<string, string> = {
+    styles: 'مدل‌های مو', techniques: 'تکنیک‌ها', articles: 'مقالات', products: 'محصولات', courses: 'دوره‌ها', orders: 'سفارش‌ها',
+    requests: 'درخواست‌های کارگاه', instructors: 'مدرس‌ها', cities: 'شهرها', sessions: 'جلسات', coupons: 'کدهای تخفیف',
+    certificates: 'گواهینامه‌ها', manualEnrollments: 'دسترسی‌های دستی', paymentIntents: 'تراکنش‌های پرداخت', users: 'کاربران', auditLogs: 'گزارش رخدادها'
+  };
+
+  const downloadBackup = async () => {
+    setBackupBusy(true);
+    setBackupNote(null);
+    try {
+      const dbData = await ApiClient.exportDbBackup();
+      const blob = new Blob([JSON.stringify(dbData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `gisara_db_backup_${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      setBackupNote({ ok: true, text: 'فایل پشتیبان دانلود شد. کلیدهای درگاه و پیامک عمداً در آن قرار داده نمی‌شوند.' });
+    } catch {
+      setBackupNote({ ok: false, text: 'دانلود فایل پشتیبان انجام نشد. دوباره تلاش کنید.' });
+    } finally {
+      setBackupBusy(false);
+    }
+  };
+
+  const chooseRestoreFile = async (file: File) => {
+    setBackupNote(null);
+    setRestoreResult(null);
+    try {
+      const payload = JSON.parse(await file.text());
+      if (!payload || typeof payload !== 'object' || Array.isArray(payload)) throw new Error('bad');
+      const counts = Object.entries(payload)
+        .filter(([, v]) => Array.isArray(v))
+        .map(([k, v]) => [k, (v as any[]).length] as [string, number]);
+      if (counts.length === 0) throw new Error('empty');
+      setPendingRestore({ fileName: file.name, payload, counts, unknown: Object.keys(payload).filter((k) => !(k in COLLECTION_LABELS)) });
+    } catch {
+      setBackupNote({ ok: false, text: 'فایل انتخاب‌شده یک پشتیبان JSON معتبر نیست.' });
+    }
+  };
+
+  const confirmRestore = async () => {
+    if (!pendingRestore) return;
+    try {
+      const res: any = await ApiClient.importDbBackup(pendingRestore.payload);
+      setRestoreResult({ restored: res?.restored || {}, ignored: res?.ignoredCollections || [], snapshot: res?.previousStateSnapshot || '' });
+      setBackupNote({ ok: true, text: 'بازیابی انجام شد.' });
+    } catch (err: any) {
+      const first = err?.data?.errors?.[0];
+      setBackupNote({ ok: false, text: `${err?.message || 'بازیابی انجام نشد.'}${first ? ` (${first})` : ''} هیچ تغییری اعمال نشد.` });
+    } finally {
+      setPendingRestore(null);
+    }
+  };
 
   const testSingleEndpoint = async (target: typeof TEST_ENDPOINTS[0]): Promise<TestResult> => {
     setTestingEndpoint(target.endpoint);
@@ -252,53 +309,6 @@ export const BackendDiagnosticTool: React.FC = () => {
 
           <div className="flex flex-wrap items-center gap-2">
             <button
-              onClick={async () => {
-                try {
-                  const dbData = await ApiClient.exportDbBackup();
-                  const blob = new Blob([JSON.stringify(dbData, null, 2)], { type: 'application/json' });
-                  const url = URL.createObjectURL(blob);
-                  const a = document.createElement('a');
-                  a.href = url;
-                  a.download = `gisara_db_backup_${Date.now()}.json`;
-                  a.click();
-                  URL.revokeObjectURL(url);
-                } catch {
-                  alert('خطا در دانلود فایل پشتیبان دیتابیس.');
-                }
-              }}
-              className="flex items-center gap-1.5 px-3 py-2 bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs font-medium rounded-xl border border-stone-700 transition-all"
-              title="دانلود خروجی پشتیبان کامل دیتابیس JSON"
-            >
-              <Download className="w-3.5 h-3.5 text-amber-400" />
-              دانلود بکاپ دیتابیس
-            </button>
-
-            <label className="flex items-center gap-1.5 px-3 py-2 bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs font-medium rounded-xl border border-stone-700 cursor-pointer transition-all">
-              <Upload className="w-3.5 h-3.5 text-emerald-400" />
-              بازیابی دیتابیس
-              <input
-                type="file"
-                accept=".json"
-                className="hidden"
-                onChange={async (e) => {
-                  const file = e.target.files?.[0];
-                  if (!file) return;
-                  try {
-                    const text = await file.text();
-                    const parsed = JSON.parse(text);
-                    if (confirm('آیا از بازیابی دیتابیس اطمینان دارید؟ اطلاعات موجود با فایل پشتیبان جایگزین خواهد شد.')) {
-                      await ApiClient.importDbBackup(parsed);
-                      alert('دیتابیس با موفقیت بازیابی شد.');
-                      window.location.reload();
-                    }
-                  } catch {
-                    alert('فایل پشتیبان انتخاب‌شده معتبر نیست.');
-                  }
-                }}
-              />
-            </label>
-
-            <button
               onClick={runAllDiagnostics}
               disabled={isTestingAll}
               className="flex items-center gap-2 px-5 py-2.5 bg-amber-600 hover:bg-amber-500 disabled:bg-stone-700 text-stone-950 font-bold rounded-xl transition-all shadow-md active:scale-95 text-sm"
@@ -308,6 +318,49 @@ export const BackendDiagnosticTool: React.FC = () => {
             </button>
           </div>
         </div>
+
+        {/* Backup & restore: destructive tools live apart from the read-only connectivity checks */}
+        <section aria-labelledby="backup-title" className="mt-5 rounded-xl bg-stone-950/50 border border-stone-700/50 p-4 space-y-3">
+          <h3 id="backup-title" className="text-sm font-bold text-stone-100">پشتیبان‌گیری و بازیابی</h3>
+          <div className="flex flex-wrap items-center gap-2">
+            <button type="button" onClick={downloadBackup} disabled={backupBusy} aria-busy={backupBusy} className="min-h-10 flex items-center gap-1.5 px-3 py-2 bg-stone-800 hover:bg-stone-700 disabled:opacity-60 text-stone-200 text-xs font-medium rounded-xl border border-stone-700 transition-colors cursor-pointer">
+              <Download className="w-3.5 h-3.5 text-amber-400" aria-hidden="true" />
+              دانلود پشتیبان
+            </button>
+            <label className="min-h-10 flex items-center gap-1.5 px-3 py-2 bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs font-medium rounded-xl border border-stone-700 cursor-pointer transition-colors">
+              <Upload className="w-3.5 h-3.5 text-emerald-400" aria-hidden="true" />
+              انتخاب فایل برای بازیابی
+              <input type="file" accept=".json,application/json" className="sr-only" onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) chooseRestoreFile(f); }} />
+            </label>
+          </div>
+          {backupNote && <p role={backupNote.ok ? 'status' : 'alert'} className={`text-xs ${backupNote.ok ? 'text-emerald-300' : 'text-rose-300'}`}>{backupNote.text}</p>}
+          {restoreResult && (
+            <div role="status" className="text-xs text-stone-200 space-y-1 bg-stone-900 rounded-lg p-3">
+              <div className="font-bold text-emerald-300">بازیابی‌شده: {Object.entries(restoreResult.restored).map(([k, v]) => `${COLLECTION_LABELS[k] || k} (${v.toLocaleString('fa-IR')})`).join('، ') || '—'}</div>
+              {restoreResult.ignored.length > 0 && <div className="text-amber-300">نادیده گرفته‌شده: {restoreResult.ignored.map((k) => COLLECTION_LABELS[k] || k).join('، ')}</div>}
+              {restoreResult.snapshot && <div className="text-stone-400">نسخه قبل از بازیابی ذخیره شد: <bdi dir="ltr" className="font-mono">{restoreResult.snapshot}</bdi></div>}
+              <button type="button" onClick={() => window.location.reload()} className="mt-1 min-h-9 px-3 bg-amber-600 hover:bg-amber-500 text-stone-950 font-bold rounded-lg cursor-pointer">بارگذاری مجدد صفحه</button>
+            </div>
+          )}
+        </section>
+
+        <ConfirmDialog
+          isOpen={!!pendingRestore}
+          danger
+          title="بازیابی دیتابیس از فایل"
+          message={pendingRestore && (
+            <div className="space-y-2">
+              <p>فایل «{pendingRestore.fileName}» شامل این بخش‌هاست و جایگزین اطلاعات فعلی همین بخش‌ها می‌شود:</p>
+              <ul className="list-disc ps-5 text-xs">{pendingRestore.counts.map(([k, n]) => <li key={k}>{COLLECTION_LABELS[k] || k}: {n.toLocaleString('fa-IR')} مورد</li>)}</ul>
+              {pendingRestore.unknown.length > 0 && <p className="text-xs">بخش‌های ناشناخته (نادیده گرفته می‌شوند): {pendingRestore.unknown.join('، ')}</p>}
+              <p className="text-xs">پیش از اعمال، یک نسخه از وضعیت فعلی ذخیره می‌شود.</p>
+            </div>
+          )}
+          confirmLabel="بازیابی کن"
+          requirePhrase="بازیابی"
+          onCancel={() => setPendingRestore(null)}
+          onConfirm={confirmRestore}
+        />
 
         {/* Quick Summary Metrics */}
         <div className="grid grid-cols-2 sm:grid-cols-6 gap-3 mt-6 pt-6 border-t border-stone-700/50">
