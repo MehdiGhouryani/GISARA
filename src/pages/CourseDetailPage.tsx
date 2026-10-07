@@ -111,7 +111,7 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
                 <EditorialImage src={instructor.portrait} alt={instructor.name} aspectRatio="1:1" />
               </div>
               <div>
-                <div className="text-[11px] text-[#59524A]">مدرس این دوره:</div>
+                <div className="text-xs text-[#59524A]">مدرس این دوره:</div>
                 <div className="text-sm font-bold text-[#171614]">{instructor.name}</div>
                 <div className="text-xs text-[#59524A] mt-0.5">{instructor.specialty}</div>
               </div>

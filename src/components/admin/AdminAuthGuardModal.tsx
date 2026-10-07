@@ -161,7 +161,7 @@ export const AdminAuthGuardModal: React.FC<AdminAuthGuardModalProps> = ({
               <Clock className="w-4 h-4 text-rose-600 animate-pulse" />
               <span>دسترسی موقتاً مسدود شده است</span>
             </div>
-            <p className="text-[11px] leading-relaxed">
+            <p className="text-xs leading-relaxed">
               به دلیل ۵ بار تلاش ناموفق پیاپی، دسترسی تا {lockout.remainingSeconds} ثانیه دیگر مسدود است.
             </p>
           </div>
@@ -194,7 +194,7 @@ export const AdminAuthGuardModal: React.FC<AdminAuthGuardModalProps> = ({
                   {showPasscode ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
-              <p className="text-[10px] text-[#7A7265] mt-1.5 flex items-center justify-end">
+              <p className="text-xs text-[#7A7265] mt-1.5 flex items-center justify-end">
                 <span className="text-[#87553B] font-medium">{lockout.attemptsLeft} فرصت باقی‌مانده</span>
               </p>
             </div>
@@ -236,7 +236,7 @@ export const AdminAuthGuardModal: React.FC<AdminAuthGuardModalProps> = ({
         )}
 
         {/* Security Notice */}
-        <div className="mt-6 pt-4 border-t border-[#EAE2D5] flex items-center justify-center gap-1.5 text-[11px] text-[#7A7265]">
+        <div className="mt-6 pt-4 border-t border-[#EAE2D5] flex items-center justify-center gap-1.5 text-xs text-[#7A7265]">
           <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
           <span>حفاظت امنیتی در برابر Brute-force و مسدودسازی خودکار</span>
         </div>

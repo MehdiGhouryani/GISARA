@@ -42,15 +42,15 @@ export const ProductCard: React.FC<ProductCardProps> = React.memo(({
           />
 
           {/* Minimal Brand Tag */}
-          <span className="absolute top-2.5 right-2.5 bg-white/90 backdrop-blur-xs text-[#59524A] text-[10px] font-bold px-2 py-0.5 rounded-md border border-[#EAE2D5]/60 shadow-2xs">
+          <span className="absolute top-2.5 right-2.5 bg-white/90 backdrop-blur-xs text-[#59524A] text-xs font-bold px-2 py-0.5 rounded-md border border-[#EAE2D5]/60 shadow-2xs">
             {product.brand}
           </span>
         </div>
 
         {/* Info */}
         <div className="p-3.5 space-y-1.5">
-          <div className="flex items-center justify-between text-[11px] text-[#59524A]">
-            <span className="text-[10px] font-semibold text-[#87553B]">{product.category}</span>
+          <div className="flex items-center justify-between text-xs text-[#59524A]">
+            <span className="text-xs font-semibold text-[#87553B]">{product.category}</span>
             <div className="flex items-center gap-1 text-amber-700 font-bold tabular-nums">
               <Star className="w-3 h-3 fill-current text-amber-500" />
               <span>{product.rating}</span>
@@ -66,10 +66,10 @@ export const ProductCard: React.FC<ProductCardProps> = React.memo(({
             <span className="text-sm sm:text-base font-bold text-[#171614] tabular-nums">
               {product.priceToman.toLocaleString('fa-IR')}
             </span>
-            <span className="text-[10px] font-medium text-[#59524A]">تومان</span>
+            <span className="text-xs font-medium text-[#59524A]">تومان</span>
 
             {product.compareAtPriceToman && (
-              <span className="text-[11px] text-[#59524A]/50 line-through tabular-nums mr-auto">
+              <span className="text-xs text-[#59524A]/50 line-through tabular-nums mr-auto">
                 {product.compareAtPriceToman.toLocaleString('fa-IR')}
               </span>
             )}

@@ -131,7 +131,7 @@ export const MagazinePage: React.FC<MagazinePageProps> = ({
                   </div>
                   <div>
                     <div className="text-xs sm:text-sm font-bold text-[#171614]">{selectedArticle.author.name}</div>
-                    <div className="text-[11px] text-[#59524A]">{selectedArticle.author.role}</div>
+                    <div className="text-xs text-[#59524A]">{selectedArticle.author.role}</div>
                   </div>
                 </div>
 
@@ -208,7 +208,7 @@ export const MagazinePage: React.FC<MagazinePageProps> = ({
                           e.stopPropagation();
                           onAddToCart(prod, e);
                         }}
-                        className="px-3 py-1.5 bg-[#171614] hover:bg-[#87553B] text-white text-[11px] font-bold rounded-lg shrink-0 cursor-pointer transition-colors"
+                        className="px-3 py-1.5 bg-[#171614] hover:bg-[#87553B] text-white text-xs font-bold rounded-lg shrink-0 cursor-pointer transition-colors"
                       >
                         خرید
                       </button>

@@ -129,7 +129,7 @@ export const OrderTrackingModal: React.FC<OrderTrackingModalProps> = ({
               <h2 className="text-base sm:text-lg font-bold text-[#171614]">
                 رهگیری آنلاین مرسوله و سفارش
               </h2>
-              <p className="text-[11px] sm:text-xs text-[#59524A]">
+              <p className="text-xs sm:text-xs text-[#59524A]">
                 استعلام وضعیت ارسال سفارش‌های ابزار شینیون در سراسر کشور
               </p>
             </div>
@@ -164,14 +164,14 @@ export const OrderTrackingModal: React.FC<OrderTrackingModalProps> = ({
           </div>
           {orders.length > 0 && (
             <div className="flex items-center gap-2 mt-2">
-              <span className="text-[11px] text-[#59524A]">سفارش‌های اخیر شما:</span>
+              <span className="text-xs text-[#59524A]">سفارش‌های اخیر شما:</span>
               <div className="flex flex-wrap gap-1.5">
                 {orders.map((o) => (
                   <button
                     key={o.id}
                     type="button"
                     onClick={() => setSearchQuery(o.id)}
-                    className="px-2 py-0.5 text-[10px] font-bold rounded-md bg-[#FAF7F2] text-[#87553B] hover:bg-[#87553B]/10 border border-[#EAE2D5] cursor-pointer tabular-nums"
+                    className="px-2 py-0.5 text-xs font-bold rounded-md bg-[#FAF7F2] text-[#87553B] hover:bg-[#87553B]/10 border border-[#EAE2D5] cursor-pointer tabular-nums"
                   >
                     {o.id}
                   </button>
@@ -187,11 +187,11 @@ export const OrderTrackingModal: React.FC<OrderTrackingModalProps> = ({
             <div className="p-4 bg-[#FAF7F2] rounded-xl border border-[#EAE2D5] space-y-3">
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="text-[11px] text-[#59524A]">کد سفارش گیس‌آرا:</div>
+                  <div className="text-xs text-[#59524A]">کد سفارش گیس‌آرا:</div>
                   <div className="text-xs font-bold text-[#171614] tabular-nums">{foundOrder.id}</div>
                 </div>
                 <div className="text-left">
-                  <div className="text-[11px] text-[#59524A]">متصدی حمل:</div>
+                  <div className="text-xs text-[#59524A]">متصدی حمل:</div>
                   <div className="text-xs font-bold text-[#87553B]">پست پیشتاز جمهوری اسلامی</div>
                 </div>
               </div>
@@ -199,7 +199,7 @@ export const OrderTrackingModal: React.FC<OrderTrackingModalProps> = ({
               {/* 24-digit postal code box */}
               <div className="p-2.5 bg-white rounded-lg border border-[#EAE2D5] flex items-center justify-between gap-2">
                 <div className="truncate">
-                  <span className="text-[10px] text-[#59524A] block">کد رهگیری پستی (بارنامه):</span>
+                  <span className="text-xs text-[#59524A] block">کد رهگیری پستی (بارنامه):</span>
                   <span className="text-xs font-mono font-bold text-[#171614] tracking-wider tabular-nums select-all">
                     {foundOrder.trackingCode || '312890048102938472910482'}
                   </span>
@@ -207,7 +207,7 @@ export const OrderTrackingModal: React.FC<OrderTrackingModalProps> = ({
                 <button
                   type="button"
                   onClick={() => handleCopy(foundOrder.trackingCode || '312890048102938472910482')}
-                  className="px-2.5 py-1 text-[11px] font-semibold text-[#87553B] hover:bg-[#87553B]/10 rounded-md transition-colors flex items-center gap-1 cursor-pointer shrink-0"
+                  className="px-2.5 py-1 text-xs font-semibold text-[#87553B] hover:bg-[#87553B]/10 rounded-md transition-colors flex items-center gap-1 cursor-pointer shrink-0"
                 >
                   {copiedCode ? (
                     <>
@@ -223,7 +223,7 @@ export const OrderTrackingModal: React.FC<OrderTrackingModalProps> = ({
                 </button>
               </div>
 
-              <div className="grid grid-cols-2 gap-2 text-[11px] text-[#59524A] pt-1 border-t border-[#EAE2D5]/70">
+              <div className="grid grid-cols-2 gap-2 text-xs text-[#59524A] pt-1 border-t border-[#EAE2D5]/70">
                 <div>
                   <span className="font-semibold text-[#171614]">مبدا:</span> انبار مرکزی تهران
                 </div>
@@ -262,9 +262,9 @@ export const OrderTrackingModal: React.FC<OrderTrackingModalProps> = ({
                         <span className={`font-bold ${st.done ? 'text-[#171614]' : 'text-[#968A7C]'}`}>
                           {st.title}
                         </span>
-                        <span className="text-[10px] text-[#59524A] tabular-nums">{st.date}</span>
+                        <span className="text-xs text-[#59524A] tabular-nums">{st.date}</span>
                       </div>
-                      <p className="text-[11px] text-[#59524A] leading-relaxed">
+                      <p className="text-xs text-[#59524A] leading-relaxed">
                         {st.desc}
                       </p>
                     </div>
@@ -277,7 +277,7 @@ export const OrderTrackingModal: React.FC<OrderTrackingModalProps> = ({
           <div className="p-8 text-center bg-[#FAF7F2] rounded-xl border border-[#EAE2D5] space-y-2">
             <AlertCircle className="w-8 h-8 text-amber-600 mx-auto" />
             <p className="text-xs font-bold text-[#171614]">سفارشی با این شناسه یافت نشد</p>
-            <p className="text-[11px] text-[#59524A]">
+            <p className="text-xs text-[#59524A]">
               لطفاً شماره سفارش ثبت‌شده در پیامک یا پیشخوان کاربری خود را به درستی وارد نمایید.
             </p>
           </div>
@@ -289,7 +289,7 @@ export const OrderTrackingModal: React.FC<OrderTrackingModalProps> = ({
             href="https://tracking.post.ir"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-[11px] text-[#87553B] hover:text-[#381F13] font-semibold inline-flex items-center gap-1 cursor-pointer"
+            className="text-xs text-[#87553B] hover:text-[#381F13] font-semibold inline-flex items-center gap-1 cursor-pointer"
           >
             <span>استعلام مستقیم در سامانه شرکت ملی پست ایران</span>
             <ExternalLink className="w-3 h-3" />

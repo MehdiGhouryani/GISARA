@@ -81,12 +81,12 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
             <div className="relative">
               <Icon className={`w-5 h-5 transition-transform ${tab.isActive ? 'scale-110' : ''}`} />
               {typeof tab.badge === 'number' && tab.badge > 0 && (
-                <span className="absolute -top-1.5 -right-2 bg-[#87553B] text-white text-[10px] font-black rounded-full h-4 min-w-4 px-1 flex items-center justify-center shadow-xs">
+                <span className="absolute -top-1.5 -right-2 bg-[#87553B] text-white text-xs font-black rounded-full h-4 min-w-4 px-1 flex items-center justify-center shadow-xs">
                   {tab.badge > 99 ? '99+' : tab.badge}
                 </span>
               )}
             </div>
-            <span className="text-[10px] mt-0.5 font-medium whitespace-nowrap">
+            <span className="text-xs mt-0.5 font-medium whitespace-nowrap">
               {tab.label}
             </span>
             {tab.isActive && (

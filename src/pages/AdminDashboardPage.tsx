@@ -221,11 +221,11 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
                 <span className="sm:hidden">پنل مدیریت گیس‌آرا</span>
                 <span className="hidden sm:inline">کنسول مدیریت و عملیات گیس‌آرا (GisAra)</span>
               </span>
-              <span className="text-[10px] bg-amber-500/20 text-[#e2b87f] px-2 py-0.5 rounded-md font-bold border border-amber-500/30 hidden lg:inline-block">
+              <span className="text-xs bg-amber-500/20 text-[#e2b87f] px-2 py-0.5 rounded-md font-bold border border-amber-500/30 hidden lg:inline-block">
                 پنل فوق کامل
               </span>
             </div>
-            <div className="text-[11px] text-stone-400 hidden md:block">
+            <div className="text-xs text-stone-400 hidden md:block">
               کنترل یکپارچه همه‌جانبه محتوا، فروشگاه، کارگاه و امنیت سیستم
             </div>
           </div>
@@ -235,12 +235,12 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
           {/* Quick status counters */}
           <div className="hidden lg:flex items-center gap-2 text-xs">
             {pendingOrdersCount > 0 && (
-              <span className="px-2.5 py-1 bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-lg text-[11px] font-bold tabular-nums">
+              <span className="px-2.5 py-1 bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-lg text-xs font-bold tabular-nums">
                 {pendingOrdersCount} سفارش منتظر پرداخت
               </span>
             )}
             {openRequestsCount > 0 && (
-              <span className="px-2.5 py-1 bg-rose-500/20 text-rose-300 border border-rose-500/30 rounded-lg text-[11px] font-bold tabular-nums">
+              <span className="px-2.5 py-1 bg-rose-500/20 text-rose-300 border border-rose-500/30 rounded-lg text-xs font-bold tabular-nums">
                 {openRequestsCount} درخواست جدید کارگاه
               </span>
             )}
@@ -374,7 +374,7 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
             <PackageCheck className="w-3.5 h-3.5 text-amber-400" />
             <span>سفارشات</span>
             {openRequestsCount > 0 && (
-              <span className="px-1.5 py-0.2 rounded-full bg-rose-600 text-white text-[10px] font-bold tabular-nums">
+              <span className="px-1.5 py-0.2 rounded-full bg-rose-600 text-white text-xs font-bold tabular-nums">
                 {openRequestsCount}
               </span>
             )}
@@ -406,13 +406,13 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
             </div>
             <div>
               <div className="text-xs font-bold text-[#f5f4f2]">پنل ارشد گیس‌آرا</div>
-              <div className="text-[10px] text-amber-500 font-medium">سطح دسترسی: فوق کامل</div>
+              <div className="text-xs text-amber-500 font-medium">سطح دسترسی: فوق کامل</div>
             </div>
           </div>
 
           {/* Clean Main Options Group */}
           <div className="space-y-2">
-            <div className="text-[10px] font-bold text-stone-500 uppercase tracking-wider px-3 mb-2">
+            <div className="text-xs font-bold text-stone-500 uppercase tracking-wider px-3 mb-2">
               منوی ناوبری اصلی
             </div>
 
@@ -512,7 +512,7 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
                 <span>۵. سفارشات و کارگاه‌ها</span>
               </div>
               {openRequestsCount > 0 && (
-                <span className="w-5 h-5 rounded-full bg-rose-600 text-white text-[10px] font-bold flex items-center justify-center tabular-nums">
+                <span className="w-5 h-5 rounded-full bg-rose-600 text-white text-xs font-bold flex items-center justify-center tabular-nums">
                   {openRequestsCount}
                 </span>
               )}
@@ -570,7 +570,7 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
                       <span className="p-2.5 bg-amber-500/10 text-amber-500 rounded-xl">
                         <Sparkles className="w-5 h-5" />
                       </span>
-                      <span className="text-[10px] font-bold bg-amber-500/20 text-[#e2b87f] px-2.5 py-0.5 rounded-full">
+                      <span className="text-xs font-bold bg-amber-500/20 text-[#e2b87f] px-2.5 py-0.5 rounded-full">
                         بخش اول
                       </span>
                     </div>
@@ -583,15 +583,15 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
                     <div className="grid grid-cols-3 gap-2 pt-2 border-t border-[#26211e] text-center text-xs">
                       <div className="p-2 bg-stone-900 rounded-lg">
                         <div className="font-bold text-[#f5f4f2] tabular-nums">{styles.length}</div>
-                        <div className="text-[10px] text-stone-400">مدل مو</div>
+                        <div className="text-xs text-stone-400">مدل مو</div>
                       </div>
                       <div className="p-2 bg-stone-900 rounded-lg">
                         <div className="font-bold text-[#f5f4f2] tabular-nums">{articles.length}</div>
-                        <div className="text-[10px] text-stone-400">مقاله</div>
+                        <div className="text-xs text-stone-400">مقاله</div>
                       </div>
                       <div className="p-2 bg-stone-900 rounded-lg">
                         <div className="font-bold text-[#f5f4f2] tabular-nums">{techniques.length}</div>
-                        <div className="text-[10px] text-stone-400">تکنیک</div>
+                        <div className="text-xs text-stone-400">تکنیک</div>
                       </div>
                     </div>
                   </div>
@@ -618,7 +618,7 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
                       <span className="p-2.5 bg-amber-500/10 text-amber-500 rounded-xl">
                         <ShoppingBag className="w-5 h-5" />
                       </span>
-                      <span className="text-[10px] font-bold bg-amber-500/20 text-[#e2b87f] px-2.5 py-0.5 rounded-full">
+                      <span className="text-xs font-bold bg-amber-500/20 text-[#e2b87f] px-2.5 py-0.5 rounded-full">
                         بخش دوم
                       </span>
                     </div>
@@ -631,17 +631,17 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
                     <div className="grid grid-cols-3 gap-2 pt-2 border-t border-[#26211e] text-center text-xs">
                       <div className="p-2 bg-stone-900 rounded-lg">
                         <div className="font-bold text-[#f5f4f2] tabular-nums">{products.length}</div>
-                        <div className="text-[10px] text-stone-400">محصول</div>
+                        <div className="text-xs text-stone-400">محصول</div>
                       </div>
                       <div className="p-2 bg-stone-900 rounded-lg">
                         <div className="font-bold text-emerald-400 tabular-nums">{coupons.length}</div>
-                        <div className="text-[10px] text-stone-400">کوپن</div>
+                        <div className="text-xs text-stone-400">کوپن</div>
                       </div>
                       <div className="p-2 bg-stone-900 rounded-lg">
                         <div className={`font-bold tabular-nums ${lowStockProducts.length > 0 ? 'text-amber-400' : 'text-emerald-400'}`}>
                           {lowStockProducts.length}
                         </div>
-                        <div className="text-[10px] text-stone-400">کمبود انبار</div>
+                        <div className="text-xs text-stone-400">کمبود انبار</div>
                       </div>
                     </div>
                   </div>
@@ -668,7 +668,7 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
                       <span className="p-2.5 bg-amber-500/10 text-amber-500 rounded-xl">
                         <PackageCheck className="w-5 h-5" />
                       </span>
-                      <span className="text-[10px] font-bold bg-amber-500/20 text-[#e2b87f] px-2.5 py-0.5 rounded-full">
+                      <span className="text-xs font-bold bg-amber-500/20 text-[#e2b87f] px-2.5 py-0.5 rounded-full">
                         بخش سوم
                       </span>
                     </div>
@@ -681,15 +681,15 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
                     <div className="grid grid-cols-3 gap-2 pt-2 border-t border-[#26211e] text-center text-xs">
                       <div className="p-2 bg-stone-900 rounded-lg">
                         <div className="font-bold text-[#f5f4f2] tabular-nums">{orders.length}</div>
-                        <div className="text-[10px] text-stone-400">سفارشات</div>
+                        <div className="text-xs text-stone-400">سفارشات</div>
                       </div>
                       <div className="p-2 bg-stone-900 rounded-lg">
                         <div className="font-bold text-emerald-400 tabular-nums">{paidOrdersCount}</div>
-                        <div className="text-[10px] text-stone-400">پرداخت شده</div>
+                        <div className="text-xs text-stone-400">پرداخت شده</div>
                       </div>
                       <div className="p-2 bg-stone-900 rounded-lg">
                         <div className="font-bold text-rose-400 tabular-nums">{openRequestsCount}</div>
-                        <div className="text-[10px] text-stone-400">درخواست باز</div>
+                        <div className="text-xs text-stone-400">درخواست باز</div>
                       </div>
                     </div>
                   </div>
@@ -720,7 +720,7 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
                   <div className="text-xl font-bold text-emerald-400 mt-2 tabular-nums">
                     {totalRevenueToman.toLocaleString('fa-IR')} تومان
                   </div>
-                  <div className="text-[10px] text-stone-500 mt-1">تراکنش‌های موفق درگاه</div>
+                  <div className="text-xs text-stone-500 mt-1">تراکنش‌های موفق درگاه</div>
                 </div>
 
                 <div className="bg-[#141211] p-5 rounded-2xl border border-[#26211e] shadow-sm">
@@ -731,7 +731,7 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
                   <div className="text-xl font-bold text-[#f5f4f2] mt-2 tabular-nums">
                     {openRequestsCount} متقاضی
                   </div>
-                  <div className="text-[10px] text-amber-500 mt-1">نیازمند برنامه‌ریزی ادمین</div>
+                  <div className="text-xs text-amber-500 mt-1">نیازمند برنامه‌ریزی ادمین</div>
                 </div>
 
                 <div className="bg-[#141211] p-5 rounded-2xl border border-[#26211e] shadow-sm">
@@ -742,7 +742,7 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
                   <div className="text-xl font-bold text-[#f5f4f2] mt-2 tabular-nums">
                     {sessions.filter(s => s.status === 'OPEN').length} جلسه
                   </div>
-                  <div className="text-[10px] text-stone-500 mt-1">آماده ثبت‌نام در سایت</div>
+                  <div className="text-xs text-stone-500 mt-1">آماده ثبت‌نام در سایت</div>
                 </div>
 
                 <div className="bg-[#141211] p-5 rounded-2xl border border-[#26211e] shadow-sm">
@@ -753,7 +753,7 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
                   <div className="text-xl font-bold text-rose-400 mt-2 tabular-nums">
                     {lowStockProducts.length} کالا
                   </div>
-                  <div className="text-[10px] text-rose-400/80 mt-1">موجودی کمتر از ۱۵ عدد</div>
+                  <div className="text-xs text-rose-400/80 mt-1">موجودی کمتر از ۱۵ عدد</div>
                 </div>
               </div>
 
@@ -793,7 +793,7 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
                       {orders.slice(0, 5).map((o) => (
                         <tr key={o.id} className="hover:bg-stone-900/60 transition-colors">
                           <td className="py-3.5 font-mono font-bold text-[#f5f4f2]">{o.orderNumber}</td>
-                          <td className="py-3.5 text-stone-300">{o.shippingAddress?.recipientName || 'کاربر شنیون مو'}</td>
+                          <td className="py-3.5 text-stone-300">{o.shippingAddress?.recipientName || 'کاربر گیس‌آرا'}</td>
                           <td className="py-3.5 text-stone-400 tabular-nums">{o.items.length} قلم</td>
                           <td className="py-3.5 font-bold text-amber-500 tabular-nums">
                             {o.payableToman.toLocaleString('fa-IR')} تومان
@@ -958,7 +958,7 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
                       <h3 className="text-sm font-bold text-white">دفتر ثبت رخدادهای حساس (Audit Trail)</h3>
                       <p className="text-xs text-stone-400">ثبت تغییرناپذیر کلیه تراکنش‌ها، ویرایش‌ها و ورودی‌های انبار</p>
                     </div>
-                    <span className="text-[10px] bg-stone-900 text-stone-300 px-2.5 py-1 rounded-lg font-mono">
+                    <span className="text-xs bg-stone-900 text-stone-300 px-2.5 py-1 rounded-lg font-mono">
                       {auditLogs.length} رخداد
                     </span>
                   </div>

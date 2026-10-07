@@ -39,8 +39,8 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                 <Truck className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </div>
               <div className="min-w-0">
-                <h4 className="text-[11px] sm:text-xs font-bold text-white transition-colors duration-300 group-hover:text-[#C59B63] truncate">ارسال تخصصی ابزار</h4>
-                <p className="text-[10px] sm:text-[11px] text-stone-400 mt-0.5 leading-relaxed hidden sm:block">
+                <h4 className="text-xs sm:text-xs font-bold text-white transition-colors duration-300 group-hover:text-[#C59B63] truncate">ارسال تخصصی ابزار</h4>
+                <p className="text-xs sm:text-xs text-stone-400 mt-0.5 leading-relaxed hidden sm:block">
                   بسته‌بندی استاندارد و ارسال امن
                 </p>
               </div>
@@ -51,8 +51,8 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                 <Video className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </div>
               <div className="min-w-0">
-                <h4 className="text-[11px] sm:text-xs font-bold text-white transition-colors duration-300 group-hover:text-[#C59B63] truncate">دسترسی نامحدود</h4>
-                <p className="text-[10px] sm:text-[11px] text-stone-400 mt-0.5 leading-relaxed hidden sm:block">
+                <h4 className="text-xs sm:text-xs font-bold text-white transition-colors duration-300 group-hover:text-[#C59B63] truncate">دسترسی نامحدود</h4>
+                <p className="text-xs sm:text-xs text-stone-400 mt-0.5 leading-relaxed hidden sm:block">
                   مشاهده همیشگی دوره‌ها با کیفیت بالا
                 </p>
               </div>
@@ -63,8 +63,8 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                 <ShieldCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </div>
               <div className="min-w-0">
-                <h4 className="text-[11px] sm:text-xs font-bold text-white transition-colors duration-300 group-hover:text-[#C59B63] truncate">تضمین اصالت کالا</h4>
-                <p className="text-[10px] sm:text-[11px] text-stone-400 mt-0.5 leading-relaxed hidden sm:block">
+                <h4 className="text-xs sm:text-xs font-bold text-white transition-colors duration-300 group-hover:text-[#C59B63] truncate">تضمین اصالت کالا</h4>
+                <p className="text-xs sm:text-xs text-stone-400 mt-0.5 leading-relaxed hidden sm:block">
                   محصولات و فیکساتورهای اورجینال سالنی
                 </p>
               </div>
@@ -75,8 +75,8 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                 <HeartHandshake className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </div>
               <div className="min-w-0">
-                <h4 className="text-[11px] sm:text-xs font-bold text-white transition-colors duration-300 group-hover:text-[#C59B63] truncate">مشاوره و پشتیبانی</h4>
-                <p className="text-[10px] sm:text-[11px] text-stone-400 mt-0.5 leading-relaxed hidden sm:block">
+                <h4 className="text-xs sm:text-xs font-bold text-white transition-colors duration-300 group-hover:text-[#C59B63] truncate">مشاوره و پشتیبانی</h4>
+                <p className="text-xs sm:text-xs text-stone-400 mt-0.5 leading-relaxed hidden sm:block">
                   راهنمایی تخصصی انتخاب دوره و ابزار
                 </p>
               </div>
@@ -745,12 +745,12 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                 localStorage.removeItem('gisara_cookie_consent_v1');
                 window.location.reload();
               }}
-              className="text-[11px] text-[#C59B63] hover:underline cursor-pointer sm:mr-2"
+              className="text-xs text-[#C59B63] hover:underline cursor-pointer sm:mr-2"
             >
               • تنظیمات حریم خصوصی و کوکی‌ها
             </button>
           </div>
-          <div className="flex items-center gap-2 text-stone-400 text-[11px] shrink-0">
+          <div className="flex items-center gap-2 text-stone-400 text-xs shrink-0">
             <span>آکادمی و جامعه شینیون‌کاران حرفه‌ای ایران</span>
           </div>
         </div>

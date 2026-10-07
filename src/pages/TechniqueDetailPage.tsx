@@ -255,7 +255,7 @@ export const TechniqueDetailPage: React.FC<TechniqueDetailPageProps> = ({
                 <Timer className="w-4 h-4 text-[#87553B]" />
                 <span>تایمر تمرین عملی هنرجو</span>
               </div>
-              <span className="text-[10px] text-[#59524A] font-semibold">هدف: ۱۵ دقیقه</span>
+              <span className="text-xs text-[#59524A] font-semibold">هدف: ۱۵ دقیقه</span>
             </div>
 
             <div className="bg-[#FAF7F2] p-4 rounded-xl border border-[#EAE2D5] text-center space-y-3">
@@ -300,7 +300,7 @@ export const TechniqueDetailPage: React.FC<TechniqueDetailPageProps> = ({
                 </button>
               </div>
             </div>
-            <p className="text-[11px] text-[#59524A] leading-relaxed">
+            <p className="text-xs text-[#59524A] leading-relaxed">
               سرعت دست خود را در زیرسازی و خط‌اندازی بسنجید تا برای روزهای شلوغ سالن آماده شوید.
             </p>
           </div>
@@ -312,7 +312,7 @@ export const TechniqueDetailPage: React.FC<TechniqueDetailPageProps> = ({
                 <FileEdit className="w-4 h-4 text-[#87553B]" />
                 <span>یادداشت‌های اختصاصی هنرجو</span>
               </div>
-              <span className="text-[10px] text-[#59524A]">ذخیره در مرورگر</span>
+              <span className="text-xs text-[#59524A]">ذخیره در مرورگر</span>
             </div>
 
             <textarea
@@ -324,7 +324,7 @@ export const TechniqueDetailPage: React.FC<TechniqueDetailPageProps> = ({
             />
 
             <div className="flex items-center justify-between pt-1">
-              <span className="text-[11px] text-emerald-700 font-semibold flex items-center gap-1">
+              <span className="text-xs text-emerald-700 font-semibold flex items-center gap-1">
                 {notesSaved && (
                   <>
                     <Check className="w-3.5 h-3.5" />
@@ -368,7 +368,7 @@ export const TechniqueDetailPage: React.FC<TechniqueDetailPageProps> = ({
                     <button
                       type="button"
                       onClick={(e) => onAddToCart(prod, e)}
-                      className="px-3 py-1.5 bg-[#171614] hover:bg-[#87553B] text-white text-[11px] font-semibold rounded-lg shrink-0 cursor-pointer"
+                      className="px-3 py-1.5 bg-[#171614] hover:bg-[#87553B] text-white text-xs font-semibold rounded-lg shrink-0 cursor-pointer"
                     >
                       خرید
                     </button>

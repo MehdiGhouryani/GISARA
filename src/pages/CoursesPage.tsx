@@ -52,7 +52,7 @@ export const CoursesPage: React.FC<CoursesPageProps> = ({
       {/* Header */}
       <div>
         <span className="text-xs font-bold text-[#7A5E4D] uppercase tracking-wider block">
-          آکادمی شنیون مو
+          آکادمی گیس‌آرا
         </span>
         <h1 className="text-2xl sm:text-4xl font-bold text-[#171614] mt-1">
           دوره‌های آموزشی شینیون مو
@@ -162,7 +162,7 @@ export const CoursesPage: React.FC<CoursesPageProps> = ({
                   <h3 className="text-sm font-bold text-[#171614] group-hover:text-[#7A5E4D]">
                     {city.name}
                   </h3>
-                  <div className="text-[11px] text-[#5E5A54] mt-1 tabular-nums">
+                  <div className="text-xs text-[#5E5A54] mt-1 tabular-nums">
                     {city.activeSessionsCount} جلسه فعال
                   </div>
                 </div>

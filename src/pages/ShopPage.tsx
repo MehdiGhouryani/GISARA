@@ -203,7 +203,7 @@ export const ShopPage: React.FC<ShopPageProps> = ({
       </div>
 
       {/* Result Counter */}
-      <div className="text-[11px] text-[#59524A] font-medium flex justify-between items-center pt-1">
+      <div className="text-xs text-[#59524A] font-medium flex justify-between items-center pt-1">
         <span>نمایش {filtered.length} محصول</span>
       </div>
 

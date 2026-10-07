@@ -157,7 +157,7 @@ export const ReviewsSection: React.FC<ReviewsSectionProps> = ({
                 />
               ))}
             </div>
-            <div className="text-[11px] text-[#59524A] mt-0.5 tabular-nums">
+            <div className="text-xs text-[#59524A] mt-0.5 tabular-nums">
               بر اساس {reviews.length} نظر ثبت‌شده
             </div>
           </div>
@@ -245,13 +245,13 @@ export const ReviewsSection: React.FC<ReviewsSectionProps> = ({
                     <div className="flex items-center gap-1.5">
                       <span className="font-bold text-xs text-[#171614]">{rev.authorName}</span>
                       {rev.isVerified && (
-                        <span className="inline-flex items-center gap-0.5 text-[10px] text-[#167C55] bg-emerald-50 px-1.5 py-0.5 rounded-sm font-medium border border-emerald-200">
+                        <span className="inline-flex items-center gap-0.5 text-xs text-[#167C55] bg-emerald-50 px-1.5 py-0.5 rounded-sm font-medium border border-emerald-200">
                           <CheckCircle2 className="w-2.5 h-2.5" />
                           <span>تاییدشده</span>
                         </span>
                       )}
                     </div>
-                    <span className="text-[10px] text-[#59524A]">{rev.userRole}</span>
+                    <span className="text-xs text-[#59524A]">{rev.userRole}</span>
                   </div>
                 </div>
 
@@ -264,7 +264,7 @@ export const ReviewsSection: React.FC<ReviewsSectionProps> = ({
                       />
                     ))}
                   </div>
-                  <span className="text-[10px] text-[#59524A] tabular-nums">{rev.date}</span>
+                  <span className="text-xs text-[#59524A] tabular-nums">{rev.date}</span>
                 </div>
               </div>
 
@@ -275,7 +275,7 @@ export const ReviewsSection: React.FC<ReviewsSectionProps> = ({
                   type="button"
                   onClick={() => handleLike(rev.id)}
                   disabled={likedMap[rev.id]}
-                  className={`inline-flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-md transition-colors cursor-pointer ${
+                  className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-md transition-colors cursor-pointer ${
                     likedMap[rev.id]
                       ? 'text-[#167C55] bg-emerald-50'
                       : 'text-[#59524A] hover:text-[#171614] hover:bg-[#F4EFE7]'

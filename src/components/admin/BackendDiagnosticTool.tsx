@@ -408,15 +408,15 @@ export const BackendDiagnosticTool: React.FC = () => {
               </div>
               <div className="text-sm font-black mt-1 flex items-center gap-1.5">
                 {ApiClient.getCircuitStatus().state === 'CLOSED' ? (
-                  <span className="text-emerald-400 bg-emerald-950/80 border border-emerald-800 px-2 py-0.5 rounded text-[11px]">
+                  <span className="text-emerald-400 bg-emerald-950/80 border border-emerald-800 px-2 py-0.5 rounded text-xs">
                     فعال و سالم (CLOSED)
                   </span>
                 ) : ApiClient.getCircuitStatus().state === 'HALF_OPEN' ? (
-                  <span className="text-amber-400 bg-amber-950/80 border border-amber-800 px-2 py-0.5 rounded text-[11px]">
+                  <span className="text-amber-400 bg-amber-950/80 border border-amber-800 px-2 py-0.5 rounded text-xs">
                     آزمایشی (HALF_OPEN)
                   </span>
                 ) : (
-                  <span className="text-rose-400 bg-rose-950/80 border border-rose-800 px-2 py-0.5 rounded text-[11px]">
+                  <span className="text-rose-400 bg-rose-950/80 border border-rose-800 px-2 py-0.5 rounded text-xs">
                     قطع موقت (OPEN)
                   </span>
                 )}
@@ -456,7 +456,7 @@ export const BackendDiagnosticTool: React.FC = () => {
                 >
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2 overflow-hidden">
-                      <span className="px-2 py-0.5 text-[10px] font-bold rounded bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 border border-stone-200 dark:border-stone-700 shrink-0">
+                      <span className="px-2 py-0.5 text-xs font-bold rounded bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 border border-stone-200 dark:border-stone-700 shrink-0">
                         {item.method}
                       </span>
                       <span className="text-xs font-bold text-stone-800 dark:text-stone-200 truncate">
@@ -477,34 +477,34 @@ export const BackendDiagnosticTool: React.FC = () => {
                     </button>
                   </div>
 
-                  <div className="mt-2 flex items-center justify-between text-[11px] font-mono text-stone-500">
+                  <div className="mt-2 flex items-center justify-between text-xs font-mono text-stone-500">
                     <span className="truncate max-w-[200px] text-stone-600 dark:text-stone-400 font-semibold">{item.endpoint}</span>
 
                     {res ? (
                       <div className="flex items-center gap-1.5 shrink-0">
                         {res.isHtml ? (
-                          <span className="px-1.5 py-0.5 rounded text-[10px] bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 font-sans font-medium flex items-center gap-1">
+                          <span className="px-1.5 py-0.5 rounded text-xs bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 font-sans font-medium flex items-center gap-1">
                             <AlertTriangle className="w-3 h-3" />
                             HTML Error
                           </span>
                         ) : res.status === 200 || res.status === 201 ? (
-                          <span className="px-1.5 py-0.5 rounded text-[10px] bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 font-sans font-medium flex items-center gap-1">
+                          <span className="px-1.5 py-0.5 rounded text-xs bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 font-sans font-medium flex items-center gap-1">
                             <CheckCircle2 className="w-3 h-3" />
                             {res.status} JSON ({res.latencyMs}ms)
                           </span>
                         ) : res.status === 401 || res.status === 403 ? (
-                          <span className="px-1.5 py-0.5 rounded text-[10px] bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 font-sans font-medium flex items-center gap-1">
+                          <span className="px-1.5 py-0.5 rounded text-xs bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 font-sans font-medium flex items-center gap-1">
                             <Lock className="w-3 h-3" />
                             {res.status} Protected
                           </span>
                         ) : (
-                          <span className="px-1.5 py-0.5 rounded text-[10px] bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 font-sans font-medium">
+                          <span className="px-1.5 py-0.5 rounded text-xs bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 font-sans font-medium">
                             {res.status} Error
                           </span>
                         )}
                       </div>
                     ) : (
-                      <span className="text-[10px] text-stone-400 font-sans font-normal">تست‌نشده</span>
+                      <span className="text-xs text-stone-400 font-sans font-normal">تست‌نشده</span>
                     )}
                   </div>
                 </div>
@@ -544,7 +544,7 @@ export const BackendDiagnosticTool: React.FC = () => {
                 {/* Meta Cards Grid */}
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs">
                   <div className="p-2.5 rounded-xl bg-stone-50 dark:bg-stone-800/50 border border-stone-100 dark:border-stone-800">
-                    <span className="text-stone-400 block text-[11px]">کد وضعیت HTTP:</span>
+                    <span className="text-stone-400 block text-xs">کد وضعیت HTTP:</span>
                     <span className={`font-bold font-mono text-sm mt-0.5 block ${
                       activeResult.status === 200 || activeResult.status === 201
                         ? 'text-emerald-600 dark:text-emerald-400'
@@ -557,7 +557,7 @@ export const BackendDiagnosticTool: React.FC = () => {
                   </div>
 
                   <div className="p-2.5 rounded-xl bg-stone-50 dark:bg-stone-800/50 border border-stone-100 dark:border-stone-800">
-                    <span className="text-stone-400 block text-[11px]">زمان پاسخ (Latency):</span>
+                    <span className="text-stone-400 block text-xs">زمان پاسخ (Latency):</span>
                     <span className="font-bold font-mono text-stone-800 dark:text-stone-200 text-sm mt-0.5 block flex items-center gap-1">
                       <Clock className="w-3.5 h-3.5 text-amber-500" />
                       {activeResult.latencyMs} ms
@@ -565,7 +565,7 @@ export const BackendDiagnosticTool: React.FC = () => {
                   </div>
 
                   <div className="p-2.5 rounded-xl bg-stone-50 dark:bg-stone-800/50 border border-stone-100 dark:border-stone-800 col-span-2 sm:col-span-1">
-                    <span className="text-stone-400 block text-[11px]">نوع فرمت (Content-Type):</span>
+                    <span className="text-stone-400 block text-xs">نوع فرمت (Content-Type):</span>
                     <span className="font-bold font-mono text-stone-800 dark:text-stone-200 text-xs mt-0.5 block truncate">
                       {activeResult.contentType || 'مشخص‌نشده'}
                     </span>
@@ -595,17 +595,17 @@ export const BackendDiagnosticTool: React.FC = () => {
                         پاسخ واقعی سرور (Live Payload)
                       </span>
                       {activeResult.isJson ? (
-                        <span className="text-[10px] text-emerald-600 bg-emerald-50 dark:bg-emerald-950 px-1.5 py-0.5 rounded font-mono">
+                        <span className="text-xs text-emerald-600 bg-emerald-50 dark:bg-emerald-950 px-1.5 py-0.5 rounded font-mono">
                           Valid JSON
                         </span>
                       ) : (
-                        <span className="text-[10px] text-rose-600 bg-rose-50 dark:bg-rose-950 px-1.5 py-0.5 rounded font-mono">
+                        <span className="text-xs text-rose-600 bg-rose-50 dark:bg-rose-950 px-1.5 py-0.5 rounded font-mono">
                           Non-JSON / HTML
                         </span>
                       )}
                     </div>
 
-                    <div className="p-3 bg-stone-900 text-stone-200 rounded-xl font-mono text-[11px] h-52 overflow-auto border border-stone-800 text-left dir-ltr">
+                    <div className="p-3 bg-stone-900 text-stone-200 rounded-xl font-mono text-xs h-52 overflow-auto border border-stone-800 text-left dir-ltr">
                       <pre className="whitespace-pre-wrap break-all">
                         {activeResult.isJson
                           ? JSON.stringify(activeResult.liveData, null, 2)
@@ -621,12 +621,12 @@ export const BackendDiagnosticTool: React.FC = () => {
                         <Database className="w-3.5 h-3.5 text-stone-500" />
                         داده پشتیبان کلاینت (Mock Fallback)
                       </span>
-                      <span className="text-[10px] text-stone-500 bg-stone-100 dark:bg-stone-800 px-1.5 py-0.5 rounded font-mono">
+                      <span className="text-xs text-stone-500 bg-stone-100 dark:bg-stone-800 px-1.5 py-0.5 rounded font-mono">
                         Fallback
                       </span>
                     </div>
 
-                    <div className="p-3 bg-stone-950 text-amber-200/90 rounded-xl font-mono text-[11px] h-52 overflow-auto border border-stone-800 text-left dir-ltr">
+                    <div className="p-3 bg-stone-950 text-amber-200/90 rounded-xl font-mono text-xs h-52 overflow-auto border border-stone-800 text-left dir-ltr">
                       <pre className="whitespace-pre-wrap break-all">
                         {JSON.stringify(activeResult.fallbackData, null, 2)}
                       </pre>

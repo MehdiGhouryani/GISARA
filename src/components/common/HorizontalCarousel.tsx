@@ -62,7 +62,7 @@ export const HorizontalCarousel: React.FC<HorizontalCarouselProps> = ({
       {/* Slider Control Header for Mobile/Tablet (< lg screens) */}
       <div className="lg:hidden flex items-center justify-between mb-3.5 px-0.5">
         {showHelperText && (
-          <div className="text-[11px] font-medium text-[#87553B] flex items-center gap-1.5 dir-rtl">
+          <div className="text-xs font-medium text-[#87553B] flex items-center gap-1.5 dir-rtl">
             <span className="w-1.5 h-1.5 rounded-full bg-[#C59B63] animate-pulse" />
             <span>برای دیدن سایر موارد ورق بزنید</span>
           </div>

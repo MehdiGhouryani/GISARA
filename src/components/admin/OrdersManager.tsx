@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  * 
  * OrdersManager - Dedicated Order, Workshop Requests & Capacity Management Center
- * Part of Shanyoon Admin Console Segmented Architecture
+ * Part of GisAra Admin Console Segmented Architecture
  */
 
 import React, { useState, useMemo } from 'react';
@@ -310,7 +310,7 @@ export const OrdersManager: React.FC<OrdersManagerProps> = ({
           >
             <PackageCheck className="w-4 h-4 text-amber-500" />
             <span>سفارشات فروشگاه</span>
-            <span className={`px-2 py-0.5 rounded-md text-[10px] tabular-nums font-bold ${
+            <span className={`px-2 py-0.5 rounded-md text-xs tabular-nums font-bold ${
               currentTab === 'ORDERS' ? 'bg-white/20 text-white' : 'bg-stone-900 text-stone-300'
             }`}>
               {orders.length}
@@ -329,7 +329,7 @@ export const OrdersManager: React.FC<OrdersManagerProps> = ({
             <Clock className="w-4 h-4 text-amber-500" />
             <span>صف متقاضیان کارگاه حضوری</span>
             {requests.filter(r => r.status === 'SUBMITTED' || r.status === 'UNDER_REVIEW').length > 0 && (
-              <span className="px-2 py-0.5 rounded-md bg-rose-600 text-white text-[10px] tabular-nums font-bold">
+              <span className="px-2 py-0.5 rounded-md bg-rose-600 text-white text-xs tabular-nums font-bold">
                 {requests.filter(r => r.status === 'SUBMITTED' || r.status === 'UNDER_REVIEW').length}
               </span>
             )}
@@ -346,7 +346,7 @@ export const OrdersManager: React.FC<OrdersManagerProps> = ({
           >
             <Calendar className="w-4 h-4 text-amber-500" />
             <span>جلسات و ظرفیت کلاس‌ها</span>
-            <span className={`px-2 py-0.5 rounded-md text-[10px] tabular-nums font-bold ${
+            <span className={`px-2 py-0.5 rounded-md text-xs tabular-nums font-bold ${
               currentTab === 'SESSIONS' ? 'bg-white/20 text-white' : 'bg-stone-900 text-stone-300'
             }`}>
               {sessions.length}
@@ -364,7 +364,7 @@ export const OrdersManager: React.FC<OrdersManagerProps> = ({
           >
             <User className="w-4 h-4 text-amber-500" />
             <span>مدیریت دسترسی دستی دوره‌ها</span>
-            <span className={`px-2 py-0.5 rounded-md text-[10px] tabular-nums font-bold ${
+            <span className={`px-2 py-0.5 rounded-md text-xs tabular-nums font-bold ${
               currentTab === 'ENROLLMENTS' ? 'bg-white/20 text-white' : 'bg-stone-900 text-stone-300'
             }`}>
               {manualEnrollments.length} مورد
@@ -383,7 +383,7 @@ export const OrdersManager: React.FC<OrdersManagerProps> = ({
               <div className="text-xl sm:text-2xl font-bold text-[#171614] mt-1 tabular-nums">
                 {totalOrdersCount} سفارش
               </div>
-              <div className="text-[11px] text-[#87553B] mt-0.5">در تمام کانال‌ها</div>
+              <div className="text-xs text-[#87553B] mt-0.5">در تمام کانال‌ها</div>
             </div>
 
             <div className="bg-[#FFFCF8] p-4 rounded-xl border border-[#EAE2D5] shadow-xs">
@@ -391,7 +391,7 @@ export const OrdersManager: React.FC<OrdersManagerProps> = ({
               <div className="text-xl sm:text-2xl font-bold text-[#167C55] mt-1 tabular-nums">
                 {paidOrdersCount} موفق
               </div>
-              <div className="text-[11px] text-[#167C55] mt-0.5">آماده ارسال یا تحویل</div>
+              <div className="text-xs text-[#167C55] mt-0.5">آماده ارسال یا تحویل</div>
             </div>
 
             <div className="bg-[#FFFCF8] p-4 rounded-xl border border-[#EAE2D5] shadow-xs">
@@ -399,7 +399,7 @@ export const OrdersManager: React.FC<OrdersManagerProps> = ({
               <div className="text-xl sm:text-2xl font-bold text-amber-700 mt-1 tabular-nums">
                 {pendingOrdersCount} مورد
               </div>
-              <div className="text-[11px] text-amber-700 mt-0.5">منتظر بازگشت از درگاه</div>
+              <div className="text-xs text-amber-700 mt-0.5">منتظر بازگشت از درگاه</div>
             </div>
 
             <div className="bg-[#FFFCF8] p-4 rounded-xl border border-[#EAE2D5] shadow-xs">
@@ -407,7 +407,7 @@ export const OrdersManager: React.FC<OrdersManagerProps> = ({
               <div className="text-xl sm:text-2xl font-bold text-[#171614] mt-1 tabular-nums">
                 {completedOrdersCount} بسته
               </div>
-              <div className="text-[11px] text-emerald-700 mt-0.5">ارسال و تحویل قطعی</div>
+              <div className="text-xs text-emerald-700 mt-0.5">ارسال و تحویل قطعی</div>
             </div>
           </div>
 
@@ -492,9 +492,9 @@ export const OrdersManager: React.FC<OrdersManagerProps> = ({
                         </td>
                         <td className="p-3.5">
                           <div className="font-semibold text-[#171614]">
-                            {order.shippingAddress?.recipientName || 'کاربر شنیون مو'}
+                            {order.shippingAddress?.recipientName || 'کاربر گیس‌آرا'}
                           </div>
-                          <div className="text-[11px] text-[#968A7C] font-mono mt-0.5">
+                          <div className="text-xs text-[#968A7C] font-mono mt-0.5">
                             {order.shippingAddress?.mobile || 'بدون شماره'}
                           </div>
                         </td>
@@ -502,7 +502,7 @@ export const OrdersManager: React.FC<OrdersManagerProps> = ({
                           <div className="text-[#171614] font-medium max-w-xs truncate">
                             {order.items.map((i) => `${i.title} (${i.quantity} عدد)`).join(' + ')}
                           </div>
-                          <div className="text-[11px] text-[#968A7C] tabular-nums mt-0.5">
+                          <div className="text-xs text-[#968A7C] tabular-nums mt-0.5">
                             مجموع {order.items.reduce((s, i) => s + i.quantity, 0)} قلم کالا
                           </div>
                         </td>
@@ -514,11 +514,11 @@ export const OrdersManager: React.FC<OrdersManagerProps> = ({
                         </td>
                         <td className="p-3.5">
                           {order.trackingCode ? (
-                            <span className="font-mono text-[11px] bg-stone-100 px-2 py-0.5 rounded text-[#171614] border border-stone-200">
+                            <span className="font-mono text-xs bg-stone-100 px-2 py-0.5 rounded text-[#171614] border border-stone-200">
                               {order.trackingCode}
                             </span>
                           ) : (
-                            <span className="text-[#968A7C] text-[11px]">ثبت نشده</span>
+                            <span className="text-[#968A7C] text-xs">ثبت نشده</span>
                           )}
                         </td>
                         <td className="p-3.5 text-[#59524A] tabular-nums">
@@ -528,7 +528,7 @@ export const OrdersManager: React.FC<OrdersManagerProps> = ({
                           <button
                             type="button"
                             onClick={() => handleOpenOrderDetails(order)}
-                            className="px-3 py-1.5 bg-[#87553B] hover:bg-[#6E422C] text-white font-bold text-[11px] rounded-lg transition-colors cursor-pointer shadow-xs inline-flex items-center gap-1.5"
+                            className="px-3 py-1.5 bg-[#87553B] hover:bg-[#6E422C] text-white font-bold text-xs rounded-lg transition-colors cursor-pointer shadow-xs inline-flex items-center gap-1.5"
                           >
                             <Eye className="w-3.5 h-3.5" />
                             <span>مدیریت و جزئیات</span>
@@ -612,7 +612,7 @@ export const OrdersManager: React.FC<OrdersManagerProps> = ({
                         <button
                           type="button"
                           onClick={() => setSelectedRequest(req)}
-                          className="px-3 py-1.5 bg-[#87553B] hover:bg-[#6E422C] text-white text-[11px] font-bold rounded-lg transition-colors cursor-pointer"
+                          className="px-3 py-1.5 bg-[#87553B] hover:bg-[#6E422C] text-white text-xs font-bold rounded-lg transition-colors cursor-pointer"
                         >
                           بررسی و اقدام
                         </button>
@@ -697,7 +697,7 @@ export const OrdersManager: React.FC<OrdersManagerProps> = ({
             <div className="w-full md:w-1/3 bg-[#FFFCF8] p-5 rounded-2xl border border-[#EAE2D5] shadow-xs space-y-4 h-fit">
               <div>
                 <h3 className="text-sm font-bold text-[#171614]">ثبت دسترسی دستی جدید</h3>
-                <p className="text-[11px] text-[#968A7C] mt-1">
+                <p className="text-xs text-[#968A7C] mt-1">
                   می‌توانید دسترسی یک کاربر (با شماره موبایل) را به دوره‌های آنلاین فعال یا لغو کنید.
                 </p>
               </div>
@@ -760,7 +760,7 @@ export const OrdersManager: React.FC<OrdersManagerProps> = ({
             <div className="flex-1 bg-[#FFFCF8] rounded-2xl border border-[#EAE2D5] shadow-xs overflow-hidden">
               <div className="p-4 bg-[#FAF6F0] border-b border-[#EAE2D5]">
                 <h3 className="text-sm font-bold text-[#171614]">تاریخچه ثبت‌نام‌ها و تغییرات دستی</h3>
-                <p className="text-[11px] text-[#59524A] mt-0.5">
+                <p className="text-xs text-[#59524A] mt-0.5">
                   لیست کاربرانی که دسترسی دوره آن‌ها به صورت دستی توسط ادمین مدیریت شده است.
                 </p>
               </div>
@@ -797,7 +797,7 @@ export const OrdersManager: React.FC<OrdersManagerProps> = ({
                           </td>
                           <td className="p-3.5">
                             <span
-                              className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                              className={`text-xs font-bold px-2 py-0.5 rounded-full ${
                                 item.status === 'ACTIVE'
                                   ? 'bg-emerald-100 text-emerald-800'
                                   : 'bg-rose-100 text-rose-800'
@@ -815,7 +815,7 @@ export const OrdersManager: React.FC<OrdersManagerProps> = ({
                                   await onUpdateManualEnrollment(item.userMobile, item.courseId, item.courseName, nextStatus);
                                 }
                               }}
-                              className={`px-2.5 py-1 text-[11px] font-bold rounded-lg border transition-colors cursor-pointer ${
+                              className={`px-2.5 py-1 text-xs font-bold rounded-lg border transition-colors cursor-pointer ${
                                 item.status === 'ACTIVE'
                                   ? 'border-rose-200 text-rose-700 bg-rose-50 hover:bg-rose-100'
                                   : 'border-emerald-200 text-emerald-700 bg-emerald-50 hover:bg-emerald-100'
@@ -911,7 +911,7 @@ export const OrdersManager: React.FC<OrdersManagerProps> = ({
                       />
                       <div>
                         <div className="font-bold text-[#171614]">{item.title}</div>
-                        <div className="text-[11px] text-[#968A7C] mt-0.5">
+                        <div className="text-xs text-[#968A7C] mt-0.5">
                           تعداد: <span className="font-bold tabular-nums text-[#171614]">{item.quantity} عدد</span>
                           {item.sku && <span className="mr-3 font-mono">SKU: {item.sku}</span>}
                         </div>
@@ -988,7 +988,7 @@ export const OrdersManager: React.FC<OrdersManagerProps> = ({
               </div>
 
               {saveError && (
-                <div className="p-2.5 bg-red-50 border border-red-200 text-red-800 rounded-xl text-[11px]">
+                <div className="p-2.5 bg-red-50 border border-red-200 text-red-800 rounded-xl text-xs">
                   {saveError}
                 </div>
               )}
@@ -1024,7 +1024,7 @@ export const OrdersManager: React.FC<OrdersManagerProps> = ({
           <div className="bg-[#FFFCF8] rounded-2xl max-w-lg w-full p-6 sm:p-8 border border-[#EAE2D5] shadow-2xl space-y-5">
             <div className="flex items-center justify-between border-b border-[#EAE2D5] pb-3">
               <div>
-                <span className="text-[10px] text-[#87553B] font-bold">تنظیم پیشنهاد رسمی</span>
+                <span className="text-xs text-[#87553B] font-bold">تنظیم پیشنهاد رسمی</span>
                 <h3 className="text-base font-bold text-[#171614]">{selectedRequest.fullName}</h3>
               </div>
               <button

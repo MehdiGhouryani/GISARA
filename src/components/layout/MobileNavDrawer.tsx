@@ -112,9 +112,9 @@ export const MobileNavDrawer: React.FC<MobileNavDrawerProps> = ({
             <div className="flex flex-col">
               <div className="flex items-center gap-1.5">
                 <span className="text-lg font-black text-[#171614] leading-tight">گیس‌آرا</span>
-                <span className="text-[10px] font-mono font-bold text-[#C59B63]">GisAra</span>
+                <span className="text-xs font-mono font-bold text-[#C59B63]">GisAra</span>
               </div>
-              <span className="text-[10px] text-[#87553B] font-bold">آکادمی و مرجع استایل مو</span>
+              <span className="text-xs text-[#87553B] font-bold">آکادمی و مرجع استایل مو</span>
             </div>
           </div>
           <button
@@ -157,7 +157,7 @@ export const MobileNavDrawer: React.FC<MobileNavDrawerProps> = ({
 
           {/* Nav List */}
           <nav className="space-y-1">
-            <p className="text-[11px] font-bold text-[#87553B] px-2 mb-2">دسته‌بندی‌های اصلی</p>
+            <p className="text-xs font-bold text-[#87553B] px-2 mb-2">دسته‌بندی‌های اصلی</p>
             {links.map((link) => {
               const Icon = link.icon;
               const isActive = currentRoute === link.route;
@@ -184,7 +184,7 @@ export const MobileNavDrawer: React.FC<MobileNavDrawerProps> = ({
                     </div>
                     <div className="min-w-0">
                       <p className="text-xs font-semibold text-[#171614] truncate">{link.label}</p>
-                      <p className="text-[10px] text-[#968A7C] truncate">{link.desc}</p>
+                      <p className="text-xs text-[#968A7C] truncate">{link.desc}</p>
                     </div>
                   </div>
                   <ChevronLeft className="w-4 h-4 text-[#C59B63] shrink-0" />
@@ -245,7 +245,7 @@ export const MobileNavDrawer: React.FC<MobileNavDrawerProps> = ({
             <span className="font-bold tabular-nums dir-ltr text-[#87553B]">۰۲۱-۹۱۰۱۵۴۶۷</span>
           </a>
 
-          <div className="text-[10px] text-[#968A7C] text-center leading-relaxed">
+          <div className="text-xs text-[#968A7C] text-center leading-relaxed">
             مرجع تخصصی و آکادمی شینیون مو گیس‌آرا
           </div>
         </div>

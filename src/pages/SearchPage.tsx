@@ -323,7 +323,7 @@ export const SearchPage: React.FC<SearchPageProps> = ({
               >
                 <span>{tab.label}</span>
                 <span
-                  className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold ${
+                  className={`text-xs px-1.5 py-0.2 rounded-full font-mono font-bold ${
                     isSelected ? 'bg-white/20 text-white' : 'bg-[#F4EFE7] text-[#87553B]'
                   }`}
                 >
@@ -371,25 +371,25 @@ export const SearchPage: React.FC<SearchPageProps> = ({
                     {/* Metadata Column */}
                     <div className="min-w-0 space-y-1">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-[10px] sm:text-[11px] font-bold px-2 py-0.5 rounded-md bg-[#C59B63]/15 text-[#87553B] flex items-center gap-1">
+                        <span className="text-xs sm:text-xs font-bold px-2 py-0.5 rounded-md bg-[#C59B63]/15 text-[#87553B] flex items-center gap-1">
                           <Icon className="w-3 h-3" />
                           <span>{r.type}</span>
                         </span>
 
                         {isFuzzyTypo && (
-                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-800 border border-amber-300/60">
+                          <span className="text-xs font-bold px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-800 border border-amber-300/60">
                             تطابق هوشمند
                           </span>
                         )}
 
                         {isHighMatch && (
-                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-emerald-100 text-emerald-800 border border-emerald-300/60 hidden sm:inline-block">
+                          <span className="text-xs font-bold px-1.5 py-0.5 rounded-md bg-emerald-100 text-emerald-800 border border-emerald-300/60 hidden sm:inline-block">
                             ارتباط بالا
                           </span>
                         )}
 
                         {r.badge && (
-                          <span className="text-[10px] text-[#968A7C] font-medium hidden xs:inline-block truncate">
+                          <span className="text-xs text-[#968A7C] font-medium hidden xs:inline-block truncate">
                             {r.badge}
                           </span>
                         )}

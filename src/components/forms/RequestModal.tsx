@@ -176,7 +176,7 @@ export const RequestModal: React.FC<RequestModalProps> = ({
           <div>
             {/* Step header */}
             <div className="mb-6">
-              <span className="text-[11px] font-bold text-[#87553B] uppercase tracking-wider">
+              <span className="text-xs font-bold text-[#87553B] uppercase tracking-wider">
                 مرحله {step} از ۳ · ثبت درخواست کارگاه حضوری
               </span>
               <h3 className="text-lg sm:text-xl font-bold text-[#171614] mt-1">
@@ -334,7 +334,7 @@ export const RequestModal: React.FC<RequestModalProps> = ({
                         key={lvl}
                         type="button"
                         onClick={() => setExperienceLevel(lvl)}
-                        className={`p-2 rounded-lg border text-[11px] text-center transition-all cursor-pointer ${
+                        className={`p-2 rounded-lg border text-xs text-center transition-all cursor-pointer ${
                           experienceLevel === lvl
                             ? 'border-[#87553B] bg-[#C59B63]/10 font-bold text-[#171614]'
                             : 'border-[#EAE2D5] text-[#59524A]'

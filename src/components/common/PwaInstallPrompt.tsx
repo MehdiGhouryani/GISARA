@@ -111,9 +111,9 @@ export const PwaInstallPrompt: React.FC = () => {
           <div className="truncate">
             <div className="text-xs font-bold text-white flex items-center gap-1.5 truncate">
               <span>نصب اپلیکیشن گیس‌آرا</span>
-              <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-[#87553B] text-white">رایگان</span>
+              <span className="text-xs px-1.5 py-0.5 rounded-md bg-[#87553B] text-white">رایگان</span>
             </div>
-            <div className="text-[11px] text-[#A69B8D] truncate">
+            <div className="text-xs text-[#A69B8D] truncate">
               دسترسی سریع و بدون فیلتر به مدل‌ها و آموزش‌ها
             </div>
           </div>
@@ -171,7 +171,7 @@ export const PwaInstallPrompt: React.FC = () => {
 
             <div className="space-y-3 text-xs text-[#171614] bg-[#FAF7F2] p-4 rounded-xl border border-[#EAE2D5]">
               <div className="flex items-start gap-2.5">
-                <div className="w-5 h-5 rounded-full bg-[#87553B] text-white flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">
+                <div className="w-5 h-5 rounded-full bg-[#87553B] text-white flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">
                   ۱
                 </div>
                 <div className="leading-relaxed">
@@ -182,7 +182,7 @@ export const PwaInstallPrompt: React.FC = () => {
               </div>
 
               <div className="flex items-start gap-2.5">
-                <div className="w-5 h-5 rounded-full bg-[#87553B] text-white flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">
+                <div className="w-5 h-5 rounded-full bg-[#87553B] text-white flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">
                   ۲
                 </div>
                 <div className="leading-relaxed">

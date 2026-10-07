@@ -133,7 +133,7 @@ export const SliderControl: React.FC<SliderControlProps> = ({
   return (
     <div className={`flex flex-col items-center gap-1.5 ${className}`}>
       {showHelperText && (
-        <div className="text-[11px] font-medium text-[#87553B] flex items-center gap-1.5 dir-rtl">
+        <div className="text-xs font-medium text-[#87553B] flex items-center gap-1.5 dir-rtl">
           <span className="w-1.5 h-1.5 rounded-full bg-[#C59B63] animate-pulse" />
           <span>برای دیدن سایر موارد ورق بزنید</span>
         </div>

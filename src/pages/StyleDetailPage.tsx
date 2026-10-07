@@ -84,8 +84,8 @@ export const StyleDetailPage: React.FC<StyleDetailPageProps> = ({
               categoryLabel={styleItem.occasion}
             />
           </div>
-          <div className="text-[11px] text-[#59524A] text-center">
-            تصویر ژورنالی اختصاصی شنیون مو · ثبت سبک و بافت تارها
+          <div className="text-xs text-[#59524A] text-center">
+            تصویر ژورنالی اختصاصی گیس‌آرا · ثبت سبک و بافت تارها
           </div>
         </div>
 

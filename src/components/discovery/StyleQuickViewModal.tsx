@@ -94,10 +94,10 @@ export const StyleQuickViewModal: React.FC<StyleQuickViewModalProps> = ({
 
               {/* Recommended Faces */}
               <div className="mt-4 p-3 bg-[#FAF7F2] rounded-xl border border-[#EAE2D5] space-y-1.5">
-                <span className="text-[11px] font-bold text-[#171614] block">
+                <span className="text-xs font-bold text-[#171614] block">
                   سازگار با فرم چهره و مراسم:
                 </span>
-                <div className="flex flex-wrap gap-1.5 text-[11px] text-[#87553B]">
+                <div className="flex flex-wrap gap-1.5 text-xs text-[#87553B]">
                   {['صورت بیضی', 'صورت گرد', 'مراسم رسمی و عروسی', 'لباس یقه باز'].map((f) => (
                     <span key={f} className="inline-flex items-center gap-1 bg-white px-2 py-0.5 rounded-md border border-[#EAE2D5]">
                       <Check className="w-3 h-3 text-emerald-600" />

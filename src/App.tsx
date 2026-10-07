@@ -2,7 +2,7 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
  * 
- * شنیون مو (Shanyoon) - Main Application Controller
+ * گیس‌آرا (GisAra) - Main Application Controller
  * Orchestrating all 4 Core Engines: Content & SEO, Commerce, LMS, In-Person & Admin Workspace
  * Matching UI Workbench v1.0 and Master Blueprint v5.0
  */
@@ -333,7 +333,7 @@ export default function App() {
         id: 'faq-6',
         category: 'COURSES',
         question: 'آیا دسترسی به ویدیوهای دوره‌های آنلاین محدودیت زمانی دارد؟',
-        answer: 'خیر، پس از ثبت‌نام در هر یک از دوره‌های آنلاین شنیون مو، دسترسی به تمام قسمت‌ها، ویدیوهای باکیفیت Full-HD و آپدیت‌های تکمیلی دوره به صورت مادام‌العمر در پنل یادگیری شما باقی می‌ماند.',
+        answer: 'خیر، پس از ثبت‌نام در هر یک از دوره‌های آنلاین گیس‌آرا، دسترسی به تمام قسمت‌ها، ویدیوهای باکیفیت Full-HD و آپدیت‌های تکمیلی دوره به صورت مادام‌العمر در پنل یادگیری شما باقی می‌ماند.',
       },
       {
         id: 'faq-7',
@@ -357,7 +357,7 @@ export default function App() {
         id: 'faq-10',
         category: 'SHOP',
         question: 'آیا ابزارها و اسپری‌های مو دارای ضمانت اصالت هستند؟',
-        answer: 'بله، تمامی محصولات موجود در فروشگاه شنیون مو (از برندهای معتبر نظیر Osis+، Silhouette و شانه و پین‌های حرفه‌ای) با ضمانت ۱۰۰٪ اورجینال بودن و تاریخ انقضای معتبر ارائه می‌شوند.',
+        answer: 'بله، تمامی محصولات موجود در فروشگاه گیس‌آرا (از برندهای معتبر نظیر Osis+، Silhouette و شانه و پین‌های حرفه‌ای) با ضمانت ۱۰۰٪ اورجینال بودن و تاریخ انقضای معتبر ارائه می‌شوند.',
       },
       {
         id: 'faq-11',
@@ -1979,7 +1979,7 @@ export default function App() {
         {currentRoute === 'instructors' && (
           <div className="max-w-[1240px] mx-auto px-4 sm:px-6 py-6 sm:py-10 space-y-8">
             <h1 className="text-2xl sm:text-3xl font-bold text-[#171614]">
-              مربیان و اساتید تاییدشده شنیون مو
+              مربیان و اساتید تاییدشده گیس‌آرا
             </h1>
             <p className="text-xs sm:text-sm text-[#59524A]">
               اساتید صاحب‌سبک با سابقه برگزاری دوره‌های بین‌المللی و کارگاه‌های تخصصی در سراسر کشور.

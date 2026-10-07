@@ -117,7 +117,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                             {item.title}
                           </h4>
                           {item.quantity > 1 && (
-                            <div className="mt-0.5 text-[11px] text-[#59524A] tabular-nums">
+                            <div className="mt-0.5 text-xs text-[#59524A] tabular-nums">
                               قیمت واحد: {item.priceToman.toLocaleString('fa-IR')} تومان
                             </div>
                           )}

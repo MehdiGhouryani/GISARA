@@ -111,7 +111,7 @@ export const HomePage: React.FC<HomePageProps> = ({
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 items-center">
             {/* Text & Search Column */}
             <div className="lg:col-span-7 space-y-3.5 sm:space-y-6">
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#C59B63]/20 border border-[#C59B63]/30 text-[#EAE2D5] text-[11px] sm:text-xs font-medium">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#C59B63]/20 border border-[#C59B63]/30 text-[#EAE2D5] text-xs sm:text-xs font-medium">
                 <Sparkles className="w-3.5 h-3.5 text-[#C59B63] shrink-0" />
                 <span className="truncate">آکادمی و مرجع هنر استایلینگ مو گیس‌آرا (GisAra)</span>
               </div>
@@ -156,7 +156,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                   sizes="(max-width: 640px) 340px, 420px"
                 />
                 <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#171614] via-[#171614]/65 to-transparent p-3.5 sm:p-5 pointer-events-none">
-                  <div className="text-[10px] sm:text-xs text-[#C59B63] font-bold">سبک برگزیده ماه</div>
+                  <div className="text-xs sm:text-xs text-[#C59B63] font-bold">سبک برگزیده ماه</div>
                   <div className="text-xs sm:text-base font-bold text-white mt-0.5 line-clamp-1">
                     شینیون تلفیقی بافت و خطی عروس با مروارید
                   </div>
@@ -178,7 +178,7 @@ export const HomePage: React.FC<HomePageProps> = ({
               <div className="text-xs sm:text-sm font-bold text-white group-hover:text-[#C59B63] transition-colors">
                 ژورنال مدل‌ها
               </div>
-              <div className="text-[10px] sm:text-xs text-stone-400 mt-0.5 truncate">مشاهده صدها سبک</div>
+              <div className="text-xs sm:text-xs text-stone-400 mt-0.5 truncate">مشاهده صدها سبک</div>
             </button>
 
             <button
@@ -192,7 +192,7 @@ export const HomePage: React.FC<HomePageProps> = ({
               <div className="text-xs sm:text-sm font-bold text-white group-hover:text-[#C59B63] transition-colors">
                 فروشگاه ابزار
               </div>
-              <div className="text-[10px] sm:text-xs text-stone-400 mt-0.5 truncate">خرید ابزار سالنی</div>
+              <div className="text-xs sm:text-xs text-stone-400 mt-0.5 truncate">خرید ابزار سالنی</div>
             </button>
 
             <button
@@ -206,7 +206,7 @@ export const HomePage: React.FC<HomePageProps> = ({
               <div className="text-xs sm:text-sm font-bold text-white group-hover:text-[#C59B63] transition-colors">
                 دوره‌های آنلاین
               </div>
-              <div className="text-[10px] sm:text-xs text-stone-400 mt-0.5 truncate">آموزش تخصصی</div>
+              <div className="text-xs sm:text-xs text-stone-400 mt-0.5 truncate">آموزش تخصصی</div>
             </button>
 
             <button
@@ -220,7 +220,7 @@ export const HomePage: React.FC<HomePageProps> = ({
               <div className="text-xs sm:text-sm font-bold text-white group-hover:text-[#C59B63] transition-colors">
                 بانک تکنیک‌ها
               </div>
-              <div className="text-[10px] sm:text-xs text-stone-400 mt-0.5 truncate">آموزش گام‌به‌گام</div>
+              <div className="text-xs sm:text-xs text-stone-400 mt-0.5 truncate">آموزش گام‌به‌گام</div>
             </button>
           </div>
         </div>
@@ -232,8 +232,8 @@ export const HomePage: React.FC<HomePageProps> = ({
       <section className="max-w-[1240px] mx-auto px-3.5 sm:px-6">
         <div className="flex items-center justify-between gap-2 mb-4 sm:mb-8">
           <div>
-            <span className="text-[11px] sm:text-xs font-bold text-[#87553B] uppercase tracking-wider block">
-              ژورنال شنیون مو
+            <span className="text-xs sm:text-xs font-bold text-[#87553B] uppercase tracking-wider block">
+              ژورنال گیس‌آرا
             </span>
             <h2 className="text-lg sm:text-2xl lg:text-3xl font-black text-[#171614] mt-0.5">
               محبوب‌ترین مدل‌های مو
@@ -306,7 +306,7 @@ export const HomePage: React.FC<HomePageProps> = ({
       <section className="max-w-[1240px] mx-auto px-3.5 sm:px-6">
         <div className="flex items-center justify-between gap-2 mb-4 sm:mb-8">
           <div>
-            <span className="text-[11px] sm:text-xs font-bold text-[#87553B] uppercase tracking-wider block">
+            <span className="text-xs sm:text-xs font-bold text-[#87553B] uppercase tracking-wider block">
               آموزش تکنیکال
             </span>
             <h2 className="text-lg sm:text-2xl lg:text-3xl font-black text-[#171614] mt-0.5">
@@ -337,7 +337,7 @@ export const HomePage: React.FC<HomePageProps> = ({
       <section className="max-w-[1240px] mx-auto px-3.5 sm:px-6 [content-visibility:auto] [contain-intrinsic-size:0_400px]">
         <div className="bg-[#FFFCF8] rounded-2xl sm:rounded-3xl p-5 sm:p-10 border border-[#DED7CD] shadow-xs space-y-8">
           <div>
-            <span className="text-[11px] sm:text-xs font-bold text-[#87553B] uppercase tracking-wider block">
+            <span className="text-xs sm:text-xs font-bold text-[#87553B] uppercase tracking-wider block">
               ساختار موضوعی و معماری معنایی
             </span>
             <h2 className="text-lg sm:text-2xl lg:text-3xl font-black text-[#171614] mt-0.5">
@@ -362,7 +362,7 @@ export const HomePage: React.FC<HomePageProps> = ({
               <button
                 type="button"
                 onClick={() => onNavigate('styles')}
-                className="text-[11px] font-bold text-[#87553B] hover:text-[#6E422C] flex items-center gap-1 cursor-pointer text-right"
+                className="text-xs font-bold text-[#87553B] hover:text-[#6E422C] flex items-center gap-1 cursor-pointer text-right"
               >
                 <span>مشاهده کاتالوگ سبک‌ها</span>
                 <ArrowLeft className="w-3 h-3" />
@@ -381,7 +381,7 @@ export const HomePage: React.FC<HomePageProps> = ({
               <button
                 type="button"
                 onClick={() => onNavigate('techniques')}
-                className="text-[11px] font-bold text-[#167C55] hover:text-[#0F5A3E] flex items-center gap-1 cursor-pointer text-right"
+                className="text-xs font-bold text-[#167C55] hover:text-[#0F5A3E] flex items-center gap-1 cursor-pointer text-right"
               >
                 <span>مشاهده بانک تکنیک‌ها</span>
                 <ArrowLeft className="w-3 h-3" />
@@ -400,7 +400,7 @@ export const HomePage: React.FC<HomePageProps> = ({
               <button
                 type="button"
                 onClick={() => onNavigate('shop')}
-                className="text-[11px] font-bold text-[#C59B63] hover:text-[#A47F4F] flex items-center gap-1 cursor-pointer text-right"
+                className="text-xs font-bold text-[#C59B63] hover:text-[#A47F4F] flex items-center gap-1 cursor-pointer text-right"
               >
                 <span>مشاهده ابزار سالنی</span>
                 <ArrowLeft className="w-3 h-3" />
@@ -419,7 +419,7 @@ export const HomePage: React.FC<HomePageProps> = ({
               <button
                 type="button"
                 onClick={() => onNavigate('courses')}
-                className="text-[11px] font-bold text-[#7A5E4D] hover:text-[#5E4537] flex items-center gap-1 cursor-pointer text-right"
+                className="text-xs font-bold text-[#7A5E4D] hover:text-[#5E4537] flex items-center gap-1 cursor-pointer text-right"
               >
                 <span>مشاهده دوره‌های آنلاین</span>
                 <ArrowLeft className="w-3 h-3" />
@@ -435,22 +435,22 @@ export const HomePage: React.FC<HomePageProps> = ({
             </h3>
             <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 text-center">
               <div className="flex-1 p-3 bg-white rounded-lg border border-[#EAE2D5]/70">
-                <div className="text-[10px] text-[#87553B] font-bold">گام اول: سبک هدف</div>
+                <div className="text-xs text-[#87553B] font-bold">گام اول: سبک هدف</div>
                 <div className="text-xs font-semibold mt-1">انتخاب مدل (مثلاً کلاسیک اروپایی)</div>
               </div>
               <div className="hidden md:block text-[#DED7CD]">➔</div>
               <div className="flex-1 p-3 bg-white rounded-lg border border-[#EAE2D5]/70">
-                <div className="text-[10px] text-[#167C55] font-bold">گام دوم: زنجیره مهارت</div>
+                <div className="text-xs text-[#167C55] font-bold">گام دوم: زنجیره مهارت</div>
                 <div className="text-xs font-semibold mt-1">تکنیک وزگیری و لاین‌بندی رگه‌ای</div>
               </div>
               <div className="hidden md:block text-[#DED7CD]">➔</div>
               <div className="flex-1 p-3 bg-white rounded-lg border border-[#EAE2D5]/70">
-                <div className="text-[10px] text-[#C59B63] font-bold">گام سوم: ابزار استاندارد</div>
+                <div className="text-xs text-[#C59B63] font-bold">گام سوم: ابزار استاندارد</div>
                 <div className="text-xs font-semibold mt-1">تافت Silhouette + پودر حجم‌دهنده مات</div>
               </div>
               <div className="hidden md:block text-[#DED7CD]">➔</div>
               <div className="flex-1 p-3 bg-white rounded-lg border border-[#EAE2D5]/70">
-                <div className="text-[10px] text-[#7A5E4D] font-bold">گام چهارم: تسلط کامل</div>
+                <div className="text-xs text-[#7A5E4D] font-bold">گام چهارم: تسلط کامل</div>
                 <div className="text-xs font-semibold mt-1">دوره جامع شینیون عروس سارا محمدی</div>
               </div>
             </div>
@@ -464,7 +464,7 @@ export const HomePage: React.FC<HomePageProps> = ({
       <section className="max-w-[1240px] mx-auto px-3.5 sm:px-6">
         <div className="flex items-center justify-between gap-2 mb-4 sm:mb-8">
           <div>
-            <span className="text-[11px] sm:text-xs font-bold text-[#87553B] uppercase tracking-wider block">
+            <span className="text-xs sm:text-xs font-bold text-[#87553B] uppercase tracking-wider block">
               تجهیزات سالنی
             </span>
             <h2 className="text-lg sm:text-2xl lg:text-3xl font-black text-[#171614] mt-0.5">
@@ -493,7 +493,7 @@ export const HomePage: React.FC<HomePageProps> = ({
               className="w-full h-full object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-r from-[#171614]/85 via-[#171614]/50 to-transparent p-4 sm:p-8 flex flex-col justify-end text-white text-right">
-              <span className="text-[11px] sm:text-xs font-bold text-[#C59B63]">ابزار و فیکساتورهای استاندارد</span>
+              <span className="text-xs sm:text-xs font-bold text-[#C59B63]">ابزار و فیکساتورهای استاندارد</span>
               <h3 className="text-base sm:text-2xl font-bold mt-0.5">تجهیزات تخصصی مورد تأیید مدرسین برتر</h3>
             </div>
           </div>
@@ -518,7 +518,7 @@ export const HomePage: React.FC<HomePageProps> = ({
         <div className="bg-[#F4EFE7]/70 rounded-2xl sm:rounded-3xl p-4 sm:p-10 border border-[#EAE2D5]">
           <div className="flex items-center justify-between gap-2 mb-4 sm:mb-8">
             <div>
-              <span className="text-[11px] sm:text-xs font-bold text-[#87553B] uppercase tracking-wider block">
+              <span className="text-xs sm:text-xs font-bold text-[#87553B] uppercase tracking-wider block">
                 آکادمی تخصصی
               </span>
               <h2 className="text-lg sm:text-2xl lg:text-3xl font-black text-[#171614] mt-0.5">
@@ -608,7 +608,7 @@ export const HomePage: React.FC<HomePageProps> = ({
       <section className="max-w-[1240px] mx-auto px-3.5 sm:px-6 space-y-6 [content-visibility:auto] [contain-intrinsic-size:0_450px]">
         <div className="flex items-center justify-between gap-2">
           <div>
-            <span className="text-[11px] sm:text-xs font-bold text-[#87553B] uppercase tracking-wider block">
+            <span className="text-xs sm:text-xs font-bold text-[#87553B] uppercase tracking-wider block">
               ژورنالیسم و آکادمی
             </span>
             <h2 className="text-lg sm:text-2xl lg:text-3xl font-black text-[#171614] mt-0.5">

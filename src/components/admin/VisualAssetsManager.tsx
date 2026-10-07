@@ -370,19 +370,19 @@ export const VisualAssetsManager: React.FC = () => {
                       <h3 className="text-sm font-bold text-[#171614]">
                         {index + 1}. {slot.title}
                       </h3>
-                      <span className="text-[11px] font-bold text-[#87553B] bg-[#C59B63]/10 px-2 py-0.5 rounded-sm inline-block mt-0.5">
+                      <span className="text-xs font-bold text-[#87553B] bg-[#C59B63]/10 px-2 py-0.5 rounded-sm inline-block mt-0.5">
                         {slot.recommendedPhoto}
                       </span>
                     </div>
                   </div>
 
                   {currentImg ? (
-                    <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full flex items-center gap-1 shrink-0">
+                    <span className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full flex items-center gap-1 shrink-0">
                       <CheckCircle2 className="w-3.5 h-3.5" />
                       اختصاصی فعال
                     </span>
                   ) : (
-                    <span className="text-[11px] text-[#968A7C] bg-[#F4EFE7] px-2.5 py-0.5 rounded-full shrink-0">
+                    <span className="text-xs text-[#968A7C] bg-[#F4EFE7] px-2.5 py-0.5 rounded-full shrink-0">
                       پیش‌فرض سیستم
                     </span>
                   )}
@@ -393,7 +393,7 @@ export const VisualAssetsManager: React.FC = () => {
                 </p>
 
                 {/* Aspect Ratio Hint */}
-                <div className="text-[11px] text-[#968A7C] flex items-center gap-1.5">
+                <div className="text-xs text-[#968A7C] flex items-center gap-1.5">
                   <span>ابعاد پیشنهادی:</span>
                   <span className="font-semibold text-[#171614]">{slot.aspectRatioLabel}</span>
                 </div>
@@ -417,7 +417,7 @@ export const VisualAssetsManager: React.FC = () => {
                           }}
                         />
                       )}
-                      <div className="absolute bottom-2 right-2 bg-black/60 backdrop-blur-xs text-white text-[10px] px-2 py-0.5 rounded-md font-medium">
+                      <div className="absolute bottom-2 right-2 bg-black/60 backdrop-blur-xs text-white text-xs px-2 py-0.5 rounded-md font-medium">
                         پیش‌نمایش {isHeader ? `(پوشش: ${headerOpacity}٪)` : ''}
                       </div>
                     </>
@@ -427,7 +427,7 @@ export const VisualAssetsManager: React.FC = () => {
                       <p className="text-xs font-semibold text-[#171614]">
                         هنوز تصویری بارگذاری نشده است
                       </p>
-                      <p className="text-[11px]">از دکمه زیر برای بارگذاری عکس استفاده کنید.</p>
+                      <p className="text-xs">از دکمه زیر برای بارگذاری عکس استفاده کنید.</p>
                     </div>
                   )}
                 </div>
@@ -452,7 +452,7 @@ export const VisualAssetsManager: React.FC = () => {
                       onChange={(e) => handleOpacityChange(Number(e.target.value))}
                       className="w-full accent-[#87553B] cursor-pointer"
                     />
-                    <p className="text-[10px] text-[#968A7C]">
+                    <p className="text-xs text-[#968A7C]">
                       پوشش بیشتر باعث ایجاد کنتراست مناسب و خوانایی فوق‌العاده منوها می‌شود.
                     </p>
                   </div>

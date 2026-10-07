@@ -45,7 +45,7 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course, onSelect }) => {
             className="group-hover:scale-105 transition-transform duration-700 ease-out"
           />
 
-          <div className="absolute top-3 right-3 bg-[#171614]/80 backdrop-blur-xs text-white text-[11px] font-medium px-2.5 py-1 rounded-sm flex items-center gap-1.5">
+          <div className="absolute top-3 right-3 bg-[#171614]/80 backdrop-blur-xs text-white text-xs font-medium px-2.5 py-1 rounded-sm flex items-center gap-1.5">
             <GraduationCap className="w-3.5 h-3.5 text-[#C59B63]" />
             <span>{course.level}</span>
           </div>
@@ -88,7 +88,7 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course, onSelect }) => {
             <span className="text-base sm:text-lg font-bold text-[#171614] tabular-nums">
               {course.priceToman.toLocaleString('fa-IR')}
             </span>
-            <span className="text-[11px] text-[#59524A]">تومان</span>
+            <span className="text-xs text-[#59524A]">تومان</span>
           </div>
         </div>
 

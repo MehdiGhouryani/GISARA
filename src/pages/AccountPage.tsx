@@ -422,7 +422,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                     )}
 
                     {(ord.status === 'PENDING_PAYMENT' || ord.status === 'PAYMENT_FAILED') && ord.paymentExpiresAt && (
-                      <div className="w-full text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2" role={retryError?.orderId === ord.id ? 'alert' : undefined}>
+                      <div className="w-full text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2" role={retryError?.orderId === ord.id ? 'alert' : undefined}>
                         {retryError?.orderId === ord.id
                           ? retryError.message
                           : Date.parse(ord.paymentExpiresAt) > Date.now()
@@ -646,7 +646,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
             <div className="space-y-1">
               <h3 className="text-sm font-bold text-[#171614] flex items-center gap-2">
                 <Award className="w-4 h-4 text-[#7A5E4D]" />
-                <span>گواهینامه‌های رسمی پایان دوره آکادمی شنیون مو</span>
+                <span>گواهینامه‌های رسمی پایان دوره آکادمی گیس‌آرا</span>
               </h3>
               <p className="text-xs text-[#5E5A54]">
                 این مدارک دارای بارکد و شناسه استعلام یکتا بوده و مورد تایید سالن‌های برتر و مدرسین کشوری است.
@@ -675,7 +675,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                   <div className="space-y-3">
                     <div className="flex items-start justify-between gap-3 pb-3 border-b border-[#DED7CD]/70">
                       <div>
-                        <span className="text-[11px] font-bold text-[#7A5E4D] uppercase tracking-wider block">
+                        <span className="text-xs font-bold text-[#7A5E4D] uppercase tracking-wider block">
                           گواهی رسمی پایان مسترکلاس
                         </span>
                         <h4 className="text-base font-bold text-[#171614] mt-0.5">{cert.courseTitle}</h4>
@@ -687,32 +687,32 @@ export const AccountPage: React.FC<AccountPageProps> = ({
 
                     <div className="grid grid-cols-2 gap-3 text-xs text-[#5E5A54] pt-1">
                       <div>
-                        <span className="text-[#8C857B] block text-[11px]">هنرجو:</span>
+                        <span className="text-[#8C857B] block text-xs">هنرجو:</span>
                         <strong className="text-[#171614]">{cert.studentName}</strong>
                       </div>
                       <div>
-                        <span className="text-[#8C857B] block text-[11px]">مدرس تاییدکننده:</span>
+                        <span className="text-[#8C857B] block text-xs">مدرس تاییدکننده:</span>
                         <strong className="text-[#171614]">{cert.instructorName}</strong>
                       </div>
                       <div>
-                        <span className="text-[#8C857B] block text-[11px]">تاریخ صدور:</span>
+                        <span className="text-[#8C857B] block text-xs">تاریخ صدور:</span>
                         <span className="tabular-nums font-semibold text-[#171614]">{cert.issueDateJalali}</span>
                       </div>
                       <div>
-                        <span className="text-[#8C857B] block text-[11px]">ارزیابی نهایی:</span>
+                        <span className="text-[#8C857B] block text-xs">ارزیابی نهایی:</span>
                         <span className="font-bold text-[#2F6B51]">{cert.grade}</span>
                       </div>
                     </div>
 
                     <div className="pt-2 flex items-center justify-between bg-[#EEE8DF]/40 p-2.5 rounded-xl border border-[#DED7CD]/60 text-xs">
                       <div className="space-y-0.5">
-                        <span className="text-[10px] text-[#8C857B] block">شناسه یکتای استعلام:</span>
+                        <span className="text-xs text-[#8C857B] block">شناسه یکتای استعلام:</span>
                         <span className="font-mono font-bold text-[#7A5E4D] text-xs">{cert.certificateCode}</span>
                       </div>
                       <button
                         type="button"
                         onClick={() => handleCopyCode(cert.certificateCode)}
-                        className="px-2.5 py-1 text-[11px] bg-white border border-[#DED7CD] hover:border-[#7A5E4D] rounded-lg flex items-center gap-1 cursor-pointer transition-colors text-[#171614]"
+                        className="px-2.5 py-1 text-xs bg-white border border-[#DED7CD] hover:border-[#7A5E4D] rounded-lg flex items-center gap-1 cursor-pointer transition-colors text-[#171614]"
                       >
                         {copiedCode === cert.certificateCode ? (
                           <>
@@ -752,7 +752,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
           <div className="bg-[#FFFCF8] rounded-2xl max-w-2xl w-full p-6 sm:p-8 border border-[#DED7CD] shadow-2xl max-h-[90vh] overflow-y-auto space-y-6">
             <div className="flex items-center justify-between border-b border-[#DED7CD] pb-4">
               <div className="flex items-center gap-2">
-                <span className="text-lg font-bold text-[#171614]">صورتحساب رسمی فروشگاه شنیون مو</span>
+                <span className="text-lg font-bold text-[#171614]">صورتحساب رسمی فروشگاه گیس‌آرا</span>
                 <span className="text-xs bg-[#2F6B51]/10 text-[#2F6B51] px-2 py-0.5 rounded-sm font-bold">
                   پرداخت‌شده
                 </span>
@@ -772,7 +772,7 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                 <Truck className="w-4 h-4" />
                 <span>وضعیت ارسال مرسوله پستی:</span>
               </div>
-              <div className="grid grid-cols-4 gap-2 text-center text-[11px]">
+              <div className="grid grid-cols-4 gap-2 text-center text-xs">
                 <div className="font-bold text-[#2F6B51]">۱. تأیید مالی ✓</div>
                 <div className="font-bold text-[#2F6B51]">۲. بسته‌بندی ✓</div>
                 <div className="font-bold text-[#7A5E4D]">۳. تحویل به پست</div>
@@ -896,9 +896,9 @@ export const AccountPage: React.FC<AccountPageProps> = ({
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-6 border-t border-[#DED7CD] items-center text-center relative z-10 text-xs">
                 {/* Right: Issue Date */}
                 <div className="space-y-1">
-                  <span className="text-[#8C857B] block text-[11px]">تاریخ صدور گواهینامه:</span>
+                  <span className="text-[#8C857B] block text-xs">تاریخ صدور گواهینامه:</span>
                   <span className="font-bold text-[#171614] tabular-nums">{selectedCertificate.issueDateJalali}</span>
-                  <span className="text-[10px] text-[#8C857B] block">تهران - آکادمی مرکزی گیس‌آرا</span>
+                  <span className="text-xs text-[#8C857B] block">تهران - آکادمی مرکزی گیس‌آرا</span>
                 </div>
 
                 {/* Center: Official Golden Seal */}
@@ -907,26 +907,26 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                     <Award className="w-7 h-7" />
                     <span className="text-[8px] font-black uppercase tracking-tighter mt-0.5">GISARA SEAL</span>
                   </div>
-                  <span className="text-[9px] text-[#2F6B51] font-bold mt-1.5">اصالت تایید شده</span>
+                  <span className="text-xs text-[#2F6B51] font-bold mt-1.5">اصالت تایید شده</span>
                 </div>
 
                 {/* Left: Instructor Signature */}
                 <div className="space-y-1">
-                  <span className="text-[#8C857B] block text-[11px]">امضای مدرس و مستر آکادمی:</span>
+                  <span className="text-[#8C857B] block text-xs">امضای مدرس و مستر آکادمی:</span>
                   <strong className="text-[#171614] block font-bold text-sm">{selectedCertificate.instructorName}</strong>
                   <div className="font-serif italic text-[#7A5E4D] text-xs">Verified Signature ✓</div>
                 </div>
               </div>
 
               {/* Certificate Security Barcode & Footer */}
-              <div className="pt-4 border-t border-[#DED7CD]/70 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] text-[#5E5A54] relative z-10">
+              <div className="pt-4 border-t border-[#DED7CD]/70 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#5E5A54] relative z-10">
                 <div className="flex items-center gap-2">
                   <ShieldCheck className="w-4 h-4 text-[#2F6B51]" />
                   <span>کد یکتای ثبت در پایگاه ملی گواهینامه‌ها:</span>
                   <strong className="font-mono text-xs text-[#7A5E4D]">{selectedCertificate.certificateCode}</strong>
                 </div>
 
-                <div className="text-[10px] text-[#8C857B]">
+                <div className="text-xs text-[#8C857B]">
                   قابلیت استعلام برخط در بخش استعلام گواهینامه گیس‌آرا
                 </div>
               </div>

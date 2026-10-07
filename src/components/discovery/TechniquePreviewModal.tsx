@@ -91,7 +91,7 @@ export const TechniquePreviewModal: React.FC<TechniquePreviewModalProps> = ({
                 <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
                   {technique.steps.map((st, i) => (
                     <div key={st.number || i} className="text-xs bg-[#FAF7F2] p-2 rounded-lg border border-[#EAE2D5] flex items-start gap-2">
-                      <span className="w-4 h-4 rounded-full bg-[#87553B] text-white text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">
+                      <span className="w-4 h-4 rounded-full bg-[#87553B] text-white text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
                         {st.number || i + 1}
                       </span>
                       <p className="text-[#171614] leading-relaxed line-clamp-2">

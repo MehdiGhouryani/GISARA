@@ -182,7 +182,7 @@ export const CoursesManager: React.FC<CoursesManagerProps> = ({ courses, instruc
                   <div className="min-w-0 space-y-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <h3 className="text-sm font-bold text-[#f5f4f2]">{c.name}</h3>
-                      <span className={`text-[11px] px-2 py-0.5 rounded-md border font-semibold ${STATUS_STYLE[c.status] || STATUS_STYLE.DRAFT}`}>{STATUS_LABEL[c.status] || c.status}</span>
+                      <span className={`text-xs px-2 py-0.5 rounded-md border font-semibold ${STATUS_STYLE[c.status] || STATUS_STYLE.DRAFT}`}>{STATUS_LABEL[c.status] || c.status}</span>
                     </div>
                     <div className="text-xs text-stone-400 tabular-nums flex flex-wrap gap-x-4 gap-y-1">
                       <span>{c.priceToman.toLocaleString('fa-IR')} تومان</span>

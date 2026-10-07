@@ -136,7 +136,7 @@ export const CityDetailPage: React.FC<CityDetailPageProps> = ({
                     {inst.name}
                   </h3>
                   <div className="text-xs text-[#5E5A54] mt-0.5">{inst.specialty}</div>
-                  <div className="text-[11px] text-[#7A5E4D] font-medium mt-2">
+                  <div className="text-xs text-[#7A5E4D] font-medium mt-2">
                     مشاهده رزومه و دوره‌ها ←
                   </div>
                 </div>

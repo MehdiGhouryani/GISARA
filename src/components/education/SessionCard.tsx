@@ -49,7 +49,7 @@ export const SessionCard: React.FC<SessionCardProps> = ({ session, onRequestJoin
             />
           </div>
           <div>
-            <div className="text-[11px] text-[#5E5A54]">مدرس کارگاه:</div>
+            <div className="text-xs text-[#5E5A54]">مدرس کارگاه:</div>
             <div className="text-xs sm:text-sm font-bold text-[#171614]">
               {session.instructorName}
             </div>
@@ -85,12 +85,12 @@ export const SessionCard: React.FC<SessionCardProps> = ({ session, onRequestJoin
       {/* Footer & Primary Action */}
       <div className="mt-6 pt-4 border-t border-[#DED7CD]/60 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
         <div>
-          <span className="text-[11px] text-[#5E5A54] block">شهریه کارگاه حضوری:</span>
+          <span className="text-xs text-[#5E5A54] block">شهریه کارگاه حضوری:</span>
           <div className="flex items-baseline gap-1">
             <span className="text-base sm:text-lg font-bold text-[#171614] tabular-nums">
               {session.priceToman.toLocaleString('fa-IR')}
             </span>
-            <span className="text-[11px] text-[#5E5A54]">تومان</span>
+            <span className="text-xs text-[#5E5A54]">تومان</span>
           </div>
         </div>
 

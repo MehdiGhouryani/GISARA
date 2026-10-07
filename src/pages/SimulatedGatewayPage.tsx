@@ -49,10 +49,10 @@ export const SimulatedGatewayPage: React.FC<Props> = ({
             </div>
             <div>
               <div className="font-bold text-sm tracking-tight">درگاه پرداخت اینترنتی زرین‌پال</div>
-              <div className="text-[10px] text-stone-700">محیط شبیه‌ساز امن (Sandbox Gateway)</div>
+              <div className="text-xs text-stone-700">محیط شبیه‌ساز امن (Sandbox Gateway)</div>
             </div>
           </div>
-          <div className="text-[11px] bg-stone-900/10 px-2 py-0.5 rounded font-mono">
+          <div className="text-xs bg-stone-900/10 px-2 py-0.5 rounded font-mono">
             SSL 256-bit
           </div>
         </div>
@@ -77,14 +77,14 @@ export const SimulatedGatewayPage: React.FC<Props> = ({
             </div>
             <div className="flex justify-between py-1.5">
               <span className="text-stone-500">کد پیگیری تراکنش (Authority):</span>
-              <span className="font-mono text-stone-800 text-[11px] dir-ltr">{authority}</span>
+              <span className="font-mono text-stone-800 text-xs dir-ltr">{authority}</span>
             </div>
           </div>
 
           {/* Fake Card Form Inputs */}
           <div className="space-y-3 pt-2">
             <div>
-              <label className="block text-[11px] font-bold text-stone-600 mb-1">شماره کارت ۱۶ رقمی</label>
+              <label className="block text-xs font-bold text-stone-600 mb-1">شماره کارت ۱۶ رقمی</label>
               <div className="relative">
                 <input
                   type="text"
@@ -98,7 +98,7 @@ export const SimulatedGatewayPage: React.FC<Props> = ({
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-[11px] font-bold text-stone-600 mb-1">رمز دوم (CVV2)</label>
+                <label className="block text-xs font-bold text-stone-600 mb-1">رمز دوم (CVV2)</label>
                 <input
                   type="password"
                   disabled
@@ -107,7 +107,7 @@ export const SimulatedGatewayPage: React.FC<Props> = ({
                 />
               </div>
               <div>
-                <label className="block text-[11px] font-bold text-stone-600 mb-1">تاریخ انقضا</label>
+                <label className="block text-xs font-bold text-stone-600 mb-1">تاریخ انقضا</label>
                 <input
                   type="text"
                   disabled
@@ -141,7 +141,7 @@ export const SimulatedGatewayPage: React.FC<Props> = ({
         </div>
 
         {/* Footer */}
-        <div className="bg-stone-50 border-t border-stone-100 px-6 py-3 text-center text-[10px] text-stone-500 flex items-center justify-center gap-1">
+        <div className="bg-stone-50 border-t border-stone-100 px-6 py-3 text-center text-xs text-stone-500 flex items-center justify-center gap-1">
           <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
           <span>پرداخت شما توسط شبکه الکترونیکی پرداخت کارت (شاپرک) تضمین می‌شود.</span>
         </div>

@@ -661,7 +661,7 @@ export const ContentCmsManager: React.FC<ContentCmsManagerProps> = ({
           >
             <Sparkles className="w-3.5 h-3.5" />
             <span>مدل‌های شنیون</span>
-            <span className="text-[10px] opacity-70 tabular-nums">({styles.length})</span>
+            <span className="text-xs opacity-70 tabular-nums">({styles.length})</span>
           </button>
 
           <button
@@ -675,7 +675,7 @@ export const ContentCmsManager: React.FC<ContentCmsManagerProps> = ({
           >
             <BookOpen className="w-3.5 h-3.5" />
             <span>مجله و بلاگ</span>
-            <span className="text-[10px] opacity-70 tabular-nums">({articles.length})</span>
+            <span className="text-xs opacity-70 tabular-nums">({articles.length})</span>
           </button>
 
           <button
@@ -689,7 +689,7 @@ export const ContentCmsManager: React.FC<ContentCmsManagerProps> = ({
           >
             <Layers className="w-3.5 h-3.5" />
             <span>تکنیک‌ها</span>
-            <span className="text-[10px] opacity-70 tabular-nums">({techniques.length})</span>
+            <span className="text-xs opacity-70 tabular-nums">({techniques.length})</span>
           </button>
 
           <button
@@ -703,7 +703,7 @@ export const ContentCmsManager: React.FC<ContentCmsManagerProps> = ({
           >
             <Tag className="w-3.5 h-3.5" />
             <span>کدهای تخفیف</span>
-            <span className="text-[10px] opacity-70 tabular-nums">({coupons.length})</span>
+            <span className="text-xs opacity-70 tabular-nums">({coupons.length})</span>
           </button>
 
           <button
@@ -717,7 +717,7 @@ export const ContentCmsManager: React.FC<ContentCmsManagerProps> = ({
           >
             <HelpCircle className="w-3.5 h-3.5" />
             <span>سوالات متداول</span>
-            <span className="text-[10px] opacity-70 tabular-nums">({faqs.length})</span>
+            <span className="text-xs opacity-70 tabular-nums">({faqs.length})</span>
           </button>
 
           <button
@@ -830,7 +830,7 @@ export const ContentCmsManager: React.FC<ContentCmsManagerProps> = ({
                   key={diff}
                   type="button"
                   onClick={() => setStyleDifficultyFilter(diff)}
-                  className={`px-3 py-1 rounded-md transition-all text-[11px] ${
+                  className={`px-3 py-1 rounded-md transition-all text-xs ${
                     styleDifficultyFilter === diff
                       ? 'bg-amber-600/20 text-[#e2b87f] font-bold border border-amber-600/30'
                       : 'hover:text-stone-200'
@@ -857,10 +857,10 @@ export const ContentCmsManager: React.FC<ContentCmsManagerProps> = ({
                   <div>
                     <div className="h-44 relative bg-stone-900 overflow-hidden">
                       <EditorialImage src={style.primaryImage} alt={style.name} aspectRatio="16:9" />
-                      <div className="absolute top-2.5 right-2.5 px-2.5 py-0.5 bg-black/80 text-[#e2b87f] text-[10px] font-bold rounded border border-stone-800">
+                      <div className="absolute top-2.5 right-2.5 px-2.5 py-0.5 bg-black/80 text-[#e2b87f] text-xs font-bold rounded border border-stone-800">
                         {style.occasion}
                       </div>
-                      <div className="absolute bottom-2.5 left-2.5 px-2 py-0.5 bg-black/85 text-stone-200 text-[10px] font-bold rounded flex items-center gap-1 border border-stone-850">
+                      <div className="absolute bottom-2.5 left-2.5 px-2 py-0.5 bg-black/85 text-stone-200 text-xs font-bold rounded flex items-center gap-1 border border-stone-850">
                         <Clock className="w-3 h-3 text-amber-500" />
                         <span className="tabular-nums">{style.approxMinutes} دقیقه</span>
                       </div>
@@ -872,7 +872,7 @@ export const ContentCmsManager: React.FC<ContentCmsManagerProps> = ({
                           {style.name}
                         </h4>
                         {/* unboxed metadata for level */}
-                        <span className="text-[11px] text-amber-400 font-semibold">
+                        <span className="text-xs text-amber-400 font-semibold">
                           {style.difficulty}
                         </span>
                       </div>
@@ -883,7 +883,7 @@ export const ContentCmsManager: React.FC<ContentCmsManagerProps> = ({
                   </div>
 
                   <div className="p-4 pt-3 border-t border-[#26211e] flex items-center justify-between text-xs text-stone-500 mt-2">
-                    <div className="flex items-center gap-1.5 text-[11px] tabular-nums text-stone-400">
+                    <div className="flex items-center gap-1.5 text-xs tabular-nums text-stone-400">
                       <Eye className="w-3.5 h-3.5 text-amber-500/80" />
                       <span>{style.viewsCount.toLocaleString('fa-IR')} بازدید</span>
                     </div>
@@ -892,7 +892,7 @@ export const ContentCmsManager: React.FC<ContentCmsManagerProps> = ({
                       <button
                         type="button"
                         onClick={() => handleOpenEditStyle(style)}
-                        className="px-2.5 py-1 text-[11px] font-bold rounded-lg border border-[#2e2824] bg-[#1a1816] hover:bg-amber-600/10 hover:border-amber-600/30 hover:text-[#e2b87f] text-stone-300 transition-colors cursor-pointer flex items-center gap-1"
+                        className="px-2.5 py-1 text-xs font-bold rounded-lg border border-[#2e2824] bg-[#1a1816] hover:bg-amber-600/10 hover:border-amber-600/30 hover:text-[#e2b87f] text-stone-300 transition-colors cursor-pointer flex items-center gap-1"
                         title="ویرایش مدل شنیون"
                       >
                         <Pencil className="w-3.5 h-3.5 text-[#e2b87f]" />
@@ -930,7 +930,7 @@ export const ContentCmsManager: React.FC<ContentCmsManagerProps> = ({
                   key={cat}
                   type="button"
                   onClick={() => setArticleCategoryFilter(cat)}
-                  className={`px-3 py-1 rounded-md transition-all text-[11px] ${
+                  className={`px-3 py-1 rounded-md transition-all text-xs ${
                     articleCategoryFilter === cat
                       ? 'bg-amber-600/20 text-[#e2b87f] font-bold border border-amber-600/30'
                       : 'hover:text-stone-200'
@@ -960,7 +960,7 @@ export const ContentCmsManager: React.FC<ContentCmsManagerProps> = ({
                     </div>
 
                     <div className="flex-1 min-w-0 space-y-2">
-                      <div className="flex items-center justify-between text-[11px] text-stone-400">
+                      <div className="flex items-center justify-between text-xs text-stone-400">
                         {/* zero-pill metadata */}
                         <div className="flex items-center gap-1.5">
                           <span className="text-amber-400 font-semibold">{art.category}</span>
@@ -981,14 +981,14 @@ export const ContentCmsManager: React.FC<ContentCmsManagerProps> = ({
                         alt={art.author.name}
                         className="w-5 h-5 rounded-full object-cover border border-[#2e2824]"
                       />
-                      <span className="text-[11px] text-stone-300 font-bold">{art.author.name}</span>
+                      <span className="text-xs text-stone-300 font-bold">{art.author.name}</span>
                     </div>
 
                     <div className="flex items-center gap-1.5">
                       <button
                         type="button"
                         onClick={() => handleOpenEditArticle(art)}
-                        className="px-2.5 py-1 text-[11px] font-bold rounded-lg border border-[#2e2824] bg-[#1a1816] hover:bg-amber-600/10 hover:border-amber-600/30 hover:text-[#e2b87f] text-stone-300 transition-colors cursor-pointer flex items-center gap-1"
+                        className="px-2.5 py-1 text-xs font-bold rounded-lg border border-[#2e2824] bg-[#1a1816] hover:bg-amber-600/10 hover:border-amber-600/30 hover:text-[#e2b87f] text-stone-300 transition-colors cursor-pointer flex items-center gap-1"
                         title="ویرایش مقاله"
                       >
                         <Pencil className="w-3.5 h-3.5 text-[#e2b87f]" />
@@ -1032,12 +1032,12 @@ export const ContentCmsManager: React.FC<ContentCmsManagerProps> = ({
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       {/* Zero pill metadata */}
-                      <span className="text-[11px] text-amber-500 font-bold tracking-wide">
+                      <span className="text-xs text-amber-500 font-bold tracking-wide">
                         تکنیک استاندارد آکادمی
                       </span>
                       <h4 className="text-xs font-bold text-stone-200 group-hover:text-white transition-colors mt-1">{tech.name}</h4>
                     </div>
-                    <span className="text-[11px] text-[#e2b87f]">
+                    <span className="text-xs text-[#e2b87f]">
                       سطح: {tech.difficulty}
                     </span>
                   </div>
@@ -1070,7 +1070,7 @@ export const ContentCmsManager: React.FC<ContentCmsManagerProps> = ({
                   )}
 
                   <div className="pt-2 border-t border-[#26211e]/60 flex items-center justify-between">
-                    <span className="text-[11px] text-stone-500 font-mono">
+                    <span className="text-xs text-stone-500 font-mono">
                       کد تکنیک: {tech.id}
                     </span>
 
@@ -1078,7 +1078,7 @@ export const ContentCmsManager: React.FC<ContentCmsManagerProps> = ({
                       <button
                         type="button"
                         onClick={() => handleOpenEditTechnique(tech)}
-                        className="px-2.5 py-1 text-[11px] font-bold rounded-lg border border-[#2e2824] bg-[#1a1816] hover:bg-amber-600/10 hover:border-amber-600/30 hover:text-[#e2b87f] text-stone-300 transition-colors cursor-pointer flex items-center gap-1"
+                        className="px-2.5 py-1 text-xs font-bold rounded-lg border border-[#2e2824] bg-[#1a1816] hover:bg-amber-600/10 hover:border-amber-600/30 hover:text-[#e2b87f] text-stone-300 transition-colors cursor-pointer flex items-center gap-1"
                         title="ویرایش تکنیک"
                       >
                         <Pencil className="w-3.5 h-3.5 text-[#e2b87f]" />
@@ -1110,7 +1110,7 @@ export const ContentCmsManager: React.FC<ContentCmsManagerProps> = ({
           <div className="p-5 bg-[#0a0908] border-b border-[#26211e] flex items-center justify-between">
             <div>
               <h4 className="text-xs font-bold text-stone-200">کدهای تخفیف تعریف‌شده در سیستم</h4>
-              <p className="text-[11px] text-stone-500 mt-1">
+              <p className="text-xs text-stone-500 mt-1">
                 کدهای تخفیف به صورت خودکار در سیستم فعال شده و در درگاه سفارشات کلاینت قابل استفاده هستند.
               </p>
             </div>
@@ -1138,14 +1138,14 @@ export const ContentCmsManager: React.FC<ContentCmsManagerProps> = ({
                         {coupon.discountPercent}٪ تخفیف
                       </span>
                       <span className="text-stone-500">·</span>
-                      <span className={`text-[10px] font-bold ${coupon.isActive ? 'text-emerald-400' : 'text-stone-500'}`}>
+                      <span className={`text-xs font-bold ${coupon.isActive ? 'text-emerald-400' : 'text-stone-500'}`}>
                         {coupon.isActive ? 'وضعیت: فعال' : 'وضعیت: غیرفعال'}
                       </span>
                     </div>
 
                     <p className="text-xs text-stone-400">{coupon.description}</p>
 
-                    <div className="flex flex-wrap items-center gap-4 text-[10px] text-stone-500 pt-0.5">
+                    <div className="flex flex-wrap items-center gap-4 text-xs text-stone-500 pt-0.5">
                       {coupon.maxDiscountToman && (
                         <span>سقف تخفیف: {coupon.maxDiscountToman.toLocaleString('fa-IR')} تومان</span>
                       )}
@@ -1166,7 +1166,7 @@ export const ContentCmsManager: React.FC<ContentCmsManagerProps> = ({
                     <button
                       type="button"
                       onClick={() => handleOpenEditCoupon(coupon)}
-                      className="px-2.5 py-1.5 text-[11px] font-bold rounded-xl border border-[#2e2824] bg-[#1a1816] hover:bg-amber-600/10 hover:border-amber-600/30 hover:text-[#e2b87f] text-stone-300 transition-colors cursor-pointer flex items-center gap-1.5"
+                      className="px-2.5 py-1.5 text-xs font-bold rounded-xl border border-[#2e2824] bg-[#1a1816] hover:bg-amber-600/10 hover:border-amber-600/30 hover:text-[#e2b87f] text-stone-300 transition-colors cursor-pointer flex items-center gap-1.5"
                       title="ویرایش کد تخفیف"
                     >
                       <Pencil className="w-3.5 h-3.5 text-[#e2b87f]" />
@@ -1176,7 +1176,7 @@ export const ContentCmsManager: React.FC<ContentCmsManagerProps> = ({
                     <button
                       type="button"
                       onClick={() => onToggleCouponStatus(coupon.id)}
-                      className="px-3 py-1.5 text-[11px] font-bold rounded-xl border border-[#2e2824] bg-[#1a1816] hover:bg-stone-800 text-stone-200 transition-colors cursor-pointer flex items-center gap-1.5"
+                      className="px-3 py-1.5 text-xs font-bold rounded-xl border border-[#2e2824] bg-[#1a1816] hover:bg-stone-800 text-stone-200 transition-colors cursor-pointer flex items-center gap-1.5"
                     >
                       {coupon.isActive ? (
                         <>
@@ -1222,7 +1222,7 @@ export const ContentCmsManager: React.FC<ContentCmsManagerProps> = ({
                   key={cat}
                   type="button"
                   onClick={() => setFaqCategoryFilter(cat)}
-                  className={`px-3 py-1 rounded-md transition-all text-[11px] ${
+                  className={`px-3 py-1 rounded-md transition-all text-xs ${
                     faqCategoryFilter === cat
                       ? 'bg-amber-600/20 text-[#e2b87f] font-bold border border-amber-600/30'
                       : 'hover:text-stone-200'
@@ -1246,7 +1246,7 @@ export const ContentCmsManager: React.FC<ContentCmsManagerProps> = ({
             <div className="p-5 bg-[#0a0908] border-b border-[#26211e] flex items-center justify-between">
               <div>
                 <h4 className="text-xs font-bold text-stone-200">لیست پرسش‌ها و پاسخ‌های وب‌سایت</h4>
-                <p className="text-[11px] text-stone-500 mt-1">
+                <p className="text-xs text-stone-500 mt-1">
                   تغییرات شما در این لیست بلافاصله در بخش سوالات متداول صفحه کلاینت وب‌سایت اعمال می‌شود.
                 </p>
               </div>
@@ -1266,7 +1266,7 @@ export const ContentCmsManager: React.FC<ContentCmsManagerProps> = ({
                   >
                     <div className="space-y-2 flex-1">
                       <div className="flex items-center gap-2">
-                        <span className="text-[11px] text-[#e2b87f] font-semibold">
+                        <span className="text-xs text-[#e2b87f] font-semibold">
                           {faq.category === 'COURSES'
                             ? 'دوره‌های آنلاین'
                             : faq.category === 'SHOP'
@@ -1290,7 +1290,7 @@ export const ContentCmsManager: React.FC<ContentCmsManagerProps> = ({
                         title="ویرایش پرسش و پاسخ"
                       >
                         <Pencil className="w-3.5 h-3.5 text-[#e2b87f]" />
-                        <span className="text-[11px] font-semibold">ویرایش</span>
+                        <span className="text-xs font-semibold">ویرایش</span>
                       </button>
 
                       <button
@@ -1764,7 +1764,7 @@ export const ContentCmsManager: React.FC<ContentCmsManagerProps> = ({
             <div className="flex items-center justify-between border-b border-[#2e2824] pb-3">
               <h3 className="text-xs font-bold text-white flex items-center gap-2">
                 <BookOpen className="w-4 h-4 text-[#e2b87f]" />
-                <span>انتشار مقاله جدید در مجله شنیون مو</span>
+                <span>انتشار مقاله جدید در مجله گیس‌آرا</span>
               </h3>
               <button
                 type="button"
@@ -2276,7 +2276,7 @@ export const ContentCmsManager: React.FC<ContentCmsManagerProps> = ({
               <div className="p-3 bg-[#171412] rounded-xl border border-[#26211e] flex items-center justify-between">
                 <div>
                   <span className="font-semibold text-stone-200">وضعیت فعال بودن کد:</span>
-                  <p className="text-[10px] text-stone-500 mt-0.5">در صورت غیرفعال بودن، کد در سبد خرید کاربران اعمال نمی‌شود.</p>
+                  <p className="text-xs text-stone-500 mt-0.5">در صورت غیرفعال بودن، کد در سبد خرید کاربران اعمال نمی‌شود.</p>
                 </div>
                 <button
                   type="button"
@@ -2291,7 +2291,7 @@ export const ContentCmsManager: React.FC<ContentCmsManagerProps> = ({
                 </button>
               </div>
 
-              <div className="text-[11px] text-stone-500 flex items-center gap-2 pt-1">
+              <div className="text-xs text-stone-500 flex items-center gap-2 pt-1">
                 <span>تعداد دفعات استفاده شده تاکنون:</span>
                 <span className="text-[#e2b87f] font-mono font-bold">{editingCoupon.usageCount} بار</span>
                 <span className="text-stone-600">(این آمار با ویرایش حفظ می‌شود)</span>
@@ -2477,7 +2477,7 @@ export const ContentCmsManager: React.FC<ContentCmsManagerProps> = ({
                 </div>
 
                 <div className="flex flex-col justify-end">
-                  <div className="p-2.5 bg-[#171412] rounded-xl border border-[#26211e] flex items-center justify-between text-[11px] text-stone-400">
+                  <div className="p-2.5 bg-[#171412] rounded-xl border border-[#26211e] flex items-center justify-between text-xs text-stone-400">
                     <span>آمار بازدید:</span>
                     <span className="text-[#e2b87f] font-mono font-bold">{editingStyle.viewsCount.toLocaleString('fa-IR')} بازدید</span>
                   </div>
@@ -2517,7 +2517,7 @@ export const ContentCmsManager: React.FC<ContentCmsManagerProps> = ({
                 />
               </div>
 
-              <div className="text-[10px] text-stone-500 flex items-center justify-between pt-1 border-t border-[#26211e]">
+              <div className="text-xs text-stone-500 flex items-center justify-between pt-1 border-t border-[#26211e]">
                 <span>شناسه پیوند (Slug): <code className="text-stone-400 font-mono">{editingStyle.slug}</code></span>
                 <span className="text-emerald-500/80">برای حفظ سئو و بوکمارک‌ها ثابت می‌ماند</span>
               </div>
@@ -2662,7 +2662,7 @@ export const ContentCmsManager: React.FC<ContentCmsManagerProps> = ({
                 />
               </div>
 
-              <div className="text-[10px] text-stone-500 flex items-center justify-between pt-1 border-t border-[#26211e]">
+              <div className="text-xs text-stone-500 flex items-center justify-between pt-1 border-t border-[#26211e]">
                 <span>شناسه پیوند (Slug): <code className="text-stone-400 font-mono">{editingArticle.slug}</code></span>
                 <span className="text-emerald-500/80">آدرس اینترنتی صفحه برای جلوگیری از ارور ۴۰۴ ثابت می‌ماند</span>
               </div>
@@ -2759,7 +2759,7 @@ export const ContentCmsManager: React.FC<ContentCmsManagerProps> = ({
                   <button
                     type="button"
                     onClick={handleAddStepToEdit}
-                    className="px-2.5 py-1 bg-amber-600/20 hover:bg-amber-600/30 text-[#e2b87f] border border-amber-600/40 rounded-lg text-[11px] font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                    className="px-2.5 py-1 bg-amber-600/20 hover:bg-amber-600/30 text-[#e2b87f] border border-amber-600/40 rounded-lg text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     <span>افزودن مرحله جدید</span>
@@ -2770,8 +2770,8 @@ export const ContentCmsManager: React.FC<ContentCmsManagerProps> = ({
                   {editTechSteps.map((st, idx) => (
                     <div key={idx} className="p-3 bg-[#131110] rounded-xl border border-[#2a2420] space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className="text-[11px] font-bold text-[#e2b87f] flex items-center gap-1.5">
-                          <span className="w-5 h-5 rounded-full bg-amber-600/20 border border-amber-600/30 flex items-center justify-center text-[10px] font-mono text-amber-400">
+                        <span className="text-xs font-bold text-[#e2b87f] flex items-center gap-1.5">
+                          <span className="w-5 h-5 rounded-full bg-amber-600/20 border border-amber-600/30 flex items-center justify-center text-xs font-mono text-amber-400">
                             {idx + 1}
                           </span>
                           <span>مرحله {idx + 1}</span>
@@ -2821,7 +2821,7 @@ export const ContentCmsManager: React.FC<ContentCmsManagerProps> = ({
                   <button
                     type="button"
                     onClick={handleAddMistakeToEdit}
-                    className="px-2.5 py-1 bg-stone-800 hover:bg-stone-700 text-stone-300 border border-stone-700 rounded-lg text-[11px] font-semibold flex items-center gap-1 transition-colors cursor-pointer"
+                    className="px-2.5 py-1 bg-stone-800 hover:bg-stone-700 text-stone-300 border border-stone-700 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     <span>افزودن هشدار</span>
@@ -2851,7 +2851,7 @@ export const ContentCmsManager: React.FC<ContentCmsManagerProps> = ({
                 </div>
               </div>
 
-              <div className="text-[10px] text-stone-500 flex items-center justify-between pt-1 border-t border-[#26211e]">
+              <div className="text-xs text-stone-500 flex items-center justify-between pt-1 border-t border-[#26211e]">
                 <span>شناسه پیوند (Slug): <code className="text-stone-400 font-mono">{editingTechnique.slug}</code></span>
                 <span className="text-emerald-500/80">ساختار پیوند جهت پایداری سیستم حفظ می‌شود</span>
               </div>

@@ -229,7 +229,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
                 <p className="text-xs font-bold text-stone-800">
                   {uploading ? 'در حال ذخیره‌سازی تصویر...' : 'تصویر را بکشید و رها کنید، یا کلیک کنید'}
                 </p>
-                <p className="text-[11px] text-stone-400 mt-0.5">
+                <p className="text-xs text-stone-400 mt-0.5">
                   پشتیبانی از فرمت‌های JPG, PNG, WEBP تا سقف ۱۰ مگابایت
                 </p>
               </div>
@@ -283,7 +283,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
               />
               <div className="overflow-hidden">
                 <div className="text-xs font-bold text-stone-800 truncate dir-ltr">{value}</div>
-                <div className="text-[10px] text-emerald-600 font-medium flex items-center gap-1 mt-0.5">
+                <div className="text-xs text-emerald-600 font-medium flex items-center gap-1 mt-0.5">
                   <Check className="w-3 h-3" />
                   <span>تصویر با موفقیت متصل گردید</span>
                 </div>
@@ -376,9 +376,9 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
                         </div>
 
                         {/* Bottom Info Bar */}
-                        <div className="absolute inset-x-0 bottom-0 bg-stone-900/80 backdrop-blur-xs p-1.5 text-white text-[10px]">
+                        <div className="absolute inset-x-0 bottom-0 bg-stone-900/80 backdrop-blur-xs p-1.5 text-white text-xs">
                           <div className="truncate dir-ltr font-mono">{item.filename}</div>
-                          <div className="text-stone-300 text-[9px] mt-0.5">{item.sizeKb} KB</div>
+                          <div className="text-stone-300 text-xs mt-0.5">{item.sizeKb} KB</div>
                         </div>
 
                         {isSelected && (

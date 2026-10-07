@@ -298,7 +298,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
   });
   const fieldError = (key: FieldKey) =>
     errors[key] ? (
-      <p id={`ck-${key}-err`} role="alert" className="mt-1 text-[11px] text-rose-700">
+      <p id={`ck-${key}-err`} role="alert" className="mt-1 text-xs text-rose-700">
         {errors[key]}
       </p>
     ) : null;
@@ -516,7 +516,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
                   </button>
                 </div>
                 {couponMsg && (
-                  <p role={couponMsg.isError ? 'alert' : 'status'} className={`text-[11px] font-medium ${couponMsg.isError ? 'text-rose-700' : 'text-[#2F6B51]'}`}>
+                  <p role={couponMsg.isError ? 'alert' : 'status'} className={`text-xs font-medium ${couponMsg.isError ? 'text-rose-700' : 'text-[#2F6B51]'}`}>
                     {couponMsg.text}
                   </p>
                 )}
@@ -546,7 +546,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
               </div>
             )}
             {totals.remainingForFreeShippingToman > 0 && (
-              <p className="text-[11px] text-[#7A5E4D] bg-[#A98570]/10 rounded-lg px-2.5 py-1.5">
+              <p className="text-xs text-[#7A5E4D] bg-[#A98570]/10 rounded-lg px-2.5 py-1.5">
                 با {totals.remainingForFreeShippingToman.toLocaleString('fa-IR')} تومان خرید کالای بیشتر، ارسال رایگان می‌شود.
               </p>
             )}
@@ -562,7 +562,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
       {authReady && (
         <div className="lg:hidden fixed inset-x-0 bottom-0 z-30 bg-[#FFFCF8]/95 backdrop-blur border-t border-[#DED7CD] px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] flex items-center gap-3">
           <div className="min-w-0">
-            <div className="text-[11px] text-[#5E5A54]">مبلغ قابل پرداخت</div>
+            <div className="text-xs text-[#5E5A54]">مبلغ قابل پرداخت</div>
             <div className="text-sm font-bold text-[#7A5E4D] tabular-nums">{totals.payableToman.toLocaleString('fa-IR')} تومان</div>
           </div>
           <button

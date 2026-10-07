@@ -235,7 +235,7 @@ export const EditorialImage: React.FC<EditorialImageProps> = ({
             </div>
 
             {categoryLabel && (
-              <span className="text-[11px] font-bold tracking-wide text-[#87553B] uppercase mb-1">
+              <span className="text-xs font-bold tracking-wide text-[#87553B] uppercase mb-1">
                 {categoryLabel}
               </span>
             )}
@@ -246,7 +246,7 @@ export const EditorialImage: React.FC<EditorialImageProps> = ({
           </div>
 
           {/* Bottom subtle brand stamp */}
-          <span className="absolute bottom-2 text-[10px] tracking-wider text-[#59524A] font-medium font-sans">
+          <span className="absolute bottom-2 text-xs tracking-wider text-[#59524A] font-medium font-sans">
             گیس‌آرا (GisAra) · مرجع موآرایی
           </span>
         </div>

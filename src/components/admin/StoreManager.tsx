@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  * 
  * StoreManager - Dedicated Store, Inventory & Commercial Management Center
- * Part of Shanyoon Admin Console Segmented Architecture
+ * Part of GisAra Admin Console Segmented Architecture
  */
 
 import { ConfirmDialog } from '../common/ConfirmDialog';
@@ -143,7 +143,7 @@ export const StoreManager: React.FC<StoreManagerProps> = ({
       image: prodImg,
       images: [prodImg],
       summary: 'محصول باکیفیت استاندارد آرایشگاهی با تضمین اصالت کالا.',
-      description: 'این محصول توسط دپارتمان ابزار شنیون مو تست و تایید شده است.',
+      description: 'این محصول توسط دپارتمان ابزار گیس‌آرا تست و تایید شده است.',
       specifications: {
         'نوع': newProdCategory,
         'گارانتی': 'سلامت فیزیکی',
@@ -257,7 +257,7 @@ export const StoreManager: React.FC<StoreManagerProps> = ({
           >
             <Package className="w-4 h-4 text-amber-500" />
             <span>کاتالوگ و انبارداری کالاها</span>
-            <span className={`px-2 py-0.5 rounded-md text-[10px] tabular-nums font-bold ${
+            <span className={`px-2 py-0.5 rounded-md text-xs tabular-nums font-bold ${
               currentTab === 'INVENTORY' ? 'bg-white/20 text-white' : 'bg-stone-900 text-stone-300'
             }`}>
               {products.length} کالا
@@ -275,7 +275,7 @@ export const StoreManager: React.FC<StoreManagerProps> = ({
           >
             <Tag className="w-4 h-4 text-amber-500" />
             <span>کدهای تخفیف و جشنواره‌ها</span>
-            <span className={`px-2 py-0.5 rounded-md text-[10px] tabular-nums font-bold ${
+            <span className={`px-2 py-0.5 rounded-md text-xs tabular-nums font-bold ${
               currentTab === 'COUPONS' ? 'bg-white/20 text-white' : 'bg-stone-900 text-stone-300'
             }`}>
               {coupons.length} فعال
@@ -293,7 +293,7 @@ export const StoreManager: React.FC<StoreManagerProps> = ({
           >
             <ImageIcon className="w-4 h-4 text-amber-500" />
             <span>بنرها و هویت بصری ویترین</span>
-            <span className={`px-2 py-0.5 rounded-md text-[10px] tabular-nums font-bold ${
+            <span className={`px-2 py-0.5 rounded-md text-xs tabular-nums font-bold ${
               currentTab === 'ASSETS' ? 'bg-white/20 text-white' : 'bg-stone-900 text-stone-300'
             }`}>
               ۵ جایگاه
@@ -374,7 +374,7 @@ export const StoreManager: React.FC<StoreManagerProps> = ({
                         />
                         <div>
                           <div className="font-bold text-[#171614]">{prod.name}</div>
-                          <div className="text-[10px] text-[#968A7C]">{prod.summary}</div>
+                          <div className="text-xs text-[#968A7C]">{prod.summary}</div>
                         </div>
                       </div>
                     </td>
@@ -452,7 +452,7 @@ export const StoreManager: React.FC<StoreManagerProps> = ({
                       <div className="font-bold text-[#171614] text-xs leading-snug line-clamp-2">
                         {prod.name}
                       </div>
-                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-[#59524A]">
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-[#59524A]">
                         <span>برند: {prod.brand}</span>
                         <span>·</span>
                         <span className="font-mono text-[#87553B] font-semibold">{prod.sku}</span>
@@ -466,7 +466,7 @@ export const StoreManager: React.FC<StoreManagerProps> = ({
                   {/* Stock Status & Quick Adjustment Controls */}
                   <div className="pt-2.5 border-t border-[#EAE2D5]/60 flex items-center justify-between gap-2">
                     <div className="flex items-center gap-1.5">
-                      <span className="text-[11px] text-[#59524A]">موجودی انبار:</span>
+                      <span className="text-xs text-[#59524A]">موجودی انبار:</span>
                       <span
                         className={`px-2 py-0.5 rounded-lg text-xs font-bold tabular-nums ${
                           prod.stock <= 0
@@ -603,7 +603,7 @@ export const StoreManager: React.FC<StoreManagerProps> = ({
                     </strong>
                   </div>
                   {coupon.expiresAtJalali && (
-                    <div className="flex justify-between text-[11px] text-[#968A7C]">
+                    <div className="flex justify-between text-xs text-[#968A7C]">
                       <span>انقضا:</span>
                       <span>{coupon.expiresAtJalali}</span>
                     </div>
@@ -613,7 +613,7 @@ export const StoreManager: React.FC<StoreManagerProps> = ({
                     <button
                       type="button"
                       onClick={() => handleOpenEditCoupon(coupon)}
-                      className="text-[#87553B] hover:text-[#6E422C] text-[11px] font-bold flex items-center gap-1 cursor-pointer"
+                      className="text-[#87553B] hover:text-[#6E422C] text-xs font-bold flex items-center gap-1 cursor-pointer"
                     >
                       <Pencil className="w-3.5 h-3.5" />
                       <span>ویرایش کد</span>
@@ -622,7 +622,7 @@ export const StoreManager: React.FC<StoreManagerProps> = ({
                     <button
                       type="button"
                       onClick={() => setCouponToDelete(coupon)}
-                      className="text-rose-600 hover:text-rose-800 text-[11px] font-bold flex items-center gap-1 cursor-pointer"
+                      className="text-rose-600 hover:text-rose-800 text-xs font-bold flex items-center gap-1 cursor-pointer"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                       <span>حذف کد</span>
@@ -952,7 +952,7 @@ export const StoreManager: React.FC<StoreManagerProps> = ({
               <div className="p-3 bg-stone-50 rounded-xl border border-[#EAE2D5] flex items-center justify-between">
                 <div>
                   <span className="font-semibold text-stone-800">وضعیت فعال بودن کد:</span>
-                  <p className="text-[10px] text-stone-500 mt-0.5">در صورت غیرفعال بودن، کد در درگاه اعمال نخواهد شد.</p>
+                  <p className="text-xs text-stone-500 mt-0.5">در صورت غیرفعال بودن، کد در درگاه اعمال نخواهد شد.</p>
                 </div>
                 <button
                   type="button"
@@ -967,7 +967,7 @@ export const StoreManager: React.FC<StoreManagerProps> = ({
                 </button>
               </div>
 
-              <div className="text-[11px] text-stone-500 flex items-center gap-1.5 pt-1">
+              <div className="text-xs text-stone-500 flex items-center gap-1.5 pt-1">
                 <span>تعداد دفعات استفاده شده تاکنون:</span>
                 <strong className="text-[#87553B] font-mono">{editingCoupon.usageCount} بار</strong>
                 <span className="text-stone-400">(حفظ می‌شود)</span>

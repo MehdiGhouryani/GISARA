@@ -124,7 +124,7 @@ export const UsersManager: React.FC = () => {
                   <ul className="text-xs text-stone-200 space-y-1 list-disc ps-5">{detail.courses.map((c: any) => <li key={c.id}>{c.name}</li>)}</ul>
                 )}
                 {detail.manualEnrollments.length > 0 && (
-                  <p className="text-[11px] text-stone-400 pt-1">دسترسی دستی ثبت‌شده: {fa(detail.manualEnrollments.length)} مورد (فعال‌سازی/لغو از بخش سفارشات)</p>
+                  <p className="text-xs text-stone-400 pt-1">دسترسی دستی ثبت‌شده: {fa(detail.manualEnrollments.length)} مورد (فعال‌سازی/لغو از بخش سفارشات)</p>
                 )}
               </section>
 

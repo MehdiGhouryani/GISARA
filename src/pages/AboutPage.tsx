@@ -190,7 +190,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({
             </div>
 
             <div className="space-y-1">
-              <span className="text-[11px] font-bold text-[#87553B] uppercase tracking-wider">
+              <span className="text-xs font-bold text-[#87553B] uppercase tracking-wider">
                 مؤسس و مدیر آکادمی
               </span>
               <h3 className="text-lg font-black text-[#171614]">

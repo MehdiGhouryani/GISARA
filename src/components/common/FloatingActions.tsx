@@ -63,7 +63,7 @@ export const FloatingActions: React.FC<FloatingActionsProps> = ({
       {/* 2. Discreet WhatsApp Support Button */}
       <div className="relative flex items-center">
         {isTooltipOpen && (
-          <div className="absolute right-full ml-0 mr-3 px-3 py-1.5 bg-[#1C1A17] text-white text-[11px] font-medium rounded-lg shadow-xl border border-stone-700/60 whitespace-nowrap pointer-events-none animate-in fade-in duration-200">
+          <div className="absolute right-full ml-0 mr-3 px-3 py-1.5 bg-[#1C1A17] text-white text-xs font-medium rounded-lg shadow-xl border border-stone-700/60 whitespace-nowrap pointer-events-none animate-in fade-in duration-200">
             پشتیبانی در واتساپ
             <span className="absolute -left-1 top-1/2 -translate-y-1/2 border-4 border-transparent border-r-[#1C1A17]" />
           </div>

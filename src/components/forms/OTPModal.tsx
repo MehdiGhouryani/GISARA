@@ -239,7 +239,7 @@ export const OTPModal: React.FC<OTPModalProps> = ({ isOpen, onClose, onSuccess }
                 aria-invalid={error ? true : undefined}
                 className="w-full px-4 py-3 bg-white border border-[#EAE2D5] rounded-xl text-center text-xl font-bold tracking-[0.5em] text-[#171614] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#87553B]/40 disabled:opacity-60"
               />
-              {devHint && <p className="mt-2 text-[11px] text-[#59524A] bg-[#F4EFE7] rounded-md px-2 py-1" dir="auto">نسخه توسعه: {devHint}</p>}
+              {devHint && <p className="mt-2 text-xs text-[#59524A] bg-[#F4EFE7] rounded-md px-2 py-1" dir="auto">نسخه توسعه: {devHint}</p>}
             </div>
 
             <div className="flex items-center justify-between gap-3 text-xs text-[#59524A]" aria-live="polite">

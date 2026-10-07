@@ -2,7 +2,7 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
  * 
- * Domain Mock Data for شنیون مو (Shanyoon)
+ * Domain Mock Data for گیس‌آرا (GisAra)
  * Authentic, rich domain entities matching UI Workbench and Design System
  */
 
@@ -1013,7 +1013,7 @@ export const mockSessions: WorkshopSession[] = [
     instructorName: 'سارا محمدی',
     instructorPortrait: '/assets/instructors/sara-mohammadi.jpg',
     slug: 'bridal-updo-tehran-mehr1405',
-    venueName: 'آکادمی مرکزی شنیون مو - ونک',
+    venueName: 'آکادمی مرکزی گیس‌آرا - ونک',
     venueAddress: 'تهران، میدان ونک، خیابان ملاصدرا (آدرس دقیق پس از تأیید ارسال می‌شود)',
     dateJalali: '۱۵ و ۱۶ مهر ۱۴۰۵ (دو روزه)',
     timeSlot: '۱۰:۰۰ الی ۱۷:۰۰',

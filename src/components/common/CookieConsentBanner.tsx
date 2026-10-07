@@ -64,7 +64,7 @@ export const CookieConsentBanner: React.FC = () => {
                 <X className="w-3.5 h-3.5" />
               </button>
             </div>
-            <p className="text-[11px] text-stone-600 leading-relaxed">
+            <p className="text-xs text-stone-600 leading-relaxed">
               این وب‌سایت برای ارائه خدمات بهتر، حفظ نشست‌های امن کاربری و بهبود عملکرد، از کوکی‌ها استفاده می‌کند.
             </p>
           </div>

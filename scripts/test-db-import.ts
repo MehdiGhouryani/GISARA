@@ -9,7 +9,11 @@ const order = (o: any = {}) => ({ id: 'o1', status: 'PAID', payableToman: 10, it
 check('valid minimal payload accepted', validateImport({ products: [product()] }).ok);
 check('non-object rejected', !validateImport('nope').ok && !validateImport(null).ok && !validateImport([]).ok);
 check('empty object (nothing to restore) rejected', !validateImport({}).ok);
-check('unknown collections reported as ignored, not applied', (() => { const r = validateImport({ products: [product()], coupons: [{ id: 'c' }] }); return r.ok && r.ignored.includes('coupons') && !(r.data as any)['coupons']; })());
+check('unknown collections reported as ignored, not applied', (() => { const r = validateImport({ products: [product()], somethingElse: [{ id: 'x' }], settings: { payment: { merchantId: 'secret' } } }); return r.ok && r.ignored.includes('somethingElse') && r.ignored.includes('settings') && !(r.data as any)['settings']; })());
+check('coupons are now restorable when valid', (() => { const r = validateImport({ coupons: [{ id: 'c1', code: 'WELCOME', discountPercent: 10 }] }); return r.ok && r.counts.coupons === 1; })());
+check('a malformed coupon rejects the whole import', !validateImport({ products: [product()], coupons: [{ id: 'c' }] }).ok);
+check('payment intents and manual enrollments are restorable', (() => { const r = validateImport({ paymentIntents: [{ id: 'pi1', orderId: 'o1', providerAuthority: 'A', amountToman: 1000 }], manualEnrollments: [{ id: 'm1', userMobile: '09120000000', courseId: 'c', status: 'ACTIVE' }] }); return r.ok && r.counts.paymentIntents === 1 && r.counts.manualEnrollments === 1; })());
+check('a user with a bad mobile is rejected', !validateImport({ users: [{ id: 'u', mobile: '123', userCode: 'U-ABCDEFGH' }] }).ok);
 check('collection must be an array', !validateImport({ products: { id: 'p1' } }).ok);
 check('negative price rejected', !validateImport({ products: [product({ priceToman: -1 })] }).ok);
 check('NaN/Infinity price rejected', !validateImport({ products: [product({ priceToman: Infinity })] }).ok && !validateImport({ products: [product({ priceToman: NaN })] }).ok);

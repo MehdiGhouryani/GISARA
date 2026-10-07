@@ -116,13 +116,13 @@ export const CitiesPage: React.FC<CitiesPageProps> = ({
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
 
                   {/* Province Badge */}
-                  <span className="absolute top-3 right-3 bg-black/60 backdrop-blur-xs text-white text-[10px] font-bold px-2.5 py-1 rounded-md border border-white/20">
+                  <span className="absolute top-3 right-3 bg-black/60 backdrop-blur-xs text-white text-xs font-bold px-2.5 py-1 rounded-md border border-white/20">
                     استان {city.province}
                   </span>
 
                   {/* Sessions status badge */}
                   <span
-                    className={`absolute bottom-3 right-3 text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${
+                    className={`absolute bottom-3 right-3 text-xs font-bold px-2.5 py-0.5 rounded-full border ${
                       activeSessions.length > 0
                         ? 'bg-emerald-500/90 text-white border-emerald-300'
                         : 'bg-stone-800/90 text-stone-300 border-stone-600'
@@ -147,7 +147,7 @@ export const CitiesPage: React.FC<CitiesPageProps> = ({
 
               {/* Card Footer */}
               <div className="p-4 sm:p-5 pt-3 border-t border-[#EAE2D5]/60 flex items-center justify-between text-xs">
-                <div className="flex items-center gap-3 text-[11px] text-[#59524A]">
+                <div className="flex items-center gap-3 text-xs text-[#59524A]">
                   <span className="flex items-center gap-1">
                     <Users className="w-3.5 h-3.5 text-[#87553B]" />
                     <span>{city.activeInstructorsCount} مربی</span>
@@ -159,7 +159,7 @@ export const CitiesPage: React.FC<CitiesPageProps> = ({
                   </span>
                 </div>
 
-                <span className="text-[#87553B] font-bold text-[11px] group-hover:translate-x-[-3px] transition-transform inline-flex items-center gap-0.5">
+                <span className="text-[#87553B] font-bold text-xs group-hover:translate-x-[-3px] transition-transform inline-flex items-center gap-0.5">
                   <span>مشاهده تاریخ‌ها</span>
                   <ArrowLeft className="w-3.5 h-3.5" />
                 </span>

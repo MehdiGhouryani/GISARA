@@ -379,7 +379,7 @@ export const LearnPlayerPage: React.FC<LearnPlayerPageProps> = ({
                   {noteStatus === 'saved' && (<><Check className="w-3.5 h-3.5" aria-hidden="true" />ذخیره شد</>)}
                 </span>
               </div>
-              <p className="text-[11px] text-[#5E5A54] leading-5">یادداشت‌ها فقط روی همین دستگاه و برای حساب شما نگه‌داری می‌شوند.</p>
+              <p className="text-xs text-[#5E5A54] leading-5">یادداشت‌ها فقط روی همین دستگاه و برای حساب شما نگه‌داری می‌شوند.</p>
             </div>
           )}
         </aside>

@@ -56,7 +56,7 @@ export const InstructorDetailPage: React.FC<InstructorDetailPageProps> = ({
             <div>
               <div className="flex items-center justify-center md:justify-start gap-2 text-xs font-bold text-[#7A5E4D] mb-1">
                 <Award className="w-4 h-4" />
-                <span>مدرس تاییدشده شنیون مو</span>
+                <span>مدرس تاییدشده گیس‌آرا</span>
               </div>
 
               <h1 className="text-2xl sm:text-3xl font-bold text-[#171614]">

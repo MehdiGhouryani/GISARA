@@ -580,7 +580,7 @@ export const AnalyticsConsole: React.FC<AnalyticsConsoleProps> = ({
             </span>
           </div>
           <div className="flex items-center justify-between mt-1">
-            <div className="flex items-center gap-1 text-[11px] text-emerald-700 font-semibold">
+            <div className="flex items-center gap-1 text-xs text-emerald-700 font-semibold">
               <ArrowUpRight className="w-3.5 h-3.5" />
               <span>+{rangeConfig.growthRate}%</span>
             </div>
@@ -604,7 +604,7 @@ export const AnalyticsConsole: React.FC<AnalyticsConsoleProps> = ({
             </span>
           </div>
           <div className="flex items-center justify-between mt-1">
-            <div className="flex items-center gap-1 text-[11px] text-emerald-700 font-semibold">
+            <div className="flex items-center gap-1 text-xs text-emerald-700 font-semibold">
               <ArrowUpRight className="w-3.5 h-3.5" />
               <span>+۱۲.۳%</span>
             </div>
@@ -629,12 +629,12 @@ export const AnalyticsConsole: React.FC<AnalyticsConsoleProps> = ({
               })}{' '}
               میلیون
             </span>
-            <div className="text-[10px] text-[#59524A] tabular-nums">
+            <div className="text-xs text-[#59524A] tabular-nums">
               {computedRevenue.toLocaleString('fa-IR')} ت
             </div>
           </div>
           <div className="flex items-center justify-between mt-1">
-            <div className="flex items-center gap-1 text-[11px] text-emerald-700 font-semibold">
+            <div className="flex items-center gap-1 text-xs text-emerald-700 font-semibold">
               <TrendingUp className="w-3.5 h-3.5" />
               <span>رشد قوی</span>
             </div>
@@ -656,12 +656,12 @@ export const AnalyticsConsole: React.FC<AnalyticsConsoleProps> = ({
             <span className="text-2xl font-bold text-[#171614] tabular-nums tracking-tight">
               {computedOrders.toLocaleString('fa-IR')} سفارش
             </span>
-            <div className="text-[10px] text-[#59524A] tabular-nums">
+            <div className="text-xs text-[#59524A] tabular-nums">
               میانگین {averageOrderValue.toLocaleString('fa-IR')} ت
             </div>
           </div>
           <div className="flex items-center justify-between mt-1">
-            <div className="flex items-center gap-1 text-[11px] text-emerald-700 font-semibold">
+            <div className="flex items-center gap-1 text-xs text-emerald-700 font-semibold">
               <ArrowUpRight className="w-3.5 h-3.5" />
               <span>+۹.۵%</span>
             </div>
@@ -683,12 +683,12 @@ export const AnalyticsConsole: React.FC<AnalyticsConsoleProps> = ({
             <span className="text-2xl font-bold text-[#171614] tabular-nums tracking-tight">
               {rangeConfig.conversionRate}%
             </span>
-            <div className="text-[10px] text-[#59524A]">
+            <div className="text-xs text-[#59524A]">
               از بازدید به تسویه‌حساب
             </div>
           </div>
           <div className="flex items-center justify-between mt-1">
-            <div className="flex items-center gap-1 text-[11px] text-emerald-700 font-semibold">
+            <div className="flex items-center gap-1 text-xs text-emerald-700 font-semibold">
               <TrendingUp className="w-3.5 h-3.5" />
               <span>بالاتر از میانگین صنف</span>
             </div>
@@ -710,12 +710,12 @@ export const AnalyticsConsole: React.FC<AnalyticsConsoleProps> = ({
             <span className="text-2xl font-bold text-[#171614] tabular-nums tracking-tight">
               ۰۴:۳۵
             </span>
-            <div className="text-[10px] text-emerald-700 font-medium">
+            <div className="text-xs text-emerald-700 font-medium">
               نرخ پرش پایین (۲۴.۵٪)
             </div>
           </div>
           <div className="flex items-center justify-between mt-1">
-            <div className="text-[11px] text-[#59524A]">
+            <div className="text-xs text-[#59524A]">
               تعامل ماندگار
             </div>
             <MiniSparkline
@@ -943,7 +943,7 @@ export const AnalyticsConsole: React.FC<AnalyticsConsoleProps> = ({
                     >
                       {/* Top floating pill */}
                       <span
-                        className={`text-[10px] font-bold mb-2 transition-all tabular-nums ${
+                        className={`text-xs font-bold mb-2 transition-all tabular-nums ${
                           isHovered
                             ? 'opacity-100 text-[#171614] scale-110 -translate-y-1'
                             : 'opacity-0 text-[#59524A]'
@@ -964,7 +964,7 @@ export const AnalyticsConsole: React.FC<AnalyticsConsoleProps> = ({
 
                       {/* Bottom Label */}
                       <span
-                        className={`mt-3 text-[11px] font-medium transition-colors ${
+                        className={`mt-3 text-xs font-medium transition-colors ${
                           isHovered ? 'text-[#171614] font-bold' : 'text-[#59524A]'
                         }`}
                       >
@@ -1303,7 +1303,7 @@ export const AnalyticsConsole: React.FC<AnalyticsConsoleProps> = ({
                     ? `${acquisitionChannels[selectedDonutIndex].percentage}%`
                     : '۵۴٪'}
                 </span>
-                <span className="text-[10px] text-[#87553B] font-medium">
+                <span className="text-xs text-[#87553B] font-medium">
                   {selectedDonutIndex !== null
                     ? `${acquisitionChannels[selectedDonutIndex].visitors.toLocaleString('fa-IR')} کاربر`
                     : 'گوگل ارگانیک'}
@@ -1400,7 +1400,7 @@ export const AnalyticsConsole: React.FC<AnalyticsConsoleProps> = ({
                     <div className="text-base font-bold text-[#171614] tabular-nums">
                       {dev.share}%
                     </div>
-                    <div className="text-[10px] text-[#59524A] leading-tight">{dev.label}</div>
+                    <div className="text-xs text-[#59524A] leading-tight">{dev.label}</div>
                   </div>
                 );
               })}
@@ -1437,7 +1437,7 @@ export const AnalyticsConsole: React.FC<AnalyticsConsoleProps> = ({
                 <div key={idx} className="space-y-1">
                   {/* Drop-off indicator between steps */}
                   {prevStep && (
-                    <div className="flex items-center justify-between px-6 text-[10px] text-[#C54636]">
+                    <div className="flex items-center justify-between px-6 text-xs text-[#C54636]">
                       <span className="flex items-center gap-1 font-medium">
                         <ArrowDownRight className="w-3 h-3" />
                         <span>ریزش: {dropOff}%</span>
@@ -1452,11 +1452,11 @@ export const AnalyticsConsole: React.FC<AnalyticsConsoleProps> = ({
                   <div className="bg-[#F8F5EE] border border-[#EAE2D5] rounded-xl p-3 hover:border-[#87553B]/40 transition-colors">
                     <div className="flex items-center justify-between text-xs mb-1.5">
                       <div className="flex items-center gap-2">
-                        <span className="w-5 h-5 rounded-full bg-[#171614] text-white text-[10px] font-bold flex items-center justify-center shrink-0">
+                        <span className="w-5 h-5 rounded-full bg-[#171614] text-white text-xs font-bold flex items-center justify-center shrink-0">
                           {idx + 1}
                         </span>
                         <span className="font-bold text-[#171614]">{step.step}</span>
-                        <span className="text-[10px] bg-white px-2 py-0.5 rounded border border-[#EAE2D5] text-[#59524A] hidden sm:inline">
+                        <span className="text-xs bg-white px-2 py-0.5 rounded border border-[#EAE2D5] text-[#59524A] hidden sm:inline">
                           {step.badge}
                         </span>
                       </div>
@@ -1512,7 +1512,7 @@ export const AnalyticsConsole: React.FC<AnalyticsConsoleProps> = ({
           {/* Heatmap Grid */}
           <div className="pt-2">
             {/* Column Headers */}
-            <div className="grid grid-cols-5 gap-2 text-center text-[11px] font-semibold text-[#59524A] pb-2 border-b border-[#EAE2D5]/60">
+            <div className="grid grid-cols-5 gap-2 text-center text-xs font-semibold text-[#59524A] pb-2 border-b border-[#EAE2D5]/60">
               <span className="text-right">روز هفته</span>
               <span>صبح (۸-۱۲)</span>
               <span>ظهر (۱۲-۱۶)</span>
@@ -1538,7 +1538,7 @@ export const AnalyticsConsole: React.FC<AnalyticsConsoleProps> = ({
                     return (
                       <div
                         key={tIdx}
-                        className={`h-8 rounded-lg flex items-center justify-center text-[11px] tabular-nums transition-transform hover:scale-105 cursor-pointer ${tileColor}`}
+                        className={`h-8 rounded-lg flex items-center justify-center text-xs tabular-nums transition-transform hover:scale-105 cursor-pointer ${tileColor}`}
                         title={`${row.day} - شیفت ${tIdx + 1}: شدت فعالیت ${val}%`}
                       >
                         {val}%
@@ -1550,7 +1550,7 @@ export const AnalyticsConsole: React.FC<AnalyticsConsoleProps> = ({
             </div>
 
             {/* Heatmap Legend */}
-            <div className="flex items-center justify-end gap-2 text-[10px] text-[#59524A] pt-3">
+            <div className="flex items-center justify-end gap-2 text-xs text-[#59524A] pt-3">
               <span>کم‌ترافیک</span>
               <span className="w-3.5 h-3.5 rounded bg-[#F2ECE3] border border-[#EAE2D5]"></span>
               <span className="w-3.5 h-3.5 rounded bg-[#CDB5A4]"></span>
@@ -1603,18 +1603,18 @@ export const AnalyticsConsole: React.FC<AnalyticsConsoleProps> = ({
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="font-bold text-[#171614]">{evt.city}</span>
-                      <span className="text-[10px] text-[#59524A]">• {evt.timeAgo}</span>
+                      <span className="text-xs text-[#59524A]">• {evt.timeAgo}</span>
                     </div>
                     <p className="text-[#59524A] mt-0.5 leading-relaxed">{evt.detail}</p>
                     {evt.amount && (
-                      <span className="inline-block mt-1 text-[11px] font-bold text-emerald-800 tabular-nums">
+                      <span className="inline-block mt-1 text-xs font-bold text-emerald-800 tabular-nums">
                         مبلغ: {evt.amount.toLocaleString('fa-IR')} تومان
                       </span>
                     )}
                   </div>
                 </div>
 
-                <span className="text-[10px] text-[#C59B63] font-semibold shrink-0">
+                <span className="text-xs text-[#C59B63] font-semibold shrink-0">
                   {evt.type === 'ORDER'
                     ? 'سفارش'
                     : evt.type === 'CART'
@@ -1648,17 +1648,17 @@ export const AnalyticsConsole: React.FC<AnalyticsConsoleProps> = ({
                 className="flex items-center justify-between gap-3 text-xs p-2 rounded-xl hover:bg-[#F8F5EE] transition-colors"
               >
                 <div className="flex items-center gap-2.5 overflow-hidden">
-                  <span className="w-5 h-5 rounded-full bg-[#F4EFE7] text-[#171614] text-[10px] font-bold flex items-center justify-center shrink-0">
+                  <span className="w-5 h-5 rounded-full bg-[#F4EFE7] text-[#171614] text-xs font-bold flex items-center justify-center shrink-0">
                     {idx + 1}
                   </span>
                   <div className="truncate">
                     <p className="font-semibold text-[#171614] truncate">{p.name}</p>
-                    <p className="text-[11px] text-[#59524A] tabular-nums">
+                    <p className="text-xs text-[#59524A] tabular-nums">
                       {p.priceToman.toLocaleString('fa-IR')} تومان • موجودی: {p.stock}
                     </p>
                   </div>
                 </div>
-                <span className="text-[11px] font-bold text-[#167C55] shrink-0 tabular-nums">
+                <span className="text-xs font-bold text-[#167C55] shrink-0 tabular-nums">
                   ★ {p.rating}
                 </span>
               </div>
@@ -1683,17 +1683,17 @@ export const AnalyticsConsole: React.FC<AnalyticsConsoleProps> = ({
                 className="flex items-center justify-between gap-3 text-xs p-2 rounded-xl hover:bg-[#F8F5EE] transition-colors"
               >
                 <div className="flex items-center gap-2.5 overflow-hidden">
-                  <span className="w-5 h-5 rounded-full bg-[#F4EFE7] text-[#171614] text-[10px] font-bold flex items-center justify-center shrink-0">
+                  <span className="w-5 h-5 rounded-full bg-[#F4EFE7] text-[#171614] text-xs font-bold flex items-center justify-center shrink-0">
                     {idx + 1}
                   </span>
                   <div className="truncate">
                     <p className="font-semibold text-[#171614] truncate">{s.name}</p>
-                    <p className="text-[11px] text-[#59524A]">
+                    <p className="text-xs text-[#59524A]">
                       مناسبت: {s.occasion} • {s.difficulty}
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-1 text-[11px] font-bold text-[#87553B] shrink-0 tabular-nums">
+                <div className="flex items-center gap-1 text-xs font-bold text-[#87553B] shrink-0 tabular-nums">
                   <Eye className="w-3 h-3" />
                   <span>{s.viewsCount.toLocaleString('fa-IR')}</span>
                 </div>
@@ -1748,10 +1748,10 @@ export const AnalyticsConsole: React.FC<AnalyticsConsoleProps> = ({
               {topSearches.map((s, idx) => (
                 <span
                   key={idx}
-                  className="px-2.5 py-1 bg-[#F8F5EE] border border-[#EAE2D5] text-[#171614] text-[11px] rounded-lg flex items-center gap-1.5"
+                  className="px-2.5 py-1 bg-[#F8F5EE] border border-[#EAE2D5] text-[#171614] text-xs rounded-lg flex items-center gap-1.5"
                 >
                   <span>{s.query}</span>
-                  <span className="text-[10px] text-emerald-700 font-bold tabular-nums">
+                  <span className="text-xs text-emerald-700 font-bold tabular-nums">
                     {s.change}
                   </span>
                 </span>

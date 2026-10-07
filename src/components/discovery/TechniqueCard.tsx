@@ -43,7 +43,7 @@ export const TechniqueCard: React.FC<TechniqueCardProps> = ({ technique, onSelec
 
         {/* Video Duration Tag */}
         {technique.videoDurationMinutes && (
-          <div className="absolute bottom-2.5 left-3 bg-black/60 backdrop-blur-xs text-white text-[11px] font-medium px-2 py-0.5 rounded-sm flex items-center gap-1.5 tabular-nums">
+          <div className="absolute bottom-2.5 left-3 bg-black/60 backdrop-blur-xs text-white text-xs font-medium px-2 py-0.5 rounded-sm flex items-center gap-1.5 tabular-nums">
             <Play className="w-3 h-3 fill-current text-[#C59B63]" />
             <span>{technique.videoDurationMinutes} دقیقه</span>
           </div>
@@ -85,7 +85,7 @@ export const TechniqueCard: React.FC<TechniqueCardProps> = ({ technique, onSelec
                   e.stopPropagation();
                   onQuickView(technique, e);
                 }}
-                className="text-[11px] text-[#87553B] bg-[#F4EFE7] hover:bg-[#87553B] hover:text-white px-2 py-0.5 rounded transition-colors cursor-pointer"
+                className="text-xs text-[#87553B] bg-[#F4EFE7] hover:bg-[#87553B] hover:text-white px-2 py-0.5 rounded transition-colors cursor-pointer"
                 title="مشاهده خلاصه"
               >
                 خلاصه

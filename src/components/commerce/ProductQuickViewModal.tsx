@@ -100,7 +100,7 @@ export const ProductQuickViewModal: React.FC<ProductQuickViewModalProps> = ({
                   </span>
                   <span className="text-xs text-[#59524A] mr-1">تومان</span>
                 </div>
-                <span className="text-[11px] text-[#59524A]">
+                <span className="text-xs text-[#59524A]">
                   کد: <code className="font-mono text-[#171614]">{product.sku}</code>
                 </span>
               </div>
@@ -130,7 +130,7 @@ export const ProductQuickViewModal: React.FC<ProductQuickViewModalProps> = ({
                       <Plus className="w-3.5 h-3.5" />
                     </button>
                   </div>
-                  <span className="text-[11px] text-[#59524A]">
+                  <span className="text-xs text-[#59524A]">
                     (موجودی انبار: {product.stock} عدد)
                   </span>
                 </div>

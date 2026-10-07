@@ -33,7 +33,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({ article, onSelect, isF
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
           />
           <div className="absolute inset-0 bg-gradient-to-t lg:bg-gradient-to-r from-[#171614] via-transparent to-transparent opacity-90" />
-          <span className="absolute top-4 right-4 bg-[#87553B] text-white text-[11px] font-bold px-3 py-1 rounded-full shadow-md">
+          <span className="absolute top-4 right-4 bg-[#87553B] text-white text-xs font-bold px-3 py-1 rounded-full shadow-md">
             سرمقاله ویژه مجله
           </span>
         </div>
@@ -66,7 +66,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({ article, onSelect, isF
               </div>
               <div className="text-xs">
                 <div className="font-bold text-stone-200">{article.author.name}</div>
-                <div className="text-[10px] text-stone-400">{article.author.role}</div>
+                <div className="text-xs text-stone-400">{article.author.role}</div>
               </div>
             </div>
 
@@ -98,7 +98,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({ article, onSelect, isF
         </div>
 
         <div className="p-4 sm:p-5 space-y-2">
-          <div className="flex items-center gap-2 text-[11px] text-[#87553B] font-semibold">
+          <div className="flex items-center gap-2 text-xs text-[#87553B] font-semibold">
             <span>{article.category}</span>
             <span>·</span>
             <div className="flex items-center gap-1 tabular-nums text-[#59524A]">
@@ -122,10 +122,10 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({ article, onSelect, isF
           <div className="w-6 h-6 rounded-full overflow-hidden border border-[#EAE2D5]">
             <EditorialImage src={article.author.avatar} alt={article.author.name} aspectRatio="1:1" />
           </div>
-          <span className="font-medium text-[#171614] text-[11px]">{article.author.name}</span>
+          <span className="font-medium text-[#171614] text-xs">{article.author.name}</span>
         </div>
 
-        <span className="text-[#87553B] font-bold text-[11px] group-hover:translate-x-[-2px] transition-transform inline-flex items-center gap-0.5">
+        <span className="text-[#87553B] font-bold text-xs group-hover:translate-x-[-2px] transition-transform inline-flex items-center gap-0.5">
           <span>مطالعه</span>
           <ArrowLeft className="w-3 h-3" />
         </span>

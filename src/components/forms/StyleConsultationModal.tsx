@@ -417,7 +417,7 @@ export const StyleConsultationModal: React.FC<StyleConsultationModalProps> = ({
                     }`}
                   >
                     <div className="text-xs font-bold">{opt.label}</div>
-                    <div className="text-[10px] text-[#59524A]/80">{opt.desc}</div>
+                    <div className="text-xs text-[#59524A]/80">{opt.desc}</div>
                   </button>
                 ))}
               </div>
@@ -459,7 +459,7 @@ export const StyleConsultationModal: React.FC<StyleConsultationModalProps> = ({
                     }`}
                   >
                     <div className="text-xs font-bold mb-0.5">{fh.label}</div>
-                    <div className="text-[10px] text-[#59524A] leading-relaxed">{fh.desc}</div>
+                    <div className="text-xs text-[#59524A] leading-relaxed">{fh.desc}</div>
                   </button>
                 ))}
               </div>
@@ -608,7 +608,7 @@ export const StyleConsultationModal: React.FC<StyleConsultationModalProps> = ({
                     }`}
                   >
                     <div className="font-bold text-xs text-[#171614] mb-0.5">{neck.label}</div>
-                    <div className="text-[10px] text-[#59524A]">{neck.desc}</div>
+                    <div className="text-xs text-[#59524A]">{neck.desc}</div>
                   </button>
                 ))}
               </div>
@@ -646,7 +646,7 @@ export const StyleConsultationModal: React.FC<StyleConsultationModalProps> = ({
                       <Check className="w-4 h-4 text-[#87553B]" />
                     )}
                   </div>
-                  <span className="text-[11px] text-[#59524A]">{v.desc}</span>
+                  <span className="text-xs text-[#59524A]">{v.desc}</span>
                 </button>
               ))}
             </div>
@@ -699,7 +699,7 @@ export const StyleConsultationModal: React.FC<StyleConsultationModalProps> = ({
                       {keyAdvicePoints.map((pt, idx) => (
                         <span
                           key={idx}
-                          className="text-[10px] bg-white/10 backdrop-blur-md text-[#F5E3C9] border border-white/15 px-2.5 py-1 rounded-lg flex items-center gap-1 font-semibold"
+                          className="text-xs bg-white/10 backdrop-blur-md text-[#F5E3C9] border border-white/15 px-2.5 py-1 rounded-lg flex items-center gap-1 font-semibold"
                         >
                           <Check className="w-3 h-3 text-[#C59B63]" />
                           <span>{pt}</span>
@@ -723,7 +723,7 @@ export const StyleConsultationModal: React.FC<StyleConsultationModalProps> = ({
 
               <div className="flex-1 text-center sm:text-right space-y-2">
                 <div className="flex items-center justify-center sm:justify-start gap-2 flex-wrap">
-                  <span className="text-[10px] font-bold text-[#87553B] bg-[#87553B]/10 px-2.5 py-0.5 rounded-md">
+                  <span className="text-xs font-bold text-[#87553B] bg-[#87553B]/10 px-2.5 py-0.5 rounded-md">
                     مناسبت: {matchedStyle.occasion}
                   </span>
                 </div>
@@ -737,7 +737,7 @@ export const StyleConsultationModal: React.FC<StyleConsultationModalProps> = ({
                   {matchedItem.reasons.map((r, idx) => (
                     <span
                       key={idx}
-                      className="text-[10px] bg-white border border-[#EAE2D5] text-[#59524A] font-semibold px-2 py-0.5 rounded-md flex items-center gap-1"
+                      className="text-xs bg-white border border-[#EAE2D5] text-[#59524A] font-semibold px-2 py-0.5 rounded-md flex items-center gap-1"
                     >
                       <Check className="w-3 h-3 text-[#87553B]" />
                       <span>{r}</span>
@@ -831,7 +831,7 @@ export const StyleConsultationModal: React.FC<StyleConsultationModalProps> = ({
                         </div>
                         <div className="truncate">
                           <div className="text-xs font-bold text-[#171614] truncate">{prod.name}</div>
-                          <div className="text-[11px] text-[#87553B] font-bold tabular-nums">
+                          <div className="text-xs text-[#87553B] font-bold tabular-nums">
                             {prod.priceToman.toLocaleString('fa-IR')} تومان
                           </div>
                         </div>

@@ -267,11 +267,11 @@ export const Header: React.FC<HeaderProps> = ({
                   <span className="text-base sm:text-2xl font-black tracking-tight text-[#171614] group-hover:text-[#87553B] transition-colors whitespace-nowrap">
                     گیس‌آرا
                   </span>
-                  <span className="hidden sm:inline-block text-[10px] font-mono text-[#C59B63] font-bold tracking-wider">
+                  <span className="hidden sm:inline-block text-xs font-mono text-[#C59B63] font-bold tracking-wider">
                     GisAra
                   </span>
                 </div>
-                <span className="hidden sm:inline-block text-[10px] text-[#87553B] font-medium leading-none whitespace-nowrap -mt-0.5">
+                <span className="hidden sm:inline-block text-xs text-[#87553B] font-medium leading-none whitespace-nowrap -mt-0.5">
                   آکادمی و مرجع استایل مو
                 </span>
               </div>
@@ -333,7 +333,7 @@ export const Header: React.FC<HeaderProps> = ({
             >
               <ShoppingBag className="w-5 h-5" aria-hidden="true" />
               {cartCount > 0 && (
-                <span className="absolute top-1 right-1 min-w-[18px] h-[18px] px-1 bg-[#87553B] text-white text-[10px] font-bold rounded-full flex items-center justify-center tabular-nums shadow-xs">
+                <span className="absolute top-1 right-1 min-w-[18px] h-[18px] px-1 bg-[#87553B] text-white text-xs font-bold rounded-full flex items-center justify-center tabular-nums shadow-xs">
                   {cartCount}
                 </span>
               )}
@@ -362,7 +362,7 @@ export const Header: React.FC<HeaderProps> = ({
                     <div className="absolute left-0 top-full mt-2 w-56 bg-[#FFFCF8] rounded-xl shadow-xl border border-[#EAE2D5] overflow-hidden z-50 text-right animate-in fade-in slide-in-from-top-1 duration-150">
                       <div className="p-3 bg-[#FAF6F0] border-b border-[#EAE2D5]/50">
                         <p className="text-xs font-bold text-[#171614] truncate">{userName}</p>
-                        <p className="text-[11px] text-[#968A7C] tabular-nums dir-ltr text-right">
+                        <p className="text-xs text-[#968A7C] tabular-nums dir-ltr text-right">
                           {userMobile}
                         </p>
                       </div>
@@ -561,7 +561,7 @@ export const Header: React.FC<HeaderProps> = ({
                             />
                             <div className="flex-1 min-w-0">
                               <p className="text-xs font-semibold text-[#171614] truncate">{s.name}</p>
-                              <p className="text-[11px] text-[#968A7C] truncate">{s.occasion} · {s.difficulty}</p>
+                              <p className="text-xs text-[#968A7C] truncate">{s.occasion} · {s.difficulty}</p>
                             </div>
                             <ArrowRight className="w-3.5 h-3.5 text-[#EAE2D5]" />
                           </button>
@@ -596,7 +596,7 @@ export const Header: React.FC<HeaderProps> = ({
                             />
                             <div className="flex-1 min-w-0">
                               <p className="text-xs font-semibold text-[#171614] truncate">{p.name}</p>
-                              <p className="text-[11px] text-[#87553B] font-bold tabular-nums">
+                              <p className="text-xs text-[#87553B] font-bold tabular-nums">
                                 {p.priceToman.toLocaleString('fa-IR')} تومان
                               </p>
                             </div>
@@ -633,7 +633,7 @@ export const Header: React.FC<HeaderProps> = ({
                             />
                             <div className="flex-1 min-w-0">
                               <p className="text-xs font-semibold text-[#171614] truncate">{c.name}</p>
-                              <p className="text-[11px] text-[#968A7C] truncate">{c.level}</p>
+                              <p className="text-xs text-[#968A7C] truncate">{c.level}</p>
                             </div>
                             <ArrowRight className="w-3.5 h-3.5 text-[#EAE2D5]" />
                           </button>

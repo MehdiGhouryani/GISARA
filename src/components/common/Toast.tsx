@@ -71,7 +71,7 @@ const ToastItem: React.FC<{ toast: ToastMessage; onDismiss: (id: string) => void
       <div className="flex-1 min-w-0">
         <h4 className="text-xs font-bold leading-snug">{toast.title}</h4>
         {toast.message && (
-          <p className="text-[11px] opacity-80 mt-0.5 leading-relaxed">{toast.message}</p>
+          <p className="text-xs opacity-80 mt-0.5 leading-relaxed">{toast.message}</p>
         )}
       </div>
       <button

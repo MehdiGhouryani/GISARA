@@ -47,7 +47,7 @@ export const StyleCard: React.FC<StyleCardProps> = ({ styleItem, onSelect, onQui
         <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/50 to-transparent pointer-events-none" />
 
         {/* Occasion / Time subtle metadata */}
-        <div className="absolute bottom-2.5 right-3 left-3 flex items-center justify-between text-[11px] text-white/90">
+        <div className="absolute bottom-2.5 right-3 left-3 flex items-center justify-between text-xs text-white/90">
           <span className="font-medium bg-black/40 backdrop-blur-xs px-2 py-0.5 rounded-sm">
             {styleItem.occasion}
           </span>
@@ -91,13 +91,13 @@ export const StyleCard: React.FC<StyleCardProps> = ({ styleItem, onSelect, onQui
                 e.stopPropagation();
                 onQuickView(styleItem, e);
               }}
-              className="text-[11px] text-[#87553B] bg-[#F4EFE7] hover:bg-[#87553B] hover:text-white px-2 py-0.5 rounded transition-colors cursor-pointer"
+              className="text-xs text-[#87553B] bg-[#F4EFE7] hover:bg-[#87553B] hover:text-white px-2 py-0.5 rounded transition-colors cursor-pointer"
               title="پیش‌نمایش سریع"
             >
               پیش‌نمایش سریع
             </button>
           ) : (
-            <span className="text-[11px] text-[#59524A]/80">
+            <span className="text-xs text-[#59524A]/80">
               {styleItem.techniqueIds.length} تکنیک مرتبط
             </span>
           )}

@@ -2,7 +2,7 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
  * 
- * Domain Types for شنیون مو (Shanyoon)
+ * Domain Types for گیس‌آرا (GisAra)
  * Conforming strictly to Master Blueprint v5.0 and Backend Contract v1.0
  */
 
